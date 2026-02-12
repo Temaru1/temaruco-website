@@ -1,34 +1,367 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.App {
+  min-height: 100vh;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.hero-section {
+  position: relative;
+  min-height: 90vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
 }
 
-.App-link {
-    color: #61dafb;
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7));
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.hero-content {
+  position: relative;
+  z-index: 10;
+}
+
+.testimonial-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.testimonial-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.product-card {
+  background: #F4F4F5;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: #D90429;
+  color: white;
+  border-radius: 9999px;
+  padding: 14px 32px;
+  font-weight: 600;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: #EF233C;
+  box-shadow: 0 10px 15px -3px rgba(217, 4, 41, 0.3);
+}
+
+.btn-secondary {
+  background: #09090B;
+  color: white;
+  border-radius: 9999px;
+  padding: 14px 32px;
+  font-weight: 500;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #27272A;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #09090B;
+  border: 2px solid #E4E4E7;
+  border-radius: 9999px;
+  padding: 14px 32px;
+  font-weight: 600;
+  transition: all 0.3s;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: #F4F4F5;
+}
+
+.calculator-card {
+  background: white;
+  border: 1px solid #E4E4E7;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.factory-strip img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.loading-spinner {
+  border: 3px solid #F4F4F5;
+  border-top: 3px solid #D90429;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-up {
+  animation: slideInUp 0.7s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+input, select, textarea {
+  border: 1px solid #E4E4E7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Manrope', sans-serif;
+  transition: border-color 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #D90429;
+  box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.1);
+}
+
+.nav-link {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  color: #09090B;
+  text-decoration: none;
+  padding: 8px 16px;
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: #D90429;
+}
+
+.admin-sidebar {
+  width: 250px;
+  background: #09090B;
+  color: white;
+  min-height: 100vh;
+  max-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 24px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.admin-content {
+  margin-left: 250px;
+  padding: 32px;
+  min-height: 100vh;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* Highlight order from notification */
+@keyframes highlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    border-color: #3b82f6;
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    border-color: #60a5fa;
+  }
+}
+
+.order-card.highlight-order {
+  animation: highlightPulse 2s ease-in-out 3;
+  border: 2px solid #3b82f6;
+  background-color: #eff6ff;
+}
+
+.order-row.highlight-order,
+.enquiry-row.highlight-order {
+  animation: highlightPulse 2s ease-in-out 3;
+  background-color: #eff6ff !important;
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.order-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-in_production {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.status-ready {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.status-completed {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Mobile Responsive Fixes */
+@media (max-width: 768px) {
+  /* Fix hero section on mobile */
+  .hero-section {
+    min-height: 70vh;
+    padding: 20px;
+  }
+
+  /* Adjust button sizes */
+  .btn-primary, .btn-secondary, .btn-outline {
+    padding: 12px 24px;
+    font-size: 14px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Fix admin layout on mobile */
+  .admin-sidebar {
+    width: 100%;
+    position: relative;
+    min-height: auto;
+    max-height: none;
+  }
+
+  .admin-content {
+    margin-left: 0;
+    padding: 16px;
+    max-height: none;
+  }
+
+  /* Fix cards on mobile */
+  .testimonial-card, .product-card, .calculator-card, .stat-card {
+    padding: 16px;
+  }
+
+  /* Fix modal on mobile */
+  .modal-content {
+    padding: 20px;
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  /* Fix factory strip images */
+  .factory-strip img {
+    height: 200px;
+  }
+
+  /* Ensure inputs are readable */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    width: 100%;
+  }
+}
+
+/* Tablet specific */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-sidebar {
+    width: 200px;
+  }
+
+  .admin-content {
+    margin-left: 200px;
+    padding: 24px;
+  }
+}
+
+/* Ensure no horizontal scroll */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }

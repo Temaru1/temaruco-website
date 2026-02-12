@@ -1,0 +1,26 @@
+{
+  "short_name": "Temaruco",
+  "name": "Temaruco Clothing Factory",
+  "description": "Premium clothing manufacturing for bulk orders, print-on-demand, and boutique collections",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["business", "shopping", "lifestyle"]
+}
