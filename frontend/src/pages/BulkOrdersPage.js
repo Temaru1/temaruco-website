@@ -47,16 +47,28 @@ const BulkOrdersPage = () => {
 
   const loadSettings = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/admin/settings`, {
+      // Load bulk clothing items from dedicated collection
+      const bulkItemsResponse = await axios.get(`${API_URL}/api/bulk/clothing-items`);
+      const bulkItems = bulkItemsResponse.data;
+      
+      // Load admin settings for pricing
+      const settingsResponse = await axios.get(`${API_URL}/api/admin/settings`, {
         withCredentials: true
       });
-      setSettings(response.data);
+      
+      // Combine data
+      const combinedSettings = {
+        ...settingsResponse.data,
+        bulk_clothing_items: bulkItems // Use items from dedicated collection
+      };
+      
+      setSettings(combinedSettings);
       
       // Set first item as default if available
-      if (response.data.bulk_clothing_items?.length > 0) {
+      if (bulkItems?.length > 0) {
         setOrderData(prev => ({
           ...prev,
-          clothing_item: response.data.bulk_clothing_items[0].name
+          clothing_item: bulkItems[0].name
         }));
       }
 
