@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Connection Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const BACKEND_URL = 'https://temaru-web-clone.preview.emergentagent.com';
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        addResult('Testing backend connection...', 'info');
+        addResult('Backend URL: ' + BACKEND_URL, 'info');
+        
+        // Test 1: Bank details (public endpoint)
+        fetch(BACKEND_URL + '/api/bank-details')
+            .then(res => res.json())
+            .then(data => {
+                addResult('✓ Test 1 PASSED: Bank details endpoint works', 'success');
+                addResult('Bank: ' + data.bank_name, 'success');
+            })
+            .catch(err => {
+                addResult('✗ Test 1 FAILED: ' + err.message, 'error');
+            });
+        
+        // Test 2: Bulk clothing items
+        fetch(BACKEND_URL + '/api/bulk/clothing-items')
+            .then(res => res.json())
+            .then(data => {
+                addResult('✓ Test 2 PASSED: Bulk clothing items endpoint works', 'success');
+                addResult('Found ' + data.length + ' items', 'success');
+                if (data.length > 0) {
+                    addResult('First item: ' + data[0].name + ' - ₦' + data[0].base_price, 'success');
+                }
+            })
+            .catch(err => {
+                addResult('✗ Test 2 FAILED: ' + err.message, 'error');
+            });
+        
+        // Test 3: POD clothing items
+        fetch(BACKEND_URL + '/api/pod/clothing-items')
+            .then(res => res.json())
+            .then(data => {
+                addResult('✓ Test 3 PASSED: POD clothing items endpoint works', 'success');
+                addResult('Found ' + data.length + ' items', 'success');
+            })
+            .catch(err => {
+                addResult('✗ Test 3 FAILED: ' + err.message, 'error');
+            });
+            
+        // Test 4: Check CORS
+        addResult('Testing CORS...', 'info');
+        fetch(BACKEND_URL + '/api/bank-details', {
+            method: 'OPTIONS'
+        })
+            .then(res => {
+                addResult('✓ Test 4 PASSED: CORS preflight works', 'success');
+            })
+            .catch(err => {
+                addResult('✗ Test 4 FAILED: CORS issue - ' + err.message, 'error');
+            });
+    </script>
+</body>
+</html>
