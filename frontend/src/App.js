@@ -38,6 +38,14 @@ import AdminEnquiriesPage from './pages/AdminEnquiriesPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
 
+// New Pages
+import FabricsPage from './pages/FabricsPage';
+import SouvenirsPage from './pages/SouvenirsPage';
+import DesignLabPage from './pages/DesignLabPage';
+
+// Components
+import Chatbot from './components/Chatbot';
+
 import './App.css';
 
 // Scroll to top on route change and track visits
