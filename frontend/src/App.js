@@ -128,6 +128,11 @@ function AppRouter() {
         <Route path="/custom-order-confirmation" element={<CustomOrderConfirmationPage />} />
         <Route path="/fabric" element={<FabricPage />} />
         
+        {/* New Service Pages */}
+        <Route path="/fabrics" element={<FabricsPage />} />
+        <Route path="/souvenirs" element={<SouvenirsPage />} />
+        <Route path="/design-lab" element={<DesignLabPage />} />
+        
         {/* Careers - Public */}
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/careers/apply/:jobId" element={<ApplyJobPage />} />
