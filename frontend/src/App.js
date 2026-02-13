@@ -209,6 +209,7 @@ function AppRouter() {
       </Routes>
 
       <Footer />
+      <Chatbot />
     </>
   );
 }
