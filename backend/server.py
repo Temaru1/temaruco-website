@@ -171,6 +171,8 @@ class OrderType(str, Enum):
     BULK = "bulk"
     POD = "pod"
     BOUTIQUE = "boutique"
+    FABRIC = "fabric"
+    SOUVENIR = "souvenir"
 
 class PrintType(str, Enum):
     NONE = "none"
