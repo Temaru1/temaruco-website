@@ -91,6 +91,9 @@ Clone and enhance the Temaruco website with:
   - CSV Export for Revenue and Products data
   - Added to admin sidebar for easy access
 - ✅ Fixed Chatbot visibility issue (moved above PWA install prompt, increased z-index)
+- ✅ Extended SEO to all major pages:
+  - Landing page, Fabrics, Souvenirs, Bulk Orders, POD
+  - All pages now have optimized meta tags for search engines
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
