@@ -133,6 +133,7 @@ function AppRouter() {
         <Route path="/fabrics" element={<FabricsPage />} />
         <Route path="/souvenirs" element={<SouvenirsPage />} />
         <Route path="/design-lab" element={<DesignLabPage />} />
+        <Route path="/price-calculator" element={<PriceCalculatorPage />} />
         
         {/* Careers - Public */}
         <Route path="/careers" element={<CareersPage />} />
