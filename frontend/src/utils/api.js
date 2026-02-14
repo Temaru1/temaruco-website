@@ -201,6 +201,40 @@ export const getAdminActions = () =>
   axios.get(`${API}/super-admin/actions`, { withCredentials: true });
 
 
+// Customer Account APIs
+export const getAccountProfile = () =>
+  axios.get(`${API}/auth/me`, { withCredentials: true });
+
+export const updateAccountProfile = (profileData) =>
+  axios.put(`${API}/account/profile`, profileData, { withCredentials: true });
+
+export const getAccountAddresses = () =>
+  axios.get(`${API}/account/addresses`, { withCredentials: true });
+
+export const addAccountAddress = (addressData) =>
+  axios.post(`${API}/account/addresses`, addressData, { withCredentials: true });
+
+export const deleteAccountAddress = (addressId) =>
+  axios.delete(`${API}/account/addresses/${addressId}`, { withCredentials: true });
+
+export const getAccountOrders = () =>
+  axios.get(`${API}/account/orders`, { withCredentials: true });
+
+export const getAccountOrderDetail = (orderId) =>
+  axios.get(`${API}/account/orders/${orderId}`, { withCredentials: true });
+
+export const getSavedMockups = () =>
+  axios.get(`${API}/account/mockups`, { withCredentials: true });
+
+export const saveMockup = (mockupData) =>
+  axios.post(`${API}/account/mockups`, mockupData, { withCredentials: true });
+
+export const updateMockup = (mockupId, mockupData) =>
+  axios.put(`${API}/account/mockups/${mockupId}`, mockupData, { withCredentials: true });
+
+export const deleteMockup = (mockupId) =>
+  axios.delete(`${API}/account/mockups/${mockupId}`, { withCredentials: true });
+
 // Default axios instance with auth headers for direct API calls
 const apiInstance = axios.create({
   baseURL: API,
