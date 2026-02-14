@@ -140,6 +140,16 @@ export const deleteManualQuote = (quoteId) =>
 export const sendQuoteEmail = (quoteId) =>
   axios.post(`${API}/admin/quotes/${quoteId}/send-email`, {}, { headers: getAuthHeaders() });
 
+// Reminder Settings APIs
+export const getReminderSettings = () =>
+  axios.get(`${API}/admin/settings/reminders`, { headers: getAuthHeaders() });
+
+export const updateReminderSettings = (settings) =>
+  axios.put(`${API}/admin/settings/reminders`, settings, { headers: getAuthHeaders() });
+
+export const getReminderStatus = () =>
+  axios.get(`${API}/admin/quotes/reminder-status`, { headers: getAuthHeaders() });
+
 // Receipts APIs
 export const getReceipts = () =>
   axios.get(`${API}/admin/receipts`, { headers: getAuthHeaders() });
