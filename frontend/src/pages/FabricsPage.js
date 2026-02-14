@@ -109,6 +109,11 @@ const FabricsPage = () => {
 
   return (
     <div className="min-h-screen py-16 px-4 bg-zinc-50">
+      <SEO 
+        title="Buy Premium Fabrics"
+        description="Shop premium quality fabrics for all your clothing needs. Cotton, silk blend, denim, Ankara prints and more. Fast delivery across Nigeria."
+        keywords="buy fabric Nigeria, premium cotton, silk fabric, ankara prints, denim fabric, wholesale fabric Lagos"
+      />
       <div className="max-w-7xl mx-auto">
         <h1 className="font-oswald text-5xl font-bold mb-4" data-testid="fabrics-page-title">
           Buy Fabrics
