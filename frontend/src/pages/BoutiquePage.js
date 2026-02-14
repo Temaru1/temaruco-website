@@ -172,7 +172,7 @@ const BoutiquePage = () => {
                   <h3 className="font-semibold text-zinc-900 mb-1">{product.name}</h3>
                   <p className="text-sm text-zinc-500 mb-3 line-clamp-2">{product.description}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-[#D90429]">₦{product.price.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-[#D90429]">{formatPrice(product.price)}</span>
                     <Button onClick={() => addToCart(product)} size="sm" className="bg-[#D90429] hover:bg-[#B90322]" data-testid={`add-to-cart-${product.id}`}>
                       Add to Cart
                     </Button>
