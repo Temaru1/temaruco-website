@@ -13,7 +13,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
 const FabricsPage = () => {
   const navigate = useNavigate();
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice } = useCurrency();
   const [fabrics, setFabrics] = useState([]);
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
