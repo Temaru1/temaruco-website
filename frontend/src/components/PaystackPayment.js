@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -15,6 +15,35 @@ const PaystackPayment = ({
   onClose 
 }) => {
   const [loading, setLoading] = useState(false);
+
+  // Verify payment function - called after successful Paystack transaction
+  const verifyPayment = useCallback((reference) => {
+    axios.get(`${API_URL}/api/payments/verify/${reference}`)
+      .then((verifyResponse) => {
+        if (verifyResponse.data.status === 'success') {
+          toast.success('Payment successful!');
+          
+          // Send status update email (fire and forget)
+          axios.post(`${API_URL}/api/orders/${orderId}/send-status-email`)
+            .catch((emailError) => {
+              console.error('Failed to send email:', emailError);
+            });
+          
+          if (onSuccess) {
+            onSuccess(verifyResponse.data);
+          }
+        } else {
+          toast.error('Payment verification failed');
+        }
+      })
+      .catch((error) => {
+        console.error('Payment verification error:', error);
+        toast.error(error.response?.data?.detail || 'Payment verification failed');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [orderId, onSuccess]);
 
   const handlePayment = async () => {
     if (!window.PaystackPop) {
@@ -38,7 +67,7 @@ const PaystackPayment = ({
 
       const paymentData = initResponse.data.data;
 
-      // Open Paystack popup
+      // Open Paystack popup with non-async callbacks
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: email,
@@ -49,35 +78,9 @@ const PaystackPayment = ({
           setLoading(false);
           if (onClose) onClose();
         },
-        callback: async function(response) {
-          // Verify payment on backend
-          try {
-            const verifyResponse = await axios.get(
-              `${API_URL}/api/payments/verify/${response.reference}`
-            );
-
-            if (verifyResponse.data.status === 'success') {
-              toast.success('Payment successful!');
-              
-              // Send status update email
-              try {
-                await axios.post(`${API_URL}/api/orders/${orderId}/send-status-email`);
-              } catch (emailError) {
-                console.error('Failed to send email:', emailError);
-              }
-              
-              if (onSuccess) {
-                onSuccess(verifyResponse.data);
-              }
-            } else {
-              toast.error('Payment verification failed');
-            }
-          } catch (error) {
-            console.error('Payment verification error:', error);
-            toast.error(error.response?.data?.detail || 'Payment verification failed');
-          } finally {
-            setLoading(false);
-          }
+        callback: function(response) {
+          // Call verify payment with the reference
+          verifyPayment(response.reference);
         }
       });
 
