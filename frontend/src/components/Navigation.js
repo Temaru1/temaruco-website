@@ -84,11 +84,14 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/boutique" className="nav-link text-sm font-medium" data-testid="nav-boutique">
               Boutique
             </Link>
-            <Link to="/fabric" className="nav-link text-sm font-medium" data-testid="nav-fabric">
-              Fabric
+            <Link to="/fabrics" className="nav-link text-sm font-medium" data-testid="nav-fabrics">
+              Fabrics
             </Link>
-            <Link to="/about" className="nav-link text-sm font-medium" data-testid="nav-about">
-              About
+            <Link to="/souvenirs" className="nav-link text-sm font-medium" data-testid="nav-souvenirs">
+              Souvenirs
+            </Link>
+            <Link to="/design-lab" className="nav-link text-sm font-medium" data-testid="nav-design-lab">
+              Design Lab
             </Link>
             <Link to="/contact" className="nav-link text-sm font-medium" data-testid="nav-contact">
               Contact
