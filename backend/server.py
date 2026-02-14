@@ -3231,25 +3231,6 @@ async def trigger_quote_reminders(admin_user: Dict = Depends(get_admin_user)):
     asyncio.create_task(send_quote_reminder_emails())
     return {'message': 'Quote reminder check initiated', 'success': True}
 
-@api_router.get("/admin/quotes/reminder-status")
-async def get_quote_reminder_status(admin_user: Dict = Depends(get_admin_user)):
-    """Get status of quote reminders"""
-    # Count quotes by reminder status
-    total_pending = await db.manual_quotes.count_documents({'status': {'$in': ['draft', 'pending']}})
-    reminder_3d = await db.manual_quotes.count_documents({'reminder_3d_sent': True})
-    reminder_7d = await db.manual_quotes.count_documents({'reminder_7d_sent': True})
-    reminder_14d = await db.manual_quotes.count_documents({'reminder_14d_sent': True})
-    
-    return {
-        'total_pending_quotes': total_pending,
-        'reminders_sent': {
-            '3_day': reminder_3d,
-            '7_day': reminder_7d,
-            '14_day': reminder_14d
-        },
-        'scheduler_running': scheduler.running if scheduler else False
-    }
-
 @api_router.post("/admin/quotes/{quote_id}/mark-paid")
 async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
     """Mark a quote as paid and create an order from it"""
