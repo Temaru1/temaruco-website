@@ -1881,61 +1881,127 @@ async def send_email_notification(to_email: str, subject: str, html_content: str
         logger.error(f"Failed to send email: {str(e)}")
         return False
 
-def get_order_confirmation_email(order_id: str, customer_name: str, total_amount: float, order_type: str):
-    """Generate order confirmation email HTML"""
+def get_order_confirmation_email(order_id: str, customer_name: str, total_amount: float, order_type: str, items: list = None):
+    """Generate professional order confirmation email HTML"""
+    
+    # Generate items table if provided
+    items_html = ""
+    if items:
+        items_rows = ""
+        for item in items:
+            items_rows += f"""
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">{item.get('name', item.get('description', 'Item'))}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{item.get('quantity', 1)}</td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">₦{item.get('price', item.get('unit_price', 0)):,.0f}</td>
+            </tr>
+            """
+        items_html = f"""
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #f4f4f5;">
+                    <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #52525b;">Item</th>
+                    <th style="padding: 12px; text-align: center; font-size: 12px; text-transform: uppercase; color: #52525b;">Qty</th>
+                    <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #52525b;">Price</th>
+                </tr>
+            </thead>
+            <tbody>{items_rows}</tbody>
+        </table>
+        """
+    
     return f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-            .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
-            .content {{ background: #f9f9f9; padding: 30px; }}
-            .order-box {{ background: white; padding: 20px; border-left: 4px solid #D90429; margin: 20px 0; }}
-            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
-            .button {{ background: #D90429; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; border-radius: 5px; }}
-        </style>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Confirmation - Temaruco</title>
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Order Confirmation</h1>
-            </div>
-            <div class="content">
-                <p>Dear {customer_name},</p>
-                <p>Thank you for your order! We've received your {order_type} order and are processing it.</p>
-                
-                <div class="order-box">
-                    <h2>Order Details</h2>
-                    <p><strong>Order ID:</strong> {order_id}</p>
-                    <p><strong>Total Amount:</strong> ₦{total_amount:,.2f}</p>
-                    <p><strong>Status:</strong> Pending Payment</p>
+    <body style="font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #D90429 0%, #a30320 100%); padding: 40px 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">TEMARUCO</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 12px; letter-spacing: 3px;">CLOTHING FACTORY</p>
                 </div>
                 
-                <p><strong>Next Steps:</strong></p>
-                <ol>
-                    <li>Transfer ₦{total_amount:,.2f} to our bank account</li>
-                    <li>Use Order ID <strong>{order_id}</strong> as payment reference</li>
-                    <li>Upload payment proof on our website</li>
-                </ol>
+                <!-- Success Badge -->
+                <div style="text-align: center; margin-top: -25px;">
+                    <div style="display: inline-block; background: #22c55e; color: white; padding: 8px 24px; border-radius: 50px; font-size: 14px; font-weight: 600;">
+                        ✓ Order Received
+                    </div>
+                </div>
                 
-                <p><strong>Bank Details:</strong></p>
-                <p>
-                    Bank: Stanbic IBTC Bank<br>
-                    Account Name: Temaruco Limited<br>
-                    Account Number: 0050431693
-                </p>
+                <!-- Content -->
+                <div style="padding: 30px;">
+                    <h2 style="color: #18181b; margin: 20px 0 10px 0; font-size: 22px;">Thank You, {customer_name}!</h2>
+                    <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                        Your <strong>{order_type}</strong> order has been received and is being processed.
+                    </p>
+                    
+                    <!-- Order Summary Box -->
+                    <div style="background: #fafafa; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <div>
+                                <p style="color: #71717a; font-size: 12px; margin: 0; text-transform: uppercase;">Order ID</p>
+                                <p style="color: #18181b; font-size: 18px; font-weight: bold; margin: 4px 0 0 0;">{order_id}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="color: #71717a; font-size: 12px; margin: 0; text-transform: uppercase;">Total</p>
+                                <p style="color: #D90429; font-size: 24px; font-weight: bold; margin: 4px 0 0 0;">₦{total_amount:,.0f}</p>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px dashed #d4d4d8; padding-top: 15px;">
+                            <p style="color: #71717a; font-size: 12px; margin: 0;">Status</p>
+                            <p style="color: #f59e0b; font-size: 14px; font-weight: 600; margin: 4px 0 0 0;">⏳ Awaiting Payment</p>
+                        </div>
+                    </div>
+                    
+                    {items_html}
+                    
+                    <!-- Payment Instructions -->
+                    <div style="background: #fef2f2; border-left: 4px solid #D90429; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                        <h3 style="color: #18181b; margin: 0 0 15px 0; font-size: 16px;">💳 Payment Instructions</h3>
+                        <ol style="color: #52525b; margin: 0; padding-left: 20px; line-height: 2;">
+                            <li>Transfer <strong>₦{total_amount:,.0f}</strong> to our bank account</li>
+                            <li>Use <strong>{order_id}</strong> as payment reference</li>
+                            <li>Send proof of payment via WhatsApp or email</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Bank Details -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                        <h3 style="color: #18181b; margin: 0 0 15px 0; font-size: 14px;">🏦 Bank Details</h3>
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr><td style="color: #71717a; padding: 4px 0;">Bank:</td><td style="color: #18181b; font-weight: 500;">Stanbic IBTC Bank</td></tr>
+                            <tr><td style="color: #71717a; padding: 4px 0;">Account Name:</td><td style="color: #18181b; font-weight: 500;">Temaruco Limited</td></tr>
+                            <tr><td style="color: #71717a; padding: 4px 0;">Account Number:</td><td style="color: #18181b; font-weight: 600; font-size: 16px;">0050431693</td></tr>
+                        </table>
+                    </div>
+                    
+                    <!-- CTA Button -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="https://fashion-hub-1013.preview.emergentagent.com/order-summary/{order_id}" 
+                           style="display: inline-block; background: #D90429; color: white; padding: 14px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 14px;">
+                            View Order Details →
+                        </a>
+                    </div>
+                    
+                    <!-- Help -->
+                    <p style="color: #71717a; font-size: 13px; text-align: center; margin: 25px 0 0 0;">
+                        Questions? Reply to this email or WhatsApp us at <strong>+234 912 542 3902</strong>
+                    </p>
+                </div>
                 
-                <p style="text-align: center; margin-top: 30px;">
-                    <a href="https://fashion-hub-1013.preview.emergentagent.com/order-summary/{order_id}" class="button">
-                        View Order Details
-                    </a>
-                </p>
-            </div>
-            <div class="footer">
-                <p>Temaruco Limited | Premium Clothing Manufacturing</p>
-                <p>Contact: info@temaruco.com | +234 XXX XXX XXXX</p>
+                <!-- Footer -->
+                <div style="background: #18181b; padding: 25px; text-align: center;">
+                    <p style="color: white; margin: 0 0 5px 0; font-size: 14px; font-weight: 500;">Temaruco Clothing Factory</p>
+                    <p style="color: #a1a1aa; margin: 0; font-size: 12px;">Inspire • Empower • Accomplish</p>
+                    <p style="color: #71717a; margin: 15px 0 0 0; font-size: 11px;">
+                        Lagos, Nigeria | temarucoltd@gmail.com | +234 912 542 3902
+                    </p>
+                </div>
             </div>
         </div>
     </body>
