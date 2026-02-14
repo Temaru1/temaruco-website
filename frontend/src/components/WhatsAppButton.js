@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
-const WhatsAppButton = ({ phoneNumber = '+2348000000000', defaultMessage = 'Hello, I need assistance with my order.' }) => {
+const WhatsAppButton = ({ phoneNumber = '+2349125423902', defaultMessage = 'Hello, I need assistance with my order.' }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   
   const handleClick = () => {
@@ -11,13 +11,13 @@ const WhatsAppButton = ({ phoneNumber = '+2348000000000', defaultMessage = 'Hell
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-[55]" data-testid="whatsapp-button-container">
+    <div className="fixed bottom-24 right-6 z-[60]" data-testid="whatsapp-button-container">
       {/* Tooltip */}
       {showTooltip && (
-        <div className="absolute bottom-16 left-0 bg-white rounded-lg shadow-lg p-3 w-48 animate-fadeIn">
+        <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-lg p-3 w-48 animate-fadeIn">
           <button 
             onClick={() => setShowTooltip(false)}
-            className="absolute -top-2 -right-2 bg-zinc-200 rounded-full p-1 hover:bg-zinc-300"
+            className="absolute -top-2 -left-2 bg-zinc-200 rounded-full p-1 hover:bg-zinc-300"
           >
             <X size={12} />
           </button>
@@ -38,7 +38,7 @@ const WhatsAppButton = ({ phoneNumber = '+2348000000000', defaultMessage = 'Hell
         className="bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 group"
         aria-label="Chat on WhatsApp"
         data-testid="whatsapp-button"
-        title="Double-click to open WhatsApp directly"
+        title="Click to chat on WhatsApp"
       >
         <svg 
           viewBox="0 0 24 24" 
