@@ -26,7 +26,7 @@ const PaystackPayment = ({
 
     try {
       // Initialize payment on backend to get reference
-      const initResponse = await axios.post(`${API_URL}/api/payment/initialize`, {
+      const initResponse = await axios.post(`${API_URL}/api/payments/initialize`, {
         email: email,
         amount: amount,
         order_id: orderId,
