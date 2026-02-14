@@ -223,9 +223,6 @@ const FabricsPage = () => {
                       <span>Total</span>
                       <span>{formatPrice(getTotal())}</span>
                     </div>
-                    {currency.code !== 'NGN' && (
-                      <p className="text-sm text-zinc-500 text-right">₦{getTotal().toLocaleString()} NGN</p>
-                    )}
                   </div>
 
                   {!orderId ? (
