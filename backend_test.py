@@ -360,9 +360,13 @@ class TemarucoAPITester:
         self.test_quick_quote_calculation()
         
         # Test order creation
-        self.test_fabric_order_creation()
-        self.test_souvenir_order_creation()
+        fabric_order_id = self.test_fabric_order_creation()
+        souvenir_order_id = self.test_souvenir_order_creation()
         self.test_design_lab_request()
+        
+        # Test payment functionality
+        payment_ref = self.test_payment_initialization()
+        self.test_payment_verification(payment_ref)
         
         # Test admin functionality
         admin_login_success = self.test_admin_login()
