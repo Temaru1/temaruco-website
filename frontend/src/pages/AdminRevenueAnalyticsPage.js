@@ -41,6 +41,7 @@ const exportToCSV = (data, filename) => {
 const AdminRevenueAnalyticsPage = () => {
   const [revenueData, setRevenueData] = useState(null);
   const [productData, setProductData] = useState(null);
+  const [advancedData, setAdvancedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
 
@@ -53,17 +54,21 @@ const AdminRevenueAnalyticsPage = () => {
     const token = localStorage.getItem('token');
     
     try {
-      const [revenueRes, productRes] = await Promise.all([
+      const [revenueRes, productRes, advancedRes] = await Promise.all([
         axios.get(`${API_URL}/api/admin/analytics/revenue?days=${days}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API_URL}/api/admin/analytics/products?days=${days}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/admin/analytics/advanced?days=${days}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
       
       setRevenueData(revenueRes.data);
       setProductData(productRes.data);
+      setAdvancedData(advancedRes.data);
     } catch (error) {
       console.error('Failed to load analytics:', error);
       toast.error('Failed to load analytics data');
