@@ -1034,6 +1034,15 @@ const AdminQuotesPage = () => {
                         <Send size={16} />
                         {sendingEmail === quote.id ? 'Sending...' : (quote.email_sent ? 'Resend' : 'Email')}
                       </button>
+                      {quote.email_opened && (
+                        <span 
+                          className="flex items-center gap-1 text-green-600 text-xs bg-green-50 px-2 py-1 rounded-full"
+                          title={`Opened ${quote.email_open_count || 1}x - First: ${quote.email_first_opened_at ? new Date(quote.email_first_opened_at).toLocaleString() : 'N/A'}`}
+                        >
+                          <Eye size={12} />
+                          Opened {quote.email_open_count > 1 ? `(${quote.email_open_count}x)` : ''}
+                        </span>
+                      )}
                       {quote.status !== 'paid' && (
                         <button
                           onClick={() => handleMarkAsPaid(quote.id)}
