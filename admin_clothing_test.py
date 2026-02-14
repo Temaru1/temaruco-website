@@ -321,22 +321,37 @@ class AdminClothingTester:
         """Test error handling scenarios"""
         print("\n⚠️ Testing Error Handling...")
         
-        # Test creating duplicate item
+        # Test creating duplicate item - use a simple name that we'll create twice
+        test_name = "Duplicate Test Item"
         duplicate_data = {
-            "name": created_pod_name or "Test Polo Shirt",  # Use the name that was created earlier
+            "name": test_name,
             "base_price": 2500,
             "image_url": "https://example.com/image.jpg",
-            "description": "Duplicate test",
+            "description": "First creation",
             "is_active": True
         }
         
-        success, data, status = self.make_request('POST', 'admin/pod/clothing-items', duplicate_data)
-        print(f"   Debug: Duplicate test - Name: {duplicate_data['name']}, Status: {status}, Response: {data}")
-        if not success and status == 400:
-            self.log_result("Duplicate Item Prevention", True)
-            print("   Correctly prevented duplicate item creation")
+        # Create the item first time
+        success1, data1, status1 = self.make_request('POST', 'admin/pod/clothing-items', duplicate_data)
+        if success1:
+            # Track for cleanup
+            if 'id' in data1:
+                self.created_items.append(('pod', data1['id']))
+            
+            # Try to create the same item again
+            duplicate_data['description'] = "Duplicate attempt"
+            success2, data2, status2 = self.make_request('POST', 'admin/pod/clothing-items', duplicate_data)
+            
+            if not success2 and status2 == 400:
+                self.log_result("Duplicate Item Prevention", True)
+                print("   Correctly prevented duplicate item creation")
+            else:
+                self.log_result("Duplicate Item Prevention", False, f"Expected 400 error, got {status2}")
+                # If it succeeded, track for cleanup
+                if success2 and 'id' in data2:
+                    self.created_items.append(('pod', data2['id']))
         else:
-            self.log_result("Duplicate Item Prevention", False, f"Expected 400 error, got {status}")
+            self.log_result("Duplicate Item Prevention", False, f"Failed to create initial item: {status1}")
         
         # Test updating non-existent item
         fake_id = "non-existent-id"
