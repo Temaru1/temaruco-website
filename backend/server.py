@@ -4254,6 +4254,81 @@ async def change_super_admin_password(
 
 
 # ==================== PUBLIC ORDER TRACKING ====================
+# Email Tracking Pixel Endpoint
+@api_router.get("/email/track/{tracking_id}")
+async def track_email_open(tracking_id: str, request: Request):
+    """Track email opens via invisible pixel - returns 1x1 transparent GIF"""
+    import base64
+    
+    # 1x1 transparent GIF
+    transparent_gif = base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+    
+    try:
+        # Record the open event
+        user_agent = request.headers.get('user-agent', 'unknown')
+        ip_address = request.client.host if request.client else 'unknown'
+        
+        # Find and update the email tracking record
+        tracking_record = await db.email_tracking.find_one({'tracking_id': tracking_id})
+        
+        if tracking_record:
+            # Update with open info
+            open_event = {
+                'opened_at': datetime.now(timezone.utc).isoformat(),
+                'user_agent': user_agent[:500],  # Limit length
+                'ip_address': ip_address
+            }
+            
+            await db.email_tracking.update_one(
+                {'tracking_id': tracking_id},
+                {
+                    '$set': {'first_opened_at': tracking_record.get('first_opened_at') or open_event['opened_at']},
+                    '$inc': {'open_count': 1},
+                    '$push': {'open_events': {'$each': [open_event], '$slice': -10}}  # Keep last 10 events
+                }
+            )
+            
+            # Also update the quote if this is a quote email
+            if tracking_record.get('quote_id'):
+                await db.manual_quotes.update_one(
+                    {'id': tracking_record['quote_id']},
+                    {
+                        '$set': {
+                            'email_opened': True,
+                            'email_first_opened_at': tracking_record.get('first_opened_at') or open_event['opened_at'],
+                            'email_last_opened_at': open_event['opened_at']
+                        },
+                        '$inc': {'email_open_count': 1}
+                    }
+                )
+            
+            logger.info(f"Email open tracked: {tracking_id}")
+    except Exception as e:
+        logger.error(f"Error tracking email open: {str(e)}")
+    
+    # Always return the transparent GIF regardless of errors
+    return Response(content=transparent_gif, media_type="image/gif")
+
+@api_router.get("/admin/email-tracking")
+async def get_email_tracking_stats(admin_user: Dict = Depends(get_admin_user)):
+    """Get email tracking statistics"""
+    # Get overall stats
+    total_sent = await db.email_tracking.count_documents({})
+    total_opened = await db.email_tracking.count_documents({'open_count': {'$gt': 0}})
+    
+    # Get recent tracking records
+    recent = await db.email_tracking.find(
+        {}, 
+        {'_id': 0}
+    ).sort('sent_at', -1).limit(50).to_list(50)
+    
+    return {
+        'total_sent': total_sent,
+        'total_opened': total_opened,
+        'open_rate': round((total_opened / total_sent * 100) if total_sent > 0 else 0, 1),
+        'recent_emails': recent
+    }
+
 @api_router.get("/public/track/{code}")
 async def track_order_public(code: str):
     """Public endpoint to track order or enquiry by code"""
