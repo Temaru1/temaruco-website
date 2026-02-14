@@ -351,51 +351,64 @@ const OrderSummaryPage = () => {
               <CardDescription>Select your preferred payment method</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-6">
-                <Button
-                  variant={paymentMethod === 'paystack' ? 'default' : 'outline'}
-                  onClick={() => setPaymentMethod('paystack')}
-                  className="flex-1 py-6"
-                  data-testid="paystack-method-btn"
-                >
-                  <CreditCard className="w-5 h-5 mr-2" />
-                  Pay Online (Paystack)
-                </Button>
-                <Button
-                  variant={paymentMethod === 'bank' ? 'default' : 'outline'}
-                  onClick={() => setPaymentMethod('bank')}
-                  className="flex-1 py-6"
-                  data-testid="bank-method-btn"
-                >
-                  <Building className="w-5 h-5 mr-2" />
-                  Bank Transfer
-                </Button>
-              </div>
-              
-              {/* Paystack Payment Option */}
-              {paymentMethod === 'paystack' && (
-                <div className="space-y-4">
-                  <Alert className="bg-green-50 border-green-200">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-900">
-                      Pay instantly with your card, bank account, or USSD. Secure payment powered by Paystack.
-                    </AlertDescription>
-                  </Alert>
-                  <PaystackPayment
-                    orderId={order.order_id || order.id}
-                    orderType={order.type || 'bulk'}
-                    amount={order.total_price}
-                    email={order.user_email}
-                    customerName={order.user_name}
-                    onSuccess={(data) => {
-                      toast.success('Payment successful! Your order is being processed.');
-                      fetchOrderAndBankDetails(); // Refresh order status
-                    }}
-                    onClose={() => {
-                      toast.info('Payment cancelled. You can try again or use bank transfer.');
-                    }}
-                  />
-                </div>
+              {/* Handle Stripe return */}
+              {stripeSessionId ? (
+                <StripePaymentSuccess 
+                  sessionId={stripeSessionId}
+                  onSuccess={() => {
+                    toast.success('Payment successful! Your order is being processed.');
+                    fetchOrderAndBankDetails();
+                  }}
+                />
+              ) : (
+                <>
+                  <div className="flex gap-4 mb-6">
+                    <Button
+                      variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                      onClick={() => setPaymentMethod('card')}
+                      className="flex-1 py-6"
+                      data-testid="card-method-btn"
+                    >
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Pay Online (Card)
+                    </Button>
+                    <Button
+                      variant={paymentMethod === 'bank' ? 'default' : 'outline'}
+                      onClick={() => setPaymentMethod('bank')}
+                      className="flex-1 py-6"
+                      data-testid="bank-method-btn"
+                    >
+                      <Building className="w-5 h-5 mr-2" />
+                      Bank Transfer
+                    </Button>
+                  </div>
+                  
+                  {/* Card Payment Option - Auto-detects Nigeria vs International */}
+                  {paymentMethod === 'card' && (
+                    <div className="space-y-4">
+                      <Alert className="bg-green-50 border-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-900">
+                          Pay instantly with your card. Nigerian cards use Paystack, international cards use Stripe.
+                        </AlertDescription>
+                      </Alert>
+                      <PaymentSelector
+                        orderId={order.order_id || order.id}
+                        orderType={order.type || 'bulk'}
+                        amount={order.total_price}
+                        email={order.user_email}
+                        customerName={order.user_name}
+                        onSuccess={(data) => {
+                          toast.success('Payment successful! Your order is being processed.');
+                          fetchOrderAndBankDetails();
+                        }}
+                        onClose={() => {
+                          toast.info('Payment cancelled. You can try again or use bank transfer.');
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
