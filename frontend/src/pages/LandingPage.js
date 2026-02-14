@@ -8,6 +8,7 @@ import PWAInstallButton from '../components/PWAInstallButton';
 import OrderCodeInput from '../components/OrderCodeInput';
 import axios from 'axios';
 import { STATUS_LABELS, getStatusColor } from '../utils/orderStatusValidation';
+import SEO from '../components/SEO';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
