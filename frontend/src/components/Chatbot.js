@@ -73,7 +73,7 @@ const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 bg-[#D90429] hover:bg-[#B00320] text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110"
+          className="fixed bottom-24 right-6 z-[60] bg-[#D90429] hover:bg-[#B00320] text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110"
           aria-label="Open chatbot"
           data-testid="chatbot-button"
         >
@@ -84,7 +84,7 @@ const Chatbot = () => {
       {/* Chatbot Window */}
       {isOpen && (
         <div 
-          className={`fixed bottom-6 right-6 z-50 w-[380px] bg-white rounded-2xl shadow-2xl border-4 border-[#D90429] transition-all duration-300 ${
+          className={`fixed bottom-6 right-6 z-[60] w-[380px] bg-white rounded-2xl shadow-2xl border-4 border-[#D90429] transition-all duration-300 ${
             isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
           data-testid="chatbot-window"
