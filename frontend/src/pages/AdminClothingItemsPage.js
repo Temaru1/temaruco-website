@@ -189,12 +189,20 @@ const AdminClothingItemsPage = () => {
         }
       );
 
-      const imageUrl = response.data.file_path;
+      // Check both possible response formats
+      const imageUrl = response.data.image_url || response.data.file_path;
+      
+      if (!imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+      
       setFormData({ ...formData, image_url: imageUrl });
       toast.success('Image uploaded successfully!');
+      console.log('Image uploaded:', imageUrl);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(error.response?.data?.detail || 'Failed to upload image');
+      console.error('Error response:', error.response?.data);
+      toast.error(error.response?.data?.detail || error.message || 'Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
