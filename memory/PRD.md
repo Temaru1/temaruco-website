@@ -43,9 +43,11 @@ Clone and enhance the Temaruco website with:
 - Client directory
 - Revenue analytics
 
-### Payments
+### Payments (COMPLETED)
 - Paystack integration (Live keys configured)
 - Payment initialization and verification
+- Supports all order types: fabric, souvenir, bulk, pod, boutique
+- Dual payment options on Order Summary: Paystack (online) or Bank Transfer
 - Order status updates on successful payment
 
 ## Database Collections
@@ -66,15 +68,15 @@ Clone and enhance the Temaruco website with:
 - ✅ Fixed critical Paystack payment bug (OrderType enum missing fabric/souvenir)
 - ✅ Fixed Paystack callback async function error
 - ✅ Implemented AuthProvider for persistent admin login sessions
-- ✅ Payment flow working: order creation → payment initialization → Paystack popup
+- ✅ Extended Paystack to OrderSummaryPage with dual payment options (Paystack + Bank Transfer)
+- ✅ All order types now support Paystack: bulk, pod, fabric, souvenir, boutique
 
 ## Known Limitations
-- Email notifications in mock mode (SMTP not configured)
-- Paystack popup may be blocked by Cloudflare in automated testing environments
+- Email notifications in **MOCK** mode (SMTP not configured)
+- Paystack popup may be blocked by Cloudflare in automated testing environments (works in real browsers)
 
 ## Pending Tasks (P1)
 - SEO Optimization (meta tags, sitemap, structured data)
-- Extend Paystack to BulkOrdersPage and Print-On-Demand
 
 ## Future Tasks (Backlog)
 - Advanced Analytics Dashboard with charts
