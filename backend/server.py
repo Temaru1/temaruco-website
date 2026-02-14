@@ -2703,6 +2703,152 @@ async def get_product_analytics(
         'total_products_sold': sum(p['quantity'] for p in products)
     }
 
+@api_router.get("/admin/analytics/advanced")
+async def get_advanced_analytics(
+    days: int = 30,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get advanced analytics including customer insights and conversion metrics"""
+    now = datetime.now(timezone.utc)
+    start_date = now - timedelta(days=days)
+    
+    # Customer Analytics
+    total_customers = await db.clients.count_documents({})
+    new_customers = await db.clients.count_documents({
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    
+    # Repeat customers (more than 1 order)
+    repeat_customer_pipeline = [
+        {'$match': {'created_at': {'$gte': start_date.isoformat()}}},
+        {'$group': {'_id': '$user_email', 'order_count': {'$sum': 1}}},
+        {'$match': {'order_count': {'$gt': 1}}},
+        {'$count': 'repeat_customers'}
+    ]
+    repeat_result = await db.orders.aggregate(repeat_customer_pipeline).to_list(1)
+    repeat_customers = repeat_result[0]['repeat_customers'] if repeat_result else 0
+    
+    # Order Conversion Metrics
+    total_orders = await db.orders.count_documents({
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    completed_orders = await db.orders.count_documents({
+        'status': {'$in': ['completed', 'delivered']},
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    cancelled_orders = await db.orders.count_documents({
+        'status': 'cancelled',
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    
+    completion_rate = (completed_orders / total_orders * 100) if total_orders > 0 else 0
+    cancellation_rate = (cancelled_orders / total_orders * 100) if total_orders > 0 else 0
+    
+    # Revenue by Hour of Day
+    hourly_pipeline = [
+        {'$match': {
+            'created_at': {'$gte': start_date.isoformat()},
+            'status': {'$in': ['completed', 'delivered', 'payment_verified', 'in_production']}
+        }},
+        {'$addFields': {
+            'hour': {'$hour': {'$dateFromString': {'dateString': '$created_at'}}}
+        }},
+        {'$group': {
+            '_id': '$hour',
+            'orders': {'$sum': 1},
+            'revenue': {'$sum': '$total_price'}
+        }},
+        {'$sort': {'_id': 1}}
+    ]
+    hourly_data = await db.orders.aggregate(hourly_pipeline).to_list(24)
+    hourly_breakdown = [{'hour': h['_id'], 'orders': h['orders'], 'revenue': h['revenue']} for h in hourly_data]
+    
+    # Revenue by Day of Week
+    weekday_pipeline = [
+        {'$match': {
+            'created_at': {'$gte': start_date.isoformat()},
+            'status': {'$in': ['completed', 'delivered', 'payment_verified', 'in_production']}
+        }},
+        {'$addFields': {
+            'dayOfWeek': {'$dayOfWeek': {'$dateFromString': {'dateString': '$created_at'}}}
+        }},
+        {'$group': {
+            '_id': '$dayOfWeek',
+            'orders': {'$sum': 1},
+            'revenue': {'$sum': '$total_price'}
+        }},
+        {'$sort': {'_id': 1}}
+    ]
+    weekday_data = await db.orders.aggregate(weekday_pipeline).to_list(7)
+    days_map = {1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat'}
+    weekday_breakdown = [{'day': days_map.get(d['_id'], 'Unknown'), 'orders': d['orders'], 'revenue': d['revenue']} for d in weekday_data]
+    
+    # Top Customer Locations
+    location_pipeline = [
+        {'$match': {'created_at': {'$gte': start_date.isoformat()}}},
+        {'$group': {
+            '_id': {'$ifNull': ['$delivery_state', '$delivery_city']},
+            'orders': {'$sum': 1},
+            'revenue': {'$sum': '$total_price'}
+        }},
+        {'$match': {'_id': {'$ne': None}}},
+        {'$sort': {'orders': -1}},
+        {'$limit': 10}
+    ]
+    location_data = await db.orders.aggregate(location_pipeline).to_list(10)
+    top_locations = [{'location': l['_id'], 'orders': l['orders'], 'revenue': l['revenue']} for l in location_data]
+    
+    # Quote Conversion (quotes to orders)
+    total_quotes = await db.manual_quotes.count_documents({
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    paid_quotes = await db.manual_quotes.count_documents({
+        'status': 'paid',
+        'created_at': {'$gte': start_date.isoformat()}
+    })
+    quote_conversion = (paid_quotes / total_quotes * 100) if total_quotes > 0 else 0
+    
+    # Average Time to Complete Order
+    completed_orders_data = await db.orders.find({
+        'status': {'$in': ['completed', 'delivered']},
+        'created_at': {'$gte': start_date.isoformat()}
+    }, {'_id': 0, 'created_at': 1, 'completed_at': 1, 'delivered_at': 1}).to_list(500)
+    
+    completion_times = []
+    for order in completed_orders_data:
+        try:
+            start = datetime.fromisoformat(order['created_at'].replace('Z', '+00:00'))
+            end_field = order.get('delivered_at') or order.get('completed_at')
+            if end_field:
+                end = datetime.fromisoformat(end_field.replace('Z', '+00:00'))
+                completion_times.append((end - start).days)
+        except:
+            pass
+    
+    avg_completion_days = sum(completion_times) / len(completion_times) if completion_times else 0
+    
+    return {
+        'period_days': days,
+        'customer_insights': {
+            'total_customers': total_customers,
+            'new_customers': new_customers,
+            'repeat_customers': repeat_customers,
+            'customer_retention_rate': (repeat_customers / total_customers * 100) if total_customers > 0 else 0
+        },
+        'conversion_metrics': {
+            'total_orders': total_orders,
+            'completed_orders': completed_orders,
+            'cancelled_orders': cancelled_orders,
+            'completion_rate': round(completion_rate, 1),
+            'cancellation_rate': round(cancellation_rate, 1),
+            'quote_conversion_rate': round(quote_conversion, 1),
+            'avg_completion_days': round(avg_completion_days, 1)
+        },
+        'hourly_breakdown': hourly_breakdown,
+        'weekday_breakdown': weekday_breakdown,
+        'top_locations': top_locations
+    }
+
 @api_router.get("/admin/orders")
 async def get_all_orders(
     order_type: Optional[OrderType] = None,
