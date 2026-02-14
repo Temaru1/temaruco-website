@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, 
-  Package, Users, Calendar, RefreshCw 
+  Package, Users, Calendar, RefreshCw, Download 
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,27 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
 const COLORS = ['#D90429', '#2B2D42', '#8D99AE', '#EF233C', '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4'];
+
+// CSV Export Helper
+const exportToCSV = (data, filename) => {
+  if (!data || data.length === 0) {
+    toast.error('No data to export');
+    return;
+  }
+  
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => headers.map(h => `"${row[h] || ''}"`).join(','))
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  toast.success(`${filename} exported successfully`);
+};
 
 const AdminRevenueAnalyticsPage = () => {
   const [revenueData, setRevenueData] = useState(null);
