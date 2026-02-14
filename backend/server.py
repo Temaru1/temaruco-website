@@ -6572,10 +6572,20 @@ app.mount("/uploads", StaticFiles(directory="/app/backend/uploads"), name="uploa
 scheduler = AsyncIOScheduler()
 
 async def send_quote_reminder_emails():
-    """Send automated reminder emails for unpaid quotes at 3, 7, and 14 days"""
+    """Send automated reminder emails for unpaid quotes based on settings"""
     try:
         now = datetime.now(timezone.utc)
-        reminder_days = [3, 7, 14]
+        
+        # Get reminder settings from database
+        reminder_settings = await db.reminder_settings.find_one({}, {'_id': 0}) or {}
+        
+        # Check if reminders are enabled
+        if not reminder_settings.get('enabled', True):
+            logger.info("Quote reminders are disabled in settings")
+            return
+        
+        reminder_days = reminder_settings.get('reminder_days', [3, 7, 14])
+        subject_prefix = reminder_settings.get('email_subject_prefix', '[Reminder]')
         
         # Get CMS settings for bank details
         settings = await db.cms_settings.find_one({}, {'_id': 0}) or {}
