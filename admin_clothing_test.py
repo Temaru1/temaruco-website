@@ -408,7 +408,7 @@ class AdminClothingTester:
         self.test_public_endpoints()
         
         # Test error handling
-        self.test_error_handling()
+        self.test_error_handling(created_pod_name)
         
         # Test deleting items
         self.test_delete_pod_item(pod_item_id)
