@@ -236,6 +236,17 @@ Clone and enhance the Temaruco website with:
 - Top customer locations map
 - Added all visualizations to AdminRevenueAnalyticsPage
 
+### Feature 6: Stripe Payment for International Customers ✅
+- New `/api/payments/stripe/initialize` endpoint for checkout session creation
+- New `/api/payments/stripe/status/{session_id}` for payment verification
+- New `/api/webhook/stripe` for Stripe webhooks
+- New `/api/payments/provider` endpoint to auto-detect user location
+- Created `StripePayment.js` component
+- Created `PaymentSelector.js` component with auto-detection (Paystack for Nigeria, Stripe for international)
+- Created `PaymentSuccessPage.js` for Stripe redirect handling
+- NGN to USD conversion using live exchange rates
+- Frontend shows correct payment option based on user location
+
 ## Future Tasks (Backlog)
 - Backend refactoring (server.py is 7500+ lines - needs to be split into modules)
 - Shipping integration
