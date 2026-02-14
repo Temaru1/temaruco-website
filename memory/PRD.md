@@ -111,6 +111,12 @@ Clone and enhance the Temaruco website with:
   - Status tracking (draft → pending → paid)
   - "Send Email" and "Resend" buttons in Admin Quotes page
 - ✅ API endpoint: POST /api/admin/quotes/{quote_id}/send-email
+- ✅ **Automated Quote Reminders:**
+  - Scheduler runs daily at 9 AM
+  - Sends reminders at 3, 7, and 14 days for unpaid quotes
+  - Tracks reminder history per quote
+  - API: GET /api/admin/quotes/reminder-status
+  - API: POST /api/admin/quotes/trigger-reminders (super admin only)
 
 ## Design System (design_guidelines.json)
 - **Fonts:** Syne (headings), Manrope (body)
