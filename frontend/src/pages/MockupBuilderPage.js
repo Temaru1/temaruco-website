@@ -118,6 +118,7 @@ const MockupBuilderPage = () => {
   const stageRef = useRef(null);
   const fileInputRef = useRef(null);
   const [selectedTemplate, setSelectedTemplate] = useState('tshirt_front');
+  const [selectedCategory, setSelectedCategory] = useState('apparel');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -127,6 +128,11 @@ const MockupBuilderPage = () => {
 
   const stageWidth = 500;
   const stageHeight = 600;
+
+  // Filter templates by category
+  const filteredTemplates = Object.entries(TEMPLATES).filter(
+    ([key, template]) => template.category === selectedCategory
+  );
 
   // Load template image
   useEffect(() => {
