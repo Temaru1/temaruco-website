@@ -5584,6 +5584,184 @@ async def delete_material(material_id: str, admin_user: Dict = Depends(get_admin
     
     return {'message': 'Material deleted successfully'}
 
+# ==================== PRODUCT INVENTORY MANAGEMENT ====================
+
+LOW_STOCK_THRESHOLD = 10  # Default threshold for low stock alerts
+
+@api_router.get("/admin/inventory/overview")
+async def get_inventory_overview(admin_user: Dict = Depends(get_admin_user)):
+    """Get inventory overview with stock levels and alerts"""
+    
+    # Get all product types with stock info
+    fabrics = await db.fabrics.find({}, {'_id': 0}).to_list(100)
+    souvenirs = await db.souvenirs.find({}, {'_id': 0}).to_list(100)
+    boutique = await db.boutique_products.find({}, {'_id': 0}).to_list(100)
+    
+    # Calculate stats
+    low_stock_items = []
+    out_of_stock_items = []
+    total_value = 0
+    
+    for product in fabrics + souvenirs + boutique:
+        stock = product.get('stock', product.get('quantity', 0))
+        threshold = product.get('low_stock_threshold', LOW_STOCK_THRESHOLD)
+        price = product.get('price', 0)
+        total_value += stock * price
+        
+        if stock == 0:
+            out_of_stock_items.append({
+                'id': product.get('id'),
+                'name': product.get('name'),
+                'type': 'fabric' if product in fabrics else ('souvenir' if product in souvenirs else 'boutique'),
+                'stock': stock
+            })
+        elif stock <= threshold:
+            low_stock_items.append({
+                'id': product.get('id'),
+                'name': product.get('name'),
+                'type': 'fabric' if product in fabrics else ('souvenir' if product in souvenirs else 'boutique'),
+                'stock': stock,
+                'threshold': threshold
+            })
+    
+    return {
+        'summary': {
+            'total_products': len(fabrics) + len(souvenirs) + len(boutique),
+            'fabrics_count': len(fabrics),
+            'souvenirs_count': len(souvenirs),
+            'boutique_count': len(boutique),
+            'low_stock_count': len(low_stock_items),
+            'out_of_stock_count': len(out_of_stock_items),
+            'total_inventory_value': total_value
+        },
+        'low_stock_items': low_stock_items,
+        'out_of_stock_items': out_of_stock_items
+    }
+
+@api_router.put("/admin/inventory/{product_type}/{product_id}/stock")
+async def update_product_stock(
+    product_type: str,
+    product_id: str,
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Update stock level for a product"""
+    
+    collection_map = {
+        'fabric': db.fabrics,
+        'souvenir': db.souvenirs,
+        'boutique': db.boutique_products
+    }
+    
+    if product_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid product type")
+    
+    collection = collection_map[product_type]
+    
+    update_data = {
+        'stock': data.get('stock', 0),
+        'low_stock_threshold': data.get('low_stock_threshold', LOW_STOCK_THRESHOLD),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'updated_by': admin_user['email']
+    }
+    
+    result = await collection.update_one(
+        {'id': product_id},
+        {'$set': update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Log stock change
+    await db.stock_history.insert_one({
+        'id': str(uuid.uuid4()),
+        'product_id': product_id,
+        'product_type': product_type,
+        'previous_stock': data.get('previous_stock', 0),
+        'new_stock': data.get('stock', 0),
+        'change': data.get('stock', 0) - data.get('previous_stock', 0),
+        'reason': data.get('reason', 'Manual adjustment'),
+        'updated_by': admin_user['email'],
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {'message': 'Stock updated successfully', 'new_stock': data.get('stock', 0)}
+
+@api_router.get("/admin/inventory/alerts")
+async def get_inventory_alerts(admin_user: Dict = Depends(get_admin_user)):
+    """Get low stock and out of stock alerts"""
+    
+    alerts = []
+    
+    # Check fabrics
+    fabrics = await db.fabrics.find({}, {'_id': 0}).to_list(100)
+    for f in fabrics:
+        stock = f.get('stock', 0)
+        threshold = f.get('low_stock_threshold', LOW_STOCK_THRESHOLD)
+        if stock <= threshold:
+            alerts.append({
+                'type': 'low_stock' if stock > 0 else 'out_of_stock',
+                'severity': 'critical' if stock == 0 else ('high' if stock <= threshold/2 else 'medium'),
+                'product_type': 'fabric',
+                'product_id': f.get('id'),
+                'product_name': f.get('name'),
+                'current_stock': stock,
+                'threshold': threshold
+            })
+    
+    # Check souvenirs
+    souvenirs = await db.souvenirs.find({}, {'_id': 0}).to_list(100)
+    for s in souvenirs:
+        stock = s.get('stock', 0)
+        threshold = s.get('low_stock_threshold', LOW_STOCK_THRESHOLD)
+        if stock <= threshold:
+            alerts.append({
+                'type': 'low_stock' if stock > 0 else 'out_of_stock',
+                'severity': 'critical' if stock == 0 else ('high' if stock <= threshold/2 else 'medium'),
+                'product_type': 'souvenir',
+                'product_id': s.get('id'),
+                'product_name': s.get('name'),
+                'current_stock': stock,
+                'threshold': threshold
+            })
+    
+    # Check boutique products
+    boutique = await db.boutique_products.find({}, {'_id': 0}).to_list(100)
+    for b in boutique:
+        stock = b.get('stock', 0)
+        threshold = b.get('low_stock_threshold', LOW_STOCK_THRESHOLD)
+        if stock <= threshold:
+            alerts.append({
+                'type': 'low_stock' if stock > 0 else 'out_of_stock',
+                'severity': 'critical' if stock == 0 else ('high' if stock <= threshold/2 else 'medium'),
+                'product_type': 'boutique',
+                'product_id': b.get('id'),
+                'product_name': b.get('name'),
+                'current_stock': stock,
+                'threshold': threshold
+            })
+    
+    # Sort by severity
+    severity_order = {'critical': 0, 'high': 1, 'medium': 2}
+    alerts.sort(key=lambda x: severity_order.get(x['severity'], 3))
+    
+    return {'alerts': alerts, 'total': len(alerts)}
+
+@api_router.get("/admin/inventory/history")
+async def get_stock_history(
+    product_id: Optional[str] = None,
+    limit: int = 50,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get stock change history"""
+    query = {}
+    if product_id:
+        query['product_id'] = product_id
+    
+    history = await db.stock_history.find(query, {'_id': 0}).sort('updated_at', -1).limit(limit).to_list(limit)
+    return history
+
 # ==================== SUPPLIERS MANAGEMENT ====================
 class Supplier(BaseModel):
     name: str
