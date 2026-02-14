@@ -13,6 +13,7 @@ import { StripePaymentSuccess } from '../components/StripePayment';
 
 const OrderSummaryPage = () => {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [bankDetails, setBankDetails] = useState(null);
@@ -21,7 +22,10 @@ const OrderSummaryPage = () => {
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'bank'
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
+  
+  // Check if returning from Stripe payment
+  const stripeSessionId = searchParams.get('session_id');
 
   useEffect(() => {
     fetchOrderAndBankDetails();
