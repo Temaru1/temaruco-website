@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Image as KonvaImage, Text, Transformer, Rect } from 'react-konva';
-import { ArrowLeft, Upload, Type, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, Save, Shirt, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Upload, Type, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, Save, Shirt, Image as ImageIcon, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { useAuth } from '../hooks/useAuth';
+import { saveMockup } from '../utils/api';
 
 // T-shirt template SVG paths for different views
 const TEMPLATES = {
