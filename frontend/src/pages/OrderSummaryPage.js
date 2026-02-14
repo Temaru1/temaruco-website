@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -8,7 +8,8 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { toast } from 'sonner';
 import { CheckCircle2, Upload, Copy, Phone, AlertCircle, Package, Truck, Clock, CreditCard, Building } from 'lucide-react';
 import api from '../utils/api';
-import PaystackPayment from '../components/PaystackPayment';
+import PaymentSelector from '../components/PaymentSelector';
+import { StripePaymentSuccess } from '../components/StripePayment';
 
 const OrderSummaryPage = () => {
   const { orderId } = useParams();
