@@ -246,9 +246,6 @@ const FabricsPage = () => {
                         onClose={handlePaymentClose}
                       />
                     )}
-                    >
-                      Place Order
-                    </button>
                   </>
                 )}
               </div>
