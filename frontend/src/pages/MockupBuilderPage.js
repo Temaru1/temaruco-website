@@ -294,8 +294,32 @@ const MockupBuilderPage = () => {
                 <h3 className="font-semibold text-zinc-900 mb-3 flex items-center gap-2">
                   <Shirt size={18} /> Template
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(TEMPLATES).map(([key, template]) => (
+                
+                {/* Category Tabs */}
+                <div className="flex gap-1 mb-3 bg-zinc-100 p-1 rounded-lg">
+                  {TEMPLATE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        // Select first template in category
+                        const firstInCat = Object.entries(TEMPLATES).find(([k, t]) => t.category === cat.id);
+                        if (firstInCat) setSelectedTemplate(firstInCat[0]);
+                      }}
+                      className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+                        selectedCategory === cat.id 
+                          ? 'bg-white shadow text-[#D90429]' 
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                    >
+                      {cat.icon} {cat.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Template Grid */}
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {filteredTemplates.map(([key, template]) => (
                     <button
                       key={key}
                       onClick={() => setSelectedTemplate(key)}
@@ -316,7 +340,7 @@ const MockupBuilderPage = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold text-zinc-900 mb-3">Garment Color</h3>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {COLORS.map((color) => (
                     <button
                       key={color.value}
