@@ -39,6 +39,7 @@ import AdminEnquiriesPage from './pages/AdminEnquiriesPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
 import AdminClothingItemsPage from './pages/AdminClothingItemsPage';
+import AdminProductsPage from './pages/AdminProductsPage';
 
 // New Pages
 import FabricsPage from './pages/FabricsPage';
