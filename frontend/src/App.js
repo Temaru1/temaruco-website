@@ -42,6 +42,7 @@ import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
 import FabricsPage from './pages/FabricsPage';
 import SouvenirsPage from './pages/SouvenirsPage';
 import DesignLabPage from './pages/DesignLabPage';
+import PriceCalculatorPage from './pages/PriceCalculatorPage';
 
 // Components
 import Chatbot from './components/Chatbot';
