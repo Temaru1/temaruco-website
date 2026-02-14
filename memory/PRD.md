@@ -94,7 +94,7 @@ Clone and enhance the Temaruco website with:
 - Paystack popup may be blocked by Cloudflare in automated testing environments (works in real browsers)
 
 ## Pending Tasks (P2)
-- Advanced Analytics Dashboard with charts (revenue, best-sellers, trends)
+- Enable real email notifications (requires SMTP credentials)
 
 ## Future Tasks (Backlog)
 - Advanced Analytics Dashboard with charts
