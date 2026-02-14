@@ -97,10 +97,21 @@ const SouvenirsPage = () => {
       );
 
       toast.success('Order placed successfully!');
-      navigate(`/order-summary/${response.data.order_id}`);
+      setOrderId(response.data.order_id);
+      setShowPayment(true);
     } catch (error) {
       toast.error('Failed to place order');
     }
+  };
+
+  const handlePaymentSuccess = (data) => {
+    toast.success('Payment completed! Order confirmed.');
+    navigate(`/order-summary/${orderId}`);
+  };
+
+  const handlePaymentClose = () => {
+    toast.info('You can complete payment later using your Order ID');
+    navigate(`/order-summary/${orderId}`);
   };
 
   return (
