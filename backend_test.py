@@ -222,7 +222,7 @@ class TemarucoAPITester:
         """Test design lab request submission"""
         print("\n🎨 Testing Design Lab Request...")
         
-        # Test with form data (multipart)
+        # Test with form data (multipart) - the API expects Form data, not JSON
         form_data = {
             'customer_name': 'Test Client',
             'customer_email': 'test@example.com',
@@ -233,7 +233,18 @@ class TemarucoAPITester:
             'budget': '₦50,000 - ₦100,000'
         }
         
-        success, data, status = self.make_request('POST', 'design-lab/request', form_data)
+        # Use requests directly for form data
+        url = f"{self.base_url}/api/design-lab/request"
+        try:
+            response = requests.post(url, data=form_data, timeout=30)
+            success = response.status_code < 400
+            try:
+                data = response.json() if response.content else {}
+            except json.JSONDecodeError:
+                data = {'raw_response': response.text}
+            status = response.status_code
+        except requests.exceptions.RequestException as e:
+            success, data, status = False, {'error': str(e)}, 0
         
         if success and 'enquiry_code' in data:
             self.log_result("Design Lab Request Submission", True)
