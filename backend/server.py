@@ -1606,6 +1606,22 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
     
     await db.orders.insert_one(order)
     
+    # Send order confirmation email
+    try:
+        email_html = get_order_confirmation_email(
+            order_id=order_id,
+            customer_name=order['customer_name'],
+            total_amount=order['total_price'],
+            order_type='Souvenir'
+        )
+        await send_email_notification(
+            to_email=order['customer_email'],
+            subject=f'Order Confirmation - {order_id}',
+            html_content=email_html
+        )
+    except Exception as e:
+        logger.error(f"Failed to send confirmation email: {str(e)}")
+    
     return {
         'message': 'Souvenir order created successfully',
         'order_id': order_id,
