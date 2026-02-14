@@ -6668,7 +6668,7 @@ async def send_quote_reminder_emails():
                         </html>
                         """
                         
-                        subject = f"[Reminder] Your Quote {quote.get('quote_number','')} from Temaruco"
+                        subject = f"{subject_prefix} Your Quote {quote.get('quote_number','')} from Temaruco"
                         success = await send_email_notification(quote.get('client_email'), subject, html_content)
                         
                         if success:
