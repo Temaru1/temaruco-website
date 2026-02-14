@@ -3941,35 +3941,55 @@ async def track_order_public(code: str):
     """Public endpoint to track order or enquiry by code"""
     code = code.strip().upper()
     
-    # Check if it's an order code (TM-) or enquiry code (ENQ-)
-    if code.startswith('TM-'):
-        order = await db.orders.find_one({'order_id': code}, {'_id': 0})
-        if not order:
-            raise HTTPException(status_code=404, detail="Order not found")
+    # Try to find order by various ID formats
+    # Supports: TM-, FAB-, POD-, BULK-, SOU-, BOU- prefixes and order_id field
+    order = await db.orders.find_one(
+        {'$or': [
+            {'order_id': code},
+            {'id': code}
+        ]}, 
+        {'_id': 0}
+    )
+    
+    if order:
         return {
-            'code': order['order_id'],
-            'type': order['type'],
+            'code': order.get('order_id') or order.get('id'),
+            'type': order.get('type', order.get('order_type', 'unknown')),
             'status': order['status'],
             'quantity': order.get('quantity'),
             'total_price': order.get('total_price'),
-            'created_at': order['created_at'],
-            'notes': order.get('notes')
+            'created_at': order.get('created_at'),
+            'notes': order.get('notes'),
+            'items': order.get('items', [])[:5]  # Limit to first 5 items for privacy
         }
-    elif code.startswith('ENQ-'):
+    
+    # Check if it's an enquiry code (ENQ-)
+    if code.startswith('ENQ-'):
         enquiry = await db.custom_requests.find_one({'enquiry_code': code}, {'_id': 0})
-        if not enquiry:
-            raise HTTPException(status_code=404, detail="Enquiry not found")
+        if enquiry:
+            return {
+                'code': enquiry['enquiry_code'],
+                'type': 'custom_request',
+                'status': enquiry['status'],
+                'item_description': enquiry.get('item_description'),
+                'quantity': enquiry.get('quantity'),
+                'created_at': enquiry['created_at'],
+                'notes': enquiry.get('notes')
+            }
+    
+    # Check design enquiries
+    design_enquiry = await db.design_enquiries.find_one({'enquiry_code': code}, {'_id': 0})
+    if design_enquiry:
         return {
-            'code': enquiry['enquiry_code'],
-            'type': 'custom_request',
-            'status': enquiry['status'],
-            'item_description': enquiry.get('item_description'),
-            'quantity': enquiry.get('quantity'),
-            'created_at': enquiry['created_at'],
-            'notes': enquiry.get('notes')
+            'code': design_enquiry['enquiry_code'],
+            'type': 'design_enquiry',
+            'status': design_enquiry.get('status', 'pending'),
+            'service_type': design_enquiry.get('service_type'),
+            'created_at': design_enquiry.get('created_at'),
+            'notes': design_enquiry.get('notes')
         }
-    else:
-        raise HTTPException(status_code=400, detail="Invalid code format")
+    
+    raise HTTPException(status_code=404, detail="Order or enquiry not found")
 
 # ==================== CONTACT MESSAGES ====================
 class ContactMessage(BaseModel):
