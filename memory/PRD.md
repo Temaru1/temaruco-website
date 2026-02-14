@@ -124,6 +124,12 @@ Clone and enhance the Temaruco website with:
   - Customize email subject prefix
   - View scheduler status and reminder statistics
   - API: GET/PUT /api/admin/settings/reminders
+- ✅ **Email Delivery Tracking:**
+  - Tracking pixel embedded in all quote emails
+  - Records email opens with timestamp, user agent, IP
+  - Shows "Opened" badge with open count in Quotes table
+  - Email tracking stats API: GET /api/admin/email-tracking
+  - Tracks open rate percentage
 
 ## Design System (design_guidelines.json)
 - **Fonts:** Syne (headings), Manrope (body)
