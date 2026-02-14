@@ -117,6 +117,11 @@ const SouvenirsPage = () => {
 
   return (
     <div className="min-h-screen py-16 px-4 bg-zinc-50">
+      <SEO 
+        title="Buy Souvenirs & Promotional Items"
+        description="Shop quality souvenirs and promotional items in Nigeria. Branded and unbranded merchandise, corporate gifts, event giveaways. Fast delivery nationwide."
+        keywords="souvenirs Nigeria, promotional items, corporate gifts Lagos, branded merchandise, event giveaways, custom souvenirs"
+      />
       <div className="max-w-7xl mx-auto">
         <h1 className="font-oswald text-5xl font-bold mb-4" data-testid="souvenirs-page-title">
           Buy Souvenirs
