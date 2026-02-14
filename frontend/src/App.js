@@ -222,6 +222,16 @@ function AppRouter() {
           }
         />
 
+        {/* Admin Products (Fabrics & Souvenirs) - auth required */}
+        <Route
+          path="/admin/products"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminProductsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Dashboard - auth required - at /admin/dashboard */}
         <Route
           path="/admin/dashboard/*"
