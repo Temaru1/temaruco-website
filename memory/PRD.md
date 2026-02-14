@@ -110,6 +110,12 @@ Clone and enhance the Temaruco website with:
 - ✅ Created Admin Products page for Fabrics & Souvenirs management (/admin/products)
 - ✅ Removed Chatbot, moved WhatsApp button to bottom-right
 - ✅ Updated WhatsApp number to +2349125423902
+- ✅ **UI/UX Redesign Completed:**
+  - Landing page: Clean hero, professional imagery, clear CTAs, services grid
+  - Admin sidebar: Grouped navigation (Orders, Inventory, Analytics, Settings)
+  - New fonts: Syne for headings, Manrope for body
+  - Cleaner color palette with red (#D90429) accent
+  - Better visual hierarchy and spacing
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
