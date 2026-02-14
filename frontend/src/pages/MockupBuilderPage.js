@@ -326,6 +326,15 @@ const MockupBuilderPage = () => {
               <Button variant="outline" onClick={clearAll} size="sm">
                 <RotateCcw className="w-4 h-4 mr-1" /> Reset
               </Button>
+              {user ? (
+                <Button variant="outline" onClick={() => setShowSaveModal(true)} size="sm" data-testid="save-mockup-btn">
+                  <Save className="w-4 h-4 mr-1" /> Save
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => navigate('/login')} size="sm">
+                  <User className="w-4 h-4 mr-1" /> Sign In to Save
+                </Button>
+              )}
               <Button onClick={downloadMockup} className="bg-[#D90429] hover:bg-[#B90322]" size="sm">
                 <Download className="w-4 h-4 mr-1" /> Download
               </Button>
