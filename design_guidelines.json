@@ -1,0 +1,151 @@
+{
+  "identity": {
+    "name": "Temaruco Clothing Factory",
+    "persona": "E1 - The Anti-AI Designer",
+    "tone": "Professional, Industrial yet Fashion-Forward, Approachable, Efficient",
+    "theme_mode": "light",
+    "brand_color": "#D90429"
+  },
+  "typography": {
+    "font_family_heading": "Syne, sans-serif",
+    "font_family_body": "Manrope, sans-serif",
+    "font_url": "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap",
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-bold tracking-tight leading-none",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+      "h3": "text-2xl md:text-3xl font-medium",
+      "body": "text-base md:text-lg leading-relaxed text-zinc-600",
+      "caption": "text-sm font-medium tracking-widest uppercase text-zinc-400"
+    }
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#D90429",
+      "hover": "#B90322",
+      "foreground": "#FFFFFF"
+    },
+    "background": {
+      "default": "#FFFFFF",
+      "subtle": "#FAFAFA",
+      "dark": "#09090B"
+    },
+    "text": {
+      "primary": "#18181B",
+      "secondary": "#52525B",
+      "muted": "#A1A1AA"
+    },
+    "border": {
+      "default": "#E4E4E7",
+      "subtle": "#F4F4F5"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    }
+  },
+  "layout_strategy": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "spacing": {
+      "section_gap": "py-24 md:py-32",
+      "element_gap": "gap-6 md:gap-12"
+    },
+    "grids": {
+      "bento_marketing": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "product_grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12",
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-4 gap-6"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#D90429] text-white rounded-full px-8 py-4 font-semibold hover:bg-[#B90322] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1",
+      "secondary": "bg-white text-zinc-900 border border-zinc-200 rounded-full px-8 py-4 font-medium hover:bg-zinc-50 transition-all duration-300",
+      "ghost": "text-zinc-600 hover:text-[#D90429] font-medium transition-colors"
+    },
+    "cards": {
+      "feature": "bg-zinc-50 p-8 rounded-2xl border border-zinc-100 hover:border-zinc-200 transition-all duration-300 group",
+      "product": "group relative bg-white rounded-xl overflow-hidden",
+      "dashboard": "bg-white p-6 rounded-xl border border-zinc-100 shadow-sm"
+    },
+    "inputs": {
+      "default": "w-full bg-white border border-zinc-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#D90429]/20 focus:border-[#D90429] transition-all outline-none"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+      "hover": "0 20px 40px -4px rgba(0, 0, 0, 0.1)"
+    },
+    "radius": {
+      "default": "rounded-xl",
+      "button": "rounded-full"
+    },
+    "animations": {
+      "hover_lift": "transition-transform duration-300 hover:-translate-y-1",
+      "fade_in": "animate-in fade-in duration-700 slide-in-from-bottom-4"
+    }
+  },
+  "image_urls": {
+    "hero": {
+      "url": "https://images.unsplash.com/photo-1590670796065-5c2469672e18",
+      "alt": "Elegant African fashion model in green and gold",
+      "category": "Hero Section"
+    },
+    "factory_interior": {
+      "url": "https://images.unsplash.com/photo-1684259499086-93cb3e555803",
+      "alt": "Modern clothing factory interior with workers",
+      "category": "About / Factory Tour"
+    },
+    "design_lab": {
+      "url": "https://images.unsplash.com/photo-1581094288338-2314dddb7ece",
+      "alt": "Fashion designer working on sketches",
+      "category": "Design Lab Service"
+    },
+    "bulk_orders": {
+      "url": "https://images.unsplash.com/photo-1562157873-818bc0726f68",
+      "alt": "Stack of colorful folded t-shirts",
+      "category": "Bulk Orders / POD"
+    },
+    "detail_shot": {
+      "url": "https://images.unsplash.com/photo-1625479142928-c2f2914318f2",
+      "alt": "Close up of sewing machine detail",
+      "category": "Quality Assurance / Details"
+    }
+  },
+  "admin_dashboard_strategy": {
+    "layout": "Sidebar-less 'Command Center' or Collapsible Sidebar",
+    "style": "Clean, high-density data, white background, minimal borders",
+    "navigation": "Move secondary items to a 'Settings' dropdown to declutter sidebar",
+    "widgets": "Use 'Stat Cards' with sparklines for quick insights"
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS: Add 'Syne' and 'Manrope' to index.css via Google Fonts import.",
+    "2. CLEANUP CSS: Refactor 'App.css' to remove custom classes like '.btn-primary' and use Tailwind utility classes defined in 'components' section.",
+    "3. ADMIN OVERHAUL: Redesign the Admin Dashboard. The user specifically complained about the 'cluttered sidebar'. Group items logically (e.g., 'Inventory' contains Products, Fabrics, Souvenirs).",
+    "4. WHATSAPP BUTTON: Ensure the WhatsApp button remains fixed at bottom-right, z-index 50, green (#25D366).",
+    "5. IMAGES: Use the provided Unsplash URLs. Do not use placeholders.",
+    "6. SHADCN: Customize Shadcn components to match the 'rounded-xl' and 'border-zinc-200' aesthetic. Avoid default slate styles.",
+    "7. MOBILE: Ensure all grids collapse to 1 column on mobile. The 'factory-strip' images must be responsive."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
