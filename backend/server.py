@@ -1997,7 +1997,7 @@ async def send_email_notification(to_email: str, subject: str, html_content: str
     
     # Add tracking pixel if tracking_id is provided
     if tracking_id:
-        backend_url = os.environ.get('BACKEND_URL', 'https://fashion-hub-1013.preview.emergentagent.com')
+        backend_url = os.environ.get('BACKEND_URL', 'https://apparel-manager-31.preview.emergentagent.com')
         tracking_pixel = f'<img src="{backend_url}/api/email/track/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
         # Insert tracking pixel before closing body tag
         if '</body>' in html_content:
@@ -2147,7 +2147,7 @@ def get_order_confirmation_email(order_id: str, customer_name: str, total_amount
                     
                     <!-- CTA Button -->
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="https://fashion-hub-1013.preview.emergentagent.com/order-summary/{order_id}" 
+                        <a href="https://apparel-manager-31.preview.emergentagent.com/order-summary/{order_id}" 
                            style="display: inline-block; background: #D90429; color: white; padding: 14px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 14px;">
                             View Order Details →
                         </a>
@@ -2210,7 +2210,7 @@ def get_order_status_email(order_id: str, customer_name: str, new_status: str):
                     <p><strong>Order ID:</strong> {order_id}</p>
                     <p><strong>New Status:</strong> {new_status.replace('_', ' ').title()}</p>
                 </div>
-                <p>Track your order anytime at: <a href="https://fashion-hub-1013.preview.emergentagent.com/order-summary/{order_id}">View Order</a></p>
+                <p>Track your order anytime at: <a href="https://apparel-manager-31.preview.emergentagent.com/order-summary/{order_id}">View Order</a></p>
             </div>
             <div class="footer">
                 <p>Temaruco Limited | Premium Clothing Manufacturing</p>

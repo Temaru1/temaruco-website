@@ -15,7 +15,7 @@ DB_NAME=temaruco_db
 JWT_SECRET=temaruco_jwt_secret_key_change_in_production_2025
 PAYMENT_MOCK=true
 EMAIL_MOCK=true
-FRONTEND_URL=https://fashion-hub-1013.preview.emergentagent.com
+FRONTEND_URL=https://apparel-manager-31.preview.emergentagent.com
 CORS_ORIGINS=*
 ```
 
@@ -24,7 +24,7 @@ CORS_ORIGINS=*
 ### 3. Frontend Configuration
 **File**: `/app/frontend/.env`
 ```
-REACT_APP_BACKEND_URL=https://fashion-hub-1013.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://apparel-manager-31.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 ENABLE_HEALTH_CHECK=false
 ```
@@ -75,9 +75,9 @@ frontend    RUNNING   (React on port 3000)
 mongodb     RUNNING   (MongoDB on default port)
 ```
 
-**Backend URL**: https://fashion-hub-1013.preview.emergentagent.com/api
-**Frontend URL**: https://fashion-hub-1013.preview.emergentagent.com
-**Preview URL**: https://fashion-hub-1013.preview.emergentagent.com
+**Backend URL**: https://apparel-manager-31.preview.emergentagent.com/api
+**Frontend URL**: https://apparel-manager-31.preview.emergentagent.com
+**Preview URL**: https://apparel-manager-31.preview.emergentagent.com
 
 ### 6. Admin Dashboard Features with Image Upload
 
@@ -154,10 +154,10 @@ curl http://localhost:8001/api/bank-details
 ```
 
 **Test Frontend**:
-Open browser to: https://fashion-hub-1013.preview.emergentagent.com
+Open browser to: https://apparel-manager-31.preview.emergentagent.com
 
 **Test Admin Login**:
-1. Navigate to: https://fashion-hub-1013.preview.emergentagent.com/admin/login
+1. Navigate to: https://apparel-manager-31.preview.emergentagent.com/admin/login
 2. Use admin credentials
 3. Navigate to Clothing Management to test image upload
 

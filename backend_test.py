@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class TemarucoAPITester:
-    def __init__(self, base_url="https://fashion-hub-1013.preview.emergentagent.com"):
+    def __init__(self, base_url="https://apparel-manager-31.preview.emergentagent.com"):
         self.base_url = base_url
         self.session_token = None
         self.admin_token = None
