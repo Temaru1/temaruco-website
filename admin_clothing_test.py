@@ -316,13 +316,13 @@ class AdminClothingTester:
         else:
             self.log_result("Public Bulk Endpoint", False, f"Status: {status}")
 
-    def test_error_handling(self):
+    def test_error_handling(self, created_pod_name=None):
         """Test error handling scenarios"""
         print("\n⚠️ Testing Error Handling...")
         
         # Test creating duplicate item
         duplicate_data = {
-            "name": f"Test Polo Shirt {timestamp}",  # Same name as created earlier
+            "name": created_pod_name or "Test Polo Shirt",  # Use the name that was created earlier
             "base_price": 2500,
             "image_url": "https://example.com/image.jpg",
             "description": "Duplicate test",
