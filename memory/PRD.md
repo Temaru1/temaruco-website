@@ -106,6 +106,10 @@ Clone and enhance the Temaruco website with:
   - POD Items: Hoodie, Polo, Sweatshirt, T-Shirt, Tank Top, Varsity Jacket (NO Jersey as requested)
   - Fabrics and Souvenirs also have placeholder images
 - ✅ Added Admin Clothing Items Management route (/admin/clothing-items)
+- ✅ Fixed product upload validation - image is now optional (uses placeholder if not provided)
+- ✅ Created Admin Products page for Fabrics & Souvenirs management (/admin/products)
+- ✅ Removed Chatbot, moved WhatsApp button to bottom-right
+- ✅ Updated WhatsApp number to +2349125423902
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
