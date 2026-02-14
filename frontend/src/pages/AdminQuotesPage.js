@@ -876,7 +876,14 @@ const AdminQuotesPage = () => {
         <h1 className="font-oswald text-4xl font-bold" data-testid="quotes-title">
           Quotes & Invoices
         </h1>
-        {/* Create button removed as per requirements - Search functionality available below */}
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="btn-primary flex items-center gap-2"
+          data-testid="create-quote-btn"
+        >
+          <Plus size={20} />
+          Create Quote/Invoice
+        </button>
       </div>
 
       <div className="mb-6 flex gap-4">
