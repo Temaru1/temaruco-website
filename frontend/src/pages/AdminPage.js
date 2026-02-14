@@ -754,6 +754,7 @@ const AdminPage = () => {
         { label: 'Clients', path: '/admin/dashboard/clients', icon: Users },
         { label: 'Suppliers', path: '/admin/dashboard/suppliers', icon: Users },
         ...(isSuperAdmin || userRole.can_manage_cms ? [{ label: 'Website CMS', path: '/admin/dashboard/cms', icon: Settings }] : []),
+        ...(isSuperAdmin ? [{ label: 'Quote Reminders', path: '/admin/dashboard/reminder-settings', icon: Bell }] : []),
         ...(isSuperAdmin ? [{ label: 'Manage Admins', path: '/admin/dashboard/super-admin', icon: Shield }] : []),
       ]
     },
