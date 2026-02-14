@@ -203,7 +203,7 @@ const BoutiquePage = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-[#D90429]">₦{(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-bold text-[#D90429]">{formatPrice(item.price * item.quantity)}</p>
                         <button onClick={() => removeFromCart(item.id)} className="text-sm text-red-500 hover:underline" data-testid={`remove-from-cart-${item.id}`}>Remove</button>
                       </div>
                     </div>
