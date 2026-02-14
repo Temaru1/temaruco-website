@@ -140,6 +140,7 @@ function AppRouter() {
         <Route path="/souvenirs" element={<SouvenirsPage />} />
         <Route path="/design-lab" element={<DesignLabPage />} />
         <Route path="/mockup-builder" element={<MockupBuilderPage />} />
+        <Route path="/account" element={<AccountPage />} />
         <Route path="/price-calculator" element={<PriceCalculatorPage />} />
         
         {/* Careers - Public */}
