@@ -137,6 +137,9 @@ export const updateManualQuote = (quoteId, updateData) =>
 export const deleteManualQuote = (quoteId) =>
   axios.delete(`${API}/admin/quotes/${quoteId}`, { headers: getAuthHeaders() });
 
+export const sendQuoteEmail = (quoteId) =>
+  axios.post(`${API}/admin/quotes/${quoteId}/send-email`, {}, { headers: getAuthHeaders() });
+
 // Receipts APIs
 export const getReceipts = () =>
   axios.get(`${API}/admin/receipts`, { headers: getAuthHeaders() });
