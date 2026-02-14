@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, 
-  Package, Users, Calendar, RefreshCw, Download 
+  Package, Users, Calendar, RefreshCw, Download, MapPin, Clock, CheckCircle, XCircle, Repeat
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
