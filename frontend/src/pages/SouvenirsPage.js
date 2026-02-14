@@ -197,7 +197,7 @@ const SouvenirsPage = () => {
                         />
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-zinc-500">₦{item.price?.toLocaleString()}</p>
+                          <p className="text-sm text-zinc-500">{formatPrice(item.price)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -227,7 +227,7 @@ const SouvenirsPage = () => {
                   <div className="border-t pt-4 mb-6">
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span>₦{getTotal().toLocaleString()}</span>
+                      <span>{formatPrice(getTotal())}</span>
                     </div>
                   </div>
 
