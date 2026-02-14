@@ -38,6 +38,7 @@ import ReceiptLookupPage from './pages/ReceiptLookupPage';
 import AdminEnquiriesPage from './pages/AdminEnquiriesPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
+import AdminClothingItemsPage from './pages/AdminClothingItemsPage';
 
 // New Pages
 import FabricsPage from './pages/FabricsPage';
