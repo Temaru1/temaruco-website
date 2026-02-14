@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Bell, Plus, LogOut, FileText, Settings, FileQuestion, Shield, DollarSign, Image, Users, TrendingUp, ShoppingCart, BarChart3, X, Menu, Shirt } from 'lucide-react';
+import { LayoutDashboard, Package, Bell, Plus, LogOut, FileText, Settings, FileQuestion, Shield, DollarSign, Image, Users, TrendingUp, ShoppingCart, BarChart3, X, Menu, Shirt, ChevronDown, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { getAdminDashboard, getAllOrders, updateOrderStatus, createProduct } from '../utils/api';
 import api from '../utils/api';
 import { toast } from 'sonner';
