@@ -3275,8 +3275,25 @@ async def send_quote_email(quote_id: str, admin_user: Dict = Depends(get_admin_u
     
     subject = f"Your {quote_type} from Temaruco Clothing Factory - {quote.get('quote_number', '')}"
     
-    # Send the email
-    success = await send_email_notification(quote.get('client_email'), subject, html_content)
+    # Create tracking record
+    tracking_id = f"qt_{quote_id}_{uuid.uuid4().hex[:8]}"
+    await db.email_tracking.insert_one({
+        'tracking_id': tracking_id,
+        'quote_id': quote_id,
+        'quote_number': quote.get('quote_number'),
+        'recipient_email': quote.get('client_email'),
+        'recipient_name': quote.get('client_name'),
+        'email_type': quote_type,
+        'subject': subject,
+        'sent_at': datetime.now(timezone.utc).isoformat(),
+        'sent_by': admin_user['email'],
+        'open_count': 0,
+        'first_opened_at': None,
+        'open_events': []
+    })
+    
+    # Send the email with tracking
+    success = await send_email_notification(quote.get('client_email'), subject, html_content, tracking_id)
     
     if success:
         # Update quote to mark as sent
@@ -3287,7 +3304,8 @@ async def send_quote_email(quote_id: str, admin_user: Dict = Depends(get_admin_u
                     'status': 'pending' if quote.get('status') == 'draft' else quote.get('status'),
                     'email_sent': True,
                     'email_sent_at': datetime.now(timezone.utc).isoformat(),
-                    'email_sent_by': admin_user['email']
+                    'email_sent_by': admin_user['email'],
+                    'last_tracking_id': tracking_id
                 }
             }
         )
