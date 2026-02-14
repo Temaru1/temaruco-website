@@ -451,7 +451,7 @@ const OrderSummaryPage = () => {
         )}
 
         {/* Upload Payment Proof */}
-        {order.status === 'pending_payment' && (
+        {order.status === 'pending_payment' && paymentMethod === 'bank' && (
           <Card className="mb-6" data-testid="payment-proof-upload-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
