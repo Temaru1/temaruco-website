@@ -252,12 +252,14 @@ function AppRouter() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" richColors />
-      <div className="App">
-        <AppRouter />
-      </div>
-    </BrowserRouter>
+    <CurrencyProvider>
+      <BrowserRouter>
+        <Toaster position="top-right" richColors />
+        <div className="App">
+          <AppRouter />
+        </div>
+      </BrowserRouter>
+    </CurrencyProvider>
   );
 }
 
