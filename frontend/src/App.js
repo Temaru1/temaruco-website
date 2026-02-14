@@ -169,6 +169,16 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+        
+        {/* Revenue Analytics - auth required */}
+        <Route
+          path="/admin/revenue-analytics"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminRevenueAnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Enquiries - auth required */}
         <Route
