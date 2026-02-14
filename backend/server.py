@@ -2180,6 +2180,146 @@ async def get_admin_dashboard(request: Request):
         'recent_orders': recent_orders
     }
 
+@api_router.get("/admin/analytics/revenue")
+async def get_revenue_analytics(
+    days: int = 30,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get revenue analytics with daily breakdown"""
+    days = min(days, 365)  # Limit to 1 year
+    
+    end_date = datetime.now(timezone.utc)
+    start_date = end_date - timedelta(days=days)
+    
+    # Get all orders in the period
+    orders = await db.orders.find({
+        'created_at': {'$gte': start_date.isoformat()}
+    }, {'_id': 0}).to_list(10000)
+    
+    # Daily revenue breakdown
+    daily_revenue = {}
+    order_type_revenue = {}
+    status_counts = {}
+    
+    for order in orders:
+        # Parse date
+        created_at = order.get('created_at', '')
+        if created_at:
+            try:
+                if isinstance(created_at, str):
+                    date_str = created_at[:10]
+                else:
+                    date_str = created_at.strftime('%Y-%m-%d')
+            except:
+                continue
+            
+            price = order.get('total_price', 0) or 0
+            order_type = order.get('type', 'unknown')
+            status = order.get('status', 'unknown')
+            
+            # Daily aggregation
+            if date_str not in daily_revenue:
+                daily_revenue[date_str] = {'revenue': 0, 'orders': 0}
+            daily_revenue[date_str]['revenue'] += price
+            daily_revenue[date_str]['orders'] += 1
+            
+            # Order type breakdown
+            if order_type not in order_type_revenue:
+                order_type_revenue[order_type] = {'revenue': 0, 'orders': 0}
+            order_type_revenue[order_type]['revenue'] += price
+            order_type_revenue[order_type]['orders'] += 1
+            
+            # Status counts
+            if status not in status_counts:
+                status_counts[status] = 0
+            status_counts[status] += 1
+    
+    # Fill missing dates
+    daily_data = []
+    current = start_date
+    while current <= end_date:
+        date_str = current.strftime('%Y-%m-%d')
+        if date_str in daily_revenue:
+            daily_data.append({
+                'date': date_str,
+                'revenue': daily_revenue[date_str]['revenue'],
+                'orders': daily_revenue[date_str]['orders']
+            })
+        else:
+            daily_data.append({
+                'date': date_str,
+                'revenue': 0,
+                'orders': 0
+            })
+        current += timedelta(days=1)
+    
+    # Calculate totals
+    total_revenue = sum(d['revenue'] for d in daily_data)
+    total_orders = sum(d['orders'] for d in daily_data)
+    avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
+    
+    # Convert order_type_revenue to list
+    type_breakdown = [
+        {'type': k, 'revenue': v['revenue'], 'orders': v['orders']}
+        for k, v in order_type_revenue.items()
+    ]
+    type_breakdown.sort(key=lambda x: x['revenue'], reverse=True)
+    
+    return {
+        'period_days': days,
+        'total_revenue': total_revenue,
+        'total_orders': total_orders,
+        'avg_order_value': round(avg_order_value, 2),
+        'daily_data': daily_data,
+        'type_breakdown': type_breakdown,
+        'status_breakdown': status_counts
+    }
+
+@api_router.get("/admin/analytics/products")
+async def get_product_analytics(
+    days: int = 30,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get best selling products analytics"""
+    days = min(days, 365)
+    
+    end_date = datetime.now(timezone.utc)
+    start_date = end_date - timedelta(days=days)
+    
+    # Get orders with items
+    orders = await db.orders.find({
+        'created_at': {'$gte': start_date.isoformat()}
+    }, {'_id': 0, 'items': 1, 'type': 1}).to_list(5000)
+    
+    product_sales = {}
+    
+    for order in orders:
+        items = order.get('items', [])
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, dict):
+                    name = item.get('name', item.get('item_name', 'Unknown'))
+                    quantity = item.get('quantity', 1)
+                    price = item.get('price', item.get('unit_price', 0)) or 0
+                    
+                    if name not in product_sales:
+                        product_sales[name] = {'quantity': 0, 'revenue': 0}
+                    product_sales[name]['quantity'] += quantity
+                    product_sales[name]['revenue'] += price * quantity
+    
+    # Convert to list and sort by quantity
+    products = [
+        {'name': k, 'quantity': v['quantity'], 'revenue': v['revenue']}
+        for k, v in product_sales.items()
+    ]
+    products.sort(key=lambda x: x['quantity'], reverse=True)
+    
+    return {
+        'period_days': days,
+        'top_products': products[:20],  # Top 20 products
+        'total_products_sold': sum(p['quantity'] for p in products)
+    }
+
 @api_router.get("/admin/orders")
 async def get_all_orders(
     order_type: Optional[OrderType] = None,
