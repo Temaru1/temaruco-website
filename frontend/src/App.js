@@ -33,6 +33,7 @@ import ApplyJobPage from './pages/ApplyJobPage';
 import AdminInventoryPage from './pages/AdminInventoryPage';
 import AdminMaterialsPage from './pages/AdminMaterialsPage';
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import AdminRevenueAnalyticsPage from './pages/AdminRevenueAnalyticsPage';
 import ReceiptLookupPage from './pages/ReceiptLookupPage';
 import AdminEnquiriesPage from './pages/AdminEnquiriesPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
