@@ -930,10 +930,175 @@ async def verify_email(token: str):
     
     return {'message': 'Email verified successfully'}
 
+# ==================== CUSTOMER ACCOUNT FEATURES ====================
+
 @api_router.get("/auth/me")
 async def get_me(request: Request):
     user = await get_current_user_from_cookie_or_header(request)
     return user
+
+@api_router.put("/account/profile")
+async def update_profile(request: Request, data: Dict[str, Any]):
+    """Update customer profile"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    update_data = {
+        'name': data.get('name', user.get('name')),
+        'phone': data.get('phone', user.get('phone')),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.update_one({'id': user['id']}, {'$set': update_data})
+    
+    return {'message': 'Profile updated successfully'}
+
+@api_router.get("/account/addresses")
+async def get_saved_addresses(request: Request):
+    """Get customer's saved addresses"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    addresses = await db.user_addresses.find({'user_id': user['id']}, {'_id': 0}).to_list(20)
+    return addresses
+
+@api_router.post("/account/addresses")
+async def add_address(request: Request, data: Dict[str, Any]):
+    """Add a new saved address"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    address = {
+        'id': str(uuid.uuid4()),
+        'user_id': user['id'],
+        'label': data.get('label', 'Home'),
+        'full_name': data.get('full_name', user.get('name')),
+        'phone': data.get('phone', user.get('phone')),
+        'address_line1': data.get('address_line1', ''),
+        'address_line2': data.get('address_line2', ''),
+        'city': data.get('city', ''),
+        'state': data.get('state', ''),
+        'country': data.get('country', 'Nigeria'),
+        'postal_code': data.get('postal_code', ''),
+        'is_default': data.get('is_default', False),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    # If this is the default, unset other defaults
+    if address['is_default']:
+        await db.user_addresses.update_many(
+            {'user_id': user['id']},
+            {'$set': {'is_default': False}}
+        )
+    
+    await db.user_addresses.insert_one(address)
+    del address['_id'] if '_id' in address else None
+    
+    return {'message': 'Address saved', 'address': address}
+
+@api_router.delete("/account/addresses/{address_id}")
+async def delete_address(address_id: str, request: Request):
+    """Delete a saved address"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    result = await db.user_addresses.delete_one({'id': address_id, 'user_id': user['id']})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Address not found")
+    
+    return {'message': 'Address deleted'}
+
+@api_router.get("/account/orders")
+async def get_order_history(request: Request):
+    """Get customer's order history"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    # Find orders by customer email
+    orders = await db.orders.find(
+        {'customer_details.email': user['email']},
+        {'_id': 0}
+    ).sort('created_at', -1).limit(50).to_list(50)
+    
+    return orders
+
+@api_router.get("/account/orders/{order_id}")
+async def get_order_detail(order_id: str, request: Request):
+    """Get single order details"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    order = await db.orders.find_one(
+        {'id': order_id, 'customer_details.email': user['email']},
+        {'_id': 0}
+    )
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return order
+
+@api_router.get("/account/mockups")
+async def get_saved_mockups(request: Request):
+    """Get customer's saved mockups"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    mockups = await db.saved_mockups.find(
+        {'user_id': user['id']},
+        {'_id': 0}
+    ).sort('created_at', -1).limit(20).to_list(20)
+    
+    return mockups
+
+@api_router.post("/account/mockups")
+async def save_mockup(request: Request, data: Dict[str, Any]):
+    """Save a mockup design"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    mockup = {
+        'id': str(uuid.uuid4()),
+        'user_id': user['id'],
+        'name': data.get('name', f"Design {datetime.now().strftime('%Y%m%d_%H%M')}"),
+        'template': data.get('template', 'tshirt_front'),
+        'color': data.get('color', '#FFFFFF'),
+        'elements': data.get('elements', []),
+        'thumbnail': data.get('thumbnail', ''),  # Base64 preview image
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.saved_mockups.insert_one(mockup)
+    
+    return {'message': 'Mockup saved', 'mockup_id': mockup['id']}
+
+@api_router.put("/account/mockups/{mockup_id}")
+async def update_mockup(mockup_id: str, request: Request, data: Dict[str, Any]):
+    """Update a saved mockup"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    result = await db.saved_mockups.update_one(
+        {'id': mockup_id, 'user_id': user['id']},
+        {'$set': {
+            'name': data.get('name'),
+            'template': data.get('template'),
+            'color': data.get('color'),
+            'elements': data.get('elements'),
+            'thumbnail': data.get('thumbnail', ''),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Mockup not found")
+    
+    return {'message': 'Mockup updated'}
+
+@api_router.delete("/account/mockups/{mockup_id}")
+async def delete_mockup(mockup_id: str, request: Request):
+    """Delete a saved mockup"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    result = await db.saved_mockups.delete_one({'id': mockup_id, 'user_id': user['id']})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Mockup not found")
+    
+    return {'message': 'Mockup deleted'}
 
 @api_router.post("/auth/google-session")
 async def google_session(request: Request, response: Response):
