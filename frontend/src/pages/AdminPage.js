@@ -818,6 +818,10 @@ const AdminPage = () => {
             <BarChart3 size={20} />
             <span>Website Analytics</span>
           </Link>
+          <Link to="/admin/revenue-analytics" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
+            <TrendingUp size={20} />
+            <span>Revenue Analytics</span>
+          </Link>
           {(isSuperAdmin || userRole.can_view_financials) && (
             <Link to="/admin/dashboard/financials" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
               <TrendingUp size={20} />
