@@ -391,15 +391,9 @@ class AdminClothingTester:
         existing_bulk_items = self.test_get_bulk_items()
         
         # Test creating new items
-        pod_item_id = self.test_create_pod_item(uploaded_image_url)
+        pod_result = self.test_create_pod_item(uploaded_image_url)
+        pod_item_id, created_pod_name = pod_result if pod_result else (None, None)
         bulk_item_id = self.test_create_bulk_item(uploaded_image_url)
-        
-        # Get the created item name for duplicate test
-        created_pod_name = None
-        if pod_item_id:
-            # Extract the name from the created item
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            created_pod_name = f"Test Polo Shirt {timestamp}"
         
         # Test updating items
         self.test_update_pod_item(pod_item_id)
