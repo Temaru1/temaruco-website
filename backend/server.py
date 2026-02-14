@@ -1621,6 +1621,41 @@ async def get_souvenirs():
     souvenirs = await db.souvenirs.find({'is_active': True}, {'_id': 0}).to_list(100)
     return souvenirs
 
+# Admin Souvenirs Management
+@api_router.post("/admin/souvenirs")
+async def create_souvenir(souvenir_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Create a new souvenir product"""
+    souvenir = {
+        'id': str(uuid.uuid4()),
+        'name': souvenir_data.get('name'),
+        'price': souvenir_data.get('price'),
+        'branded_price': souvenir_data.get('branded_price'),
+        'image_url': souvenir_data.get('image_url', ''),
+        'description': souvenir_data.get('description', ''),
+        'is_active': souvenir_data.get('is_active', True),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.souvenirs.insert_one(souvenir)
+    return {'message': 'Souvenir created', 'id': souvenir['id']}
+
+@api_router.put("/admin/souvenirs/{souvenir_id}")
+async def update_souvenir(souvenir_id: str, souvenir_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Update a souvenir product"""
+    update_data = {k: v for k, v in souvenir_data.items() if k not in ['id', '_id', 'created_at']}
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    result = await db.souvenirs.update_one({'id': souvenir_id}, {'$set': update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Souvenir not found")
+    return {'message': 'Souvenir updated'}
+
+@api_router.delete("/admin/souvenirs/{souvenir_id}")
+async def delete_souvenir(souvenir_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Delete a souvenir product"""
+    result = await db.souvenirs.delete_one({'id': souvenir_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Souvenir not found")
+    return {'message': 'Souvenir deleted'}
+
 @api_router.post("/orders/souvenir")
 async def create_souvenir_order(order_data: Dict[str, Any]):
     """Create a souvenir order"""
