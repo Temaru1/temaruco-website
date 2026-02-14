@@ -13,100 +13,75 @@ export const useCurrency = () => {
   return context;
 };
 
+// Exchange rate: 1 USD = ~1,580 NGN (adjust as needed)
+const USD_TO_NGN_RATE = 1580;
+
 export const CurrencyProvider = ({ children }) => {
   const [currency, setCurrency] = useState({
     code: 'NGN',
     symbol: '₦',
-    name: 'Nigerian Naira',
-    rate: 1
+    isNigeria: true
   });
-  const [allRates, setAllRates] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    detectCurrency();
-    loadRates();
+    detectLocation();
   }, []);
 
-  const detectCurrency = async () => {
+  const detectLocation = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/currency/detect`);
-      const data = response.data;
+      const isNigeria = response.data.country_code === 'NG';
+      
       setCurrency({
-        code: data.currency_code,
-        symbol: data.currency_symbol,
-        name: data.currency_name,
-        rate: data.exchange_rate
+        code: isNigeria ? 'NGN' : 'USD',
+        symbol: isNigeria ? '₦' : '$',
+        isNigeria: isNigeria
       });
-      // Store in localStorage for persistence
-      localStorage.setItem('userCurrency', JSON.stringify({
-        code: data.currency_code,
-        symbol: data.currency_symbol,
-        name: data.currency_name,
-        rate: data.exchange_rate
-      }));
     } catch (error) {
-      console.error('Failed to detect currency:', error);
-      // Try to load from localStorage
-      const saved = localStorage.getItem('userCurrency');
-      if (saved) {
-        setCurrency(JSON.parse(saved));
-      }
+      console.error('Failed to detect location:', error);
+      // Default to NGN if detection fails
+      setCurrency({
+        code: 'NGN',
+        symbol: '₦',
+        isNigeria: true
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadRates = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/currency/rates`);
-      setAllRates(response.data.rates);
-    } catch (error) {
-      console.error('Failed to load currency rates:', error);
-    }
-  };
-
-  const changeCurrency = (currencyCode) => {
-    if (allRates[currencyCode]) {
-      const newCurrency = {
-        code: currencyCode,
-        symbol: allRates[currencyCode].symbol,
-        name: allRates[currencyCode].name,
-        rate: allRates[currencyCode].rate
-      };
-      setCurrency(newCurrency);
-      localStorage.setItem('userCurrency', JSON.stringify(newCurrency));
-    }
-  };
-
-  // Convert NGN amount to user's currency
+  // Convert NGN amount to USD (for non-Nigerian visitors)
   const convertPrice = (amountNGN) => {
     if (!amountNGN || isNaN(amountNGN)) return 0;
-    return Math.round(amountNGN * currency.rate * 100) / 100;
+    if (currency.isNigeria) return amountNGN;
+    // Convert NGN to USD
+    return Math.round((amountNGN / USD_TO_NGN_RATE) * 100) / 100;
   };
 
   // Format price with currency symbol
-  const formatPrice = (amountNGN, showOriginal = false) => {
+  const formatPrice = (amountNGN) => {
     const converted = convertPrice(amountNGN);
-    const formatted = converted.toLocaleString(undefined, {
-      minimumFractionDigits: currency.code === 'NGN' ? 0 : 2,
-      maximumFractionDigits: currency.code === 'NGN' ? 0 : 2
-    });
     
-    if (showOriginal && currency.code !== 'NGN') {
-      return `${currency.symbol}${formatted} (₦${amountNGN.toLocaleString()})`;
+    if (currency.isNigeria) {
+      // Nigerian format: ₦2,500
+      return `₦${converted.toLocaleString()}`;
+    } else {
+      // USD format: $1.58
+      return `$${converted.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
     }
-    return `${currency.symbol}${formatted}`;
   };
 
   return (
     <CurrencyContext.Provider value={{
       currency,
-      allRates,
       loading,
-      changeCurrency,
       convertPrice,
-      formatPrice
+      formatPrice,
+      isNigeria: currency.isNigeria
     }}>
       {children}
     </CurrencyContext.Provider>
