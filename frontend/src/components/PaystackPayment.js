@@ -52,7 +52,7 @@ const PaystackPayment = ({
         callback: async function(response) {
           // Verify payment on backend
           try {
-            const verifyResponse = await axios.post(
+            const verifyResponse = await axios.get(
               `${API_URL}/api/payments/verify/${response.reference}`
             );
 
