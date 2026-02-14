@@ -116,10 +116,27 @@ const Navigation = ({ user, onLogout }) => {
               <NotificationsDropdown user={user} />
             )}
 
-            {user && user.is_admin && (
+            {user && (user.is_admin || user.is_super_admin) && (
               <>
                 <Link to="/admin/dashboard" className="nav-link text-sm font-medium" data-testid="nav-admin">
                   Admin
+                </Link>
+                <button 
+                  onClick={handleLogout} 
+                  className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                  data-testid="nav-logout"
+                  title="Logout"
+                >
+                  <LogOut size={20} className="text-zinc-700" />
+                </button>
+              </>
+            )}
+            
+            {/* Account link for logged-in non-admin users */}
+            {user && !user.is_admin && !user.is_super_admin && (
+              <>
+                <Link to="/account" className="nav-link text-sm font-medium flex items-center gap-1" data-testid="nav-account">
+                  <User size={18} /> Account
                 </Link>
                 <button 
                   onClick={handleLogout} 
