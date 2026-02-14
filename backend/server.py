@@ -2524,6 +2524,238 @@ async def verify_payment(reference: str):
         logger.error(f"Payment verification error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== STRIPE PAYMENTS (INTERNATIONAL) ====================
+class StripePaymentRequest(BaseModel):
+    order_id: str
+    order_type: str
+    amount: float  # Amount in NGN - will be converted to USD
+    email: str
+    origin_url: str
+    metadata: Optional[Dict[str, Any]] = None
+
+@api_router.post("/payments/stripe/initialize")
+async def initialize_stripe_payment(payment_request: StripePaymentRequest, request: Request):
+    """Initialize Stripe payment for international customers (USD)"""
+    try:
+        if not STRIPE_API_KEY:
+            raise HTTPException(status_code=500, detail="Stripe not configured")
+        
+        # Convert NGN to USD using current exchange rate
+        # Fetch live rate or use fallback
+        ngn_to_usd_rate = 0.00063  # Fallback rate
+        try:
+            cached_rates = await db.currency_cache.find_one(
+                {'date': datetime.now(timezone.utc).strftime('%Y-%m-%d')},
+                {'_id': 0}
+            )
+            if cached_rates and cached_rates.get('rates', {}).get('USD', {}).get('rate'):
+                ngn_to_usd_rate = cached_rates['rates']['USD']['rate']
+        except:
+            pass
+        
+        # Convert amount to USD (keep as float)
+        amount_usd = round(payment_request.amount * ngn_to_usd_rate, 2)
+        if amount_usd < 0.50:  # Stripe minimum
+            amount_usd = 0.50
+        
+        # Initialize Stripe checkout
+        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Build success/cancel URLs from frontend origin
+        success_url = f"{payment_request.origin_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{payment_request.origin_url}/payment/callback?cancelled=true"
+        
+        # Create checkout session
+        checkout_request = CheckoutSessionRequest(
+            amount=amount_usd,
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "order_id": payment_request.order_id,
+                "order_type": payment_request.order_type,
+                "email": payment_request.email,
+                "original_amount_ngn": str(payment_request.amount),
+                **(payment_request.metadata or {})
+            }
+        )
+        
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Store payment transaction record
+        payment_record = {
+            'id': str(uuid.uuid4()),
+            'session_id': session.session_id,
+            'provider': 'stripe',
+            'email': payment_request.email,
+            'amount_ngn': payment_request.amount,
+            'amount_usd': amount_usd,
+            'currency': 'USD',
+            'order_id': payment_request.order_id,
+            'order_type': payment_request.order_type,
+            'payment_status': 'pending',
+            'checkout_url': session.url,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.payment_transactions.insert_one(payment_record)
+        
+        logger.info(f"Stripe checkout created for order {payment_request.order_id}: ${amount_usd}")
+        
+        return {
+            'status': True,
+            'message': 'Stripe checkout session created',
+            'data': {
+                'checkout_url': session.url,
+                'session_id': session.session_id,
+                'amount_usd': amount_usd,
+                'amount_ngn': payment_request.amount
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"Stripe initialization error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/payments/stripe/status/{session_id}")
+async def get_stripe_payment_status(session_id: str, request: Request):
+    """Check Stripe payment status and update order if paid"""
+    try:
+        if not STRIPE_API_KEY:
+            raise HTTPException(status_code=500, detail="Stripe not configured")
+        
+        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Get payment record
+        payment_record = await db.payment_transactions.find_one(
+            {'session_id': session_id},
+            {'_id': 0}
+        )
+        
+        # Update payment status in database
+        new_status = 'paid' if status.payment_status == 'paid' else status.payment_status
+        
+        await db.payment_transactions.update_one(
+            {'session_id': session_id},
+            {'$set': {
+                'payment_status': new_status,
+                'stripe_status': status.status,
+                'verified_at': datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # If paid, update order status
+        if status.payment_status == 'paid' and payment_record:
+            # Check if already processed
+            existing_order = await db.orders.find_one({'id': payment_record['order_id']}, {'_id': 0})
+            if existing_order and existing_order.get('payment_status') != 'paid':
+                await db.orders.update_one(
+                    {'id': payment_record['order_id']},
+                    {'$set': {
+                        'payment_status': 'paid',
+                        'payment_provider': 'stripe',
+                        'payment_reference': session_id,
+                        'status': OrderStatus.PAYMENT_VERIFIED
+                    }}
+                )
+                
+                # Create notification for admin
+                await create_notification(
+                    'payment_received',
+                    'International Payment Received',
+                    f"Stripe payment of ${status.amount_total / 100:.2f} received for order {payment_record['order_id']}",
+                    payment_record['order_id']
+                )
+                
+                logger.info(f"Order {payment_record['order_id']} payment verified via Stripe")
+        
+        return {
+            'status': True,
+            'payment_status': status.payment_status,
+            'session_status': status.status,
+            'amount': status.amount_total / 100,  # Convert from cents
+            'currency': status.currency.upper()
+        }
+    
+    except Exception as e:
+        logger.error(f"Stripe status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events"""
+    try:
+        if not STRIPE_API_KEY:
+            raise HTTPException(status_code=500, detail="Stripe not configured")
+        
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        if webhook_response.payment_status == 'paid':
+            # Update payment transaction
+            await db.payment_transactions.update_one(
+                {'session_id': webhook_response.session_id},
+                {'$set': {
+                    'payment_status': 'paid',
+                    'webhook_processed': True,
+                    'webhook_event_id': webhook_response.event_id,
+                    'processed_at': datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Get payment record and update order
+            payment_record = await db.payment_transactions.find_one(
+                {'session_id': webhook_response.session_id},
+                {'_id': 0}
+            )
+            
+            if payment_record:
+                order_id = webhook_response.metadata.get('order_id') or payment_record.get('order_id')
+                if order_id:
+                    await db.orders.update_one(
+                        {'id': order_id},
+                        {'$set': {
+                            'payment_status': 'paid',
+                            'payment_provider': 'stripe',
+                            'payment_reference': webhook_response.session_id,
+                            'status': OrderStatus.PAYMENT_VERIFIED
+                        }}
+                    )
+                    
+                    logger.info(f"Order {order_id} payment confirmed via Stripe webhook")
+        
+        return {"status": "success"}
+    
+    except Exception as e:
+        logger.error(f"Stripe webhook error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+# Endpoint to get payment provider based on location
+@api_router.get("/payments/provider")
+async def get_payment_provider(request: Request):
+    """Get recommended payment provider based on user location"""
+    # Check location from headers (set by frontend or Cloudflare)
+    country = request.headers.get('CF-IPCountry', '').upper()
+    accept_lang = request.headers.get('Accept-Language', '')
+    
+    is_nigerian = country == 'NG' or 'ng' in accept_lang.lower()
+    
+    return {
+        'provider': 'paystack' if is_nigerian else 'stripe',
+        'currency': 'NGN' if is_nigerian else 'USD',
+        'country_detected': country or 'unknown',
+        'is_nigerian': is_nigerian
+    }
+
 # ==================== ADMIN ROUTES ====================
 @api_router.get("/admin/dashboard")
 async def get_admin_dashboard(request: Request):
