@@ -117,6 +117,7 @@ const COLORS = [
 
 const MockupBuilderPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const stageRef = useRef(null);
   const fileInputRef = useRef(null);
   const [selectedTemplate, setSelectedTemplate] = useState('tshirt_front');
@@ -126,6 +127,9 @@ const MockupBuilderPage = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [templateImage, setTemplateImage] = useState(null);
   const [scale, setScale] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [designName, setDesignName] = useState('');
   const transformerRef = useRef(null);
 
   const stageWidth = 500;
