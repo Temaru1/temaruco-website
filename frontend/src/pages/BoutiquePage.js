@@ -6,9 +6,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const BoutiquePage = () => {
   const navigate = useNavigate();
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart') || '[]'));
