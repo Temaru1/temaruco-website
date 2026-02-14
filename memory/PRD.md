@@ -94,6 +94,8 @@ Clone and enhance the Temaruco website with:
 - ✅ Extended SEO to all major pages:
   - Landing page, Fabrics, Souvenirs, Bulk Orders, POD
   - All pages now have optimized meta tags for search engines
+- ✅ Fixed Order Tracking to support all order formats (FAB-, POD-, BULK-, SOU-, etc.)
+- ✅ Updated OrderCodeInput component to accept all order ID formats
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
