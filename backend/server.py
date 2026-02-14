@@ -1826,9 +1826,19 @@ async def get_design_enquiry(enquiry_code: str):
         raise HTTPException(status_code=404, detail="Enquiry not found")
 
 # ==================== EMAIL NOTIFICATIONS ====================
-async def send_email_notification(to_email: str, subject: str, html_content: str):
-    """Send email notification (mock mode or real SMTP)"""
+async def send_email_notification(to_email: str, subject: str, html_content: str, tracking_id: str = None):
+    """Send email notification with optional tracking pixel"""
     email_mock = os.environ.get('EMAIL_MOCK', 'true').lower() == 'true'
+    
+    # Add tracking pixel if tracking_id is provided
+    if tracking_id:
+        backend_url = os.environ.get('BACKEND_URL', 'https://fashion-hub-1013.preview.emergentagent.com')
+        tracking_pixel = f'<img src="{backend_url}/api/email/track/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
+        # Insert tracking pixel before closing body tag
+        if '</body>' in html_content:
+            html_content = html_content.replace('</body>', f'{tracking_pixel}</body>')
+        else:
+            html_content += tracking_pixel
     
     if email_mock:
         # Mock mode - just log the email
