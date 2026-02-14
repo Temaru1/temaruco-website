@@ -238,6 +238,7 @@ const SouvenirsPage = () => {
                         value={customerInfo.name}
                         onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                         className="w-full px-4 py-2 border rounded-lg"
+                        disabled={showPayment}
                       />
                       <input
                         type="email"
@@ -245,6 +246,7 @@ const SouvenirsPage = () => {
                         value={customerInfo.email}
                         onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                         className="w-full px-4 py-2 border rounded-lg"
+                        disabled={showPayment}
                       />
                       <input
                         type="tel"
@@ -252,12 +254,28 @@ const SouvenirsPage = () => {
                         value={customerInfo.phone}
                         onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                         className="w-full px-4 py-2 border rounded-lg"
+                        disabled={showPayment}
                       />
                     </div>
 
-                    <button
-                      onClick={handleCheckout}
-                      className="w-full btn-primary"
+                    {!showPayment ? (
+                      <button
+                        onClick={handleCheckout}
+                        className="w-full btn-primary"
+                      >
+                        Place Order
+                      </button>
+                    ) : (
+                      <PaystackPayment
+                        orderId={orderId}
+                        orderType="souvenir"
+                        amount={getTotalPrice()}
+                        email={customerInfo.email}
+                        customerName={customerInfo.name}
+                        onSuccess={handlePaymentSuccess}
+                        onClose={handlePaymentClose}
+                      />
+                    )}
                     >
                       Place Order
                     </button>
