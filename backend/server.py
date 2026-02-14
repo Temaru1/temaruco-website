@@ -4727,6 +4727,10 @@ async def create_pod_clothing_item(item: PODClothingItem, admin_user: Dict = Dep
     
     await db.pod_clothing_items.insert_one(item_doc)
     
+    # Remove MongoDB _id field for JSON serialization
+    if '_id' in item_doc:
+        del item_doc['_id']
+    
     return {
         'message': 'POD clothing item created successfully',
         'id': item_doc['id'],
