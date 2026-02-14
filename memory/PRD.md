@@ -101,6 +101,11 @@ Clone and enhance the Temaruco website with:
   - Double-click opens WhatsApp directly
 - ✅ Fixed Navigation: Added Souvenirs and Design Lab links to main navigation
   - Also fixed Fabric → Fabrics route
+- ✅ Added placeholder images for all products (manageable from admin):
+  - Bulk Order Items: Corporate Shirt, Hoodie, Jersey, Joggers, Polo Shirt, Sweatshirt, T-Shirt, Varsity Jacket
+  - POD Items: Hoodie, Polo, Sweatshirt, T-Shirt, Tank Top, Varsity Jacket (NO Jersey as requested)
+  - Fabrics and Souvenirs also have placeholder images
+- ✅ Added Admin Clothing Items Management route (/admin/clothing-items)
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
