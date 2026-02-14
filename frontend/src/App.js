@@ -47,6 +47,7 @@ import PriceCalculatorPage from './pages/PriceCalculatorPage';
 
 // Components
 import Chatbot from './components/Chatbot';
+import WhatsAppButton from './components/WhatsAppButton';
 
 import './App.css';
 
