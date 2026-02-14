@@ -2,52 +2,26 @@ import React from 'react';
 
 /**
  * OrderCodeInput - Auto-formatting input for Order IDs and Enquiry Codes
- * Formats: TM-MMYY-DDXXXX or ENQ-MMYY-DDXXXX
- * Where DD = day of month, XXXX = 4-digit counter
- * Auto-capitalizes and adds hyphens
+ * Supports formats: TM-, ENQ-, FAB-, POD-, BULK-, SOU-, BOU-, DES-
+ * Auto-capitalizes input
  */
 const OrderCodeInput = ({ value, onChange, placeholder, className, ...props }) => {
+  const PREFIXES = ['ENQ', 'FAB', 'POD', 'BULK', 'SOU', 'BOU', 'DES', 'TM'];
+  
   const formatOrderCode = (input) => {
-    // Remove all non-alphanumeric characters
-    let cleaned = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Convert to uppercase and trim
+    let cleaned = input.toUpperCase().trim();
     
-    // Determine prefix (TM or ENQ)
-    let formatted = '';
-    
-    if (cleaned.startsWith('ENQ')) {
-      // Format: ENQ-MMYY-XXXXXX
-      formatted = 'ENQ';
-      cleaned = cleaned.substring(3);
-      
-      if (cleaned.length > 0) {
-        formatted += '-' + cleaned.substring(0, 4); // MMYY
-      }
-      if (cleaned.length > 4) {
-        formatted += '-' + cleaned.substring(4, 10); // XXXXXX
-      }
-    } else if (cleaned.startsWith('TM')) {
-      // Format: TM-MMYY-XXXXXX
-      formatted = 'TM';
-      cleaned = cleaned.substring(2);
-      
-      if (cleaned.length > 0) {
-        formatted += '-' + cleaned.substring(0, 4); // MMYY
-      }
-      if (cleaned.length > 4) {
-        formatted += '-' + cleaned.substring(4, 10); // XXXXXX
-      }
-    } else {
-      // Start typing - guess format
-      if (cleaned.length <= 2) {
-        formatted = cleaned;
-      } else if (cleaned.length <= 6) {
-        formatted = cleaned.substring(0, 2) + '-' + cleaned.substring(2);
-      } else {
-        formatted = cleaned.substring(0, 2) + '-' + cleaned.substring(2, 6) + '-' + cleaned.substring(6, 12);
+    // Check for known prefixes - if found, don't reformat, just return cleaned
+    for (const prefix of PREFIXES) {
+      if (cleaned.startsWith(prefix + '-') || cleaned.startsWith(prefix)) {
+        // Already has correct format or close to it, return as-is with proper hyphens
+        return cleaned;
       }
     }
     
-    return formatted;
+    // For unknown formats, just return uppercased value
+    return cleaned;
   };
 
   const handleChange = (e) => {
@@ -66,10 +40,10 @@ const OrderCodeInput = ({ value, onChange, placeholder, className, ...props }) =
       type="text"
       value={value}
       onChange={handleChange}
-      placeholder={placeholder || "TM-0226-090001 or ENQ-0226-090001"}
+      placeholder={placeholder || "FAB-260214-XXXXXX, POD-..., TM-..., or ENQ-..."}
       className={className || "w-full px-4 py-2 border border-zinc-300 rounded-lg uppercase"}
       style={{ textTransform: 'uppercase' }}
-      maxLength={16} // TM-0225-000001 = 14 chars, ENQ-0225-000001 = 16 chars
+      maxLength={24}
       {...props}
     />
   );
