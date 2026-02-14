@@ -11,25 +11,94 @@ import { Card, CardContent } from '../components/ui/card';
 const TEMPLATES = {
   tshirt_front: {
     name: 'T-Shirt Front',
+    category: 'apparel',
     printArea: { x: 150, y: 120, width: 200, height: 250 },
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80'
   },
   tshirt_back: {
     name: 'T-Shirt Back',
+    category: 'apparel',
     printArea: { x: 150, y: 100, width: 200, height: 280 },
     image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=500&q=80'
   },
   hoodie_front: {
     name: 'Hoodie Front',
+    category: 'apparel',
     printArea: { x: 140, y: 150, width: 220, height: 200 },
     image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&q=80'
   },
+  hoodie_back: {
+    name: 'Hoodie Back',
+    category: 'apparel',
+    printArea: { x: 140, y: 120, width: 220, height: 250 },
+    image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=80'
+  },
   polo_front: {
-    name: 'Polo Front',
+    name: 'Polo Shirt',
+    category: 'apparel',
     printArea: { x: 160, y: 100, width: 180, height: 180 },
     image: 'https://images.unsplash.com/photo-1625910513413-5fc4e5e20d58?w=500&q=80'
+  },
+  sweatshirt: {
+    name: 'Sweatshirt',
+    category: 'apparel',
+    printArea: { x: 140, y: 140, width: 220, height: 220 },
+    image: 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=500&q=80'
+  },
+  tank_top: {
+    name: 'Tank Top',
+    category: 'apparel',
+    printArea: { x: 160, y: 100, width: 180, height: 220 },
+    image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&q=80'
+  },
+  cap_front: {
+    name: 'Cap Front',
+    category: 'accessories',
+    printArea: { x: 175, y: 180, width: 150, height: 100 },
+    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=500&q=80'
+  },
+  cap_side: {
+    name: 'Cap Side',
+    category: 'accessories',
+    printArea: { x: 200, y: 200, width: 100, height: 80 },
+    image: 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=500&q=80'
+  },
+  tote_bag: {
+    name: 'Tote Bag',
+    category: 'accessories',
+    printArea: { x: 140, y: 150, width: 220, height: 250 },
+    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500&q=80'
+  },
+  backpack: {
+    name: 'Backpack',
+    category: 'accessories',
+    printArea: { x: 160, y: 120, width: 180, height: 200 },
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80'
+  },
+  mug: {
+    name: 'Coffee Mug',
+    category: 'accessories',
+    printArea: { x: 150, y: 180, width: 200, height: 150 },
+    image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=500&q=80'
+  },
+  phone_case: {
+    name: 'Phone Case',
+    category: 'accessories',
+    printArea: { x: 180, y: 150, width: 140, height: 280 },
+    image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=500&q=80'
+  },
+  face_mask: {
+    name: 'Face Mask',
+    category: 'accessories',
+    printArea: { x: 150, y: 220, width: 200, height: 100 },
+    image: 'https://images.unsplash.com/photo-1586942593568-29361efb5379?w=500&q=80'
   }
 };
+
+const TEMPLATE_CATEGORIES = [
+  { id: 'apparel', name: 'Apparel', icon: '👕' },
+  { id: 'accessories', name: 'Accessories', icon: '🎒' }
+];
 
 const COLORS = [
   { name: 'White', value: '#FFFFFF' },
@@ -40,6 +109,8 @@ const COLORS = [
   { name: 'Green', value: '#059669' },
   { name: 'Yellow', value: '#eab308' },
   { name: 'Purple', value: '#7c3aed' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Orange', value: '#f97316' },
 ];
 
 const MockupBuilderPage = () => {
