@@ -49,6 +49,7 @@ import PriceCalculatorPage from './pages/PriceCalculatorPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 
 import './App.css';
 
