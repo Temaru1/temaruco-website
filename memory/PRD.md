@@ -193,11 +193,35 @@ Clone and enhance the Temaruco website with:
 - Updated boutique products with real Unsplash images
 - Professional product photography
 
+## Completed Work (Feb 14, 2026 - Session 4)
+
+### Feature 1: Customer Account Page ✅
+- New `/account` route with full account management UI
+- Profile section with editable name and phone
+- Order history tab showing all past orders with status badges
+- Saved addresses management (add/delete addresses with default setting)
+- Saved designs tab showing mockups saved from Design Tool
+- Tab-based navigation with badge counts
+- Responsive design for mobile and desktop
+- API functions added to `api.js` for all account endpoints
+
+### Feature 2: Save Mockup Functionality ✅
+- Added "Save" button to MockupBuilderPage (visible when logged in)
+- Save modal with design name input
+- Generates thumbnail preview before saving
+- Saves template, color, and element data to database
+- Non-logged users see "Sign In to Save" button
+- Saved mockups viewable in Account page
+
+### Feature 3: Code Cleanup ✅
+- Removed unused `CurrencySelector.js` component
+- Fixed backend syntax error in address save function
+
 ## Future Tasks (Backlog)
-- Drag-and-drop mockup builder
-- Staff management with role permissions
-- Automated email reminders
-- Customer measurements database
+- Backend refactoring (server.py is 6500+ lines - needs to be split into modules)
+- Advanced analytics dashboard expansion
+- Shipping integration
+- Real-time admin notifications (websockets)
 - Procurement/inventory tracking
 - Financial reports generation
-- Advanced Analytics Dashboard expansion
+
