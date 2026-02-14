@@ -96,6 +96,9 @@ Clone and enhance the Temaruco website with:
   - All pages now have optimized meta tags for search engines
 - ✅ Fixed Order Tracking to support all order formats (FAB-, POD-, BULK-, SOU-, etc.)
 - ✅ Updated OrderCodeInput component to accept all order ID formats
+- ✅ Added WhatsApp support button (bottom-left) for instant customer support
+  - Single click shows tooltip with "Start Chat" button
+  - Double-click opens WhatsApp directly
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
