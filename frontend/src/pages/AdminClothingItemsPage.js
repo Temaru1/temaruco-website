@@ -50,8 +50,11 @@ const AdminClothingItemsPage = () => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.base_price || !formData.image_url) {
-      toast.error('Please fill in all required fields');
+    // Use placeholder image if no image provided
+    const imageUrl = formData.image_url || `https://placehold.co/400x500/e2e8f0/64748b?text=${encodeURIComponent(formData.name || 'Product')}`;
+    
+    if (!formData.name || !formData.base_price) {
+      toast.error('Please fill in name and price');
       return;
     }
 
@@ -63,7 +66,7 @@ const AdminClothingItemsPage = () => {
       await axios.post(endpoint, {
         name: formData.name,
         base_price: parseFloat(formData.base_price),
-        image_url: formData.image_url,
+        image_url: imageUrl,
         description: formData.description,
         is_active: formData.is_active
       }, { withCredentials: true });
