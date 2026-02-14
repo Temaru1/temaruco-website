@@ -190,6 +190,11 @@ const LandingPage = () => {
 
   return (
     <div className="App">
+      <SEO 
+        title="Premium Bulk Orders & Custom Clothing"
+        description="Nigeria's leading clothing factory for bulk orders, print-on-demand, corporate uniforms, school uniforms, and custom fashion. Quality craftsmanship meets modern design."
+        keywords="bulk clothing Nigeria, custom uniforms, print on demand, corporate clothing, school uniforms, fabric supplier Lagos"
+      />
       {/* PWA Install Prompt */}
       <PWAInstallButton />
       
