@@ -392,7 +392,7 @@ const AdminClothingItemsPage = () => {
 
                 <div>
                   <label className="block font-semibold mb-2">
-                    Product Image <span className="text-red-500">*</span>
+                    Product Image <span className="text-zinc-400 text-sm">(optional)</span>
                   </label>
                   
                   {/* Image Upload Section */}
