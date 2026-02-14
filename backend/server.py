@@ -6482,6 +6482,117 @@ app.include_router(api_router)
 from fastapi.staticfiles import StaticFiles
 app.mount("/uploads", StaticFiles(directory="/app/backend/uploads"), name="uploads")
 
+# Initialize scheduler for automated tasks
+scheduler = AsyncIOScheduler()
+
+async def send_quote_reminder_emails():
+    """Send automated reminder emails for unpaid quotes at 3, 7, and 14 days"""
+    try:
+        now = datetime.now(timezone.utc)
+        reminder_days = [3, 7, 14]
+        
+        # Get CMS settings for bank details
+        settings = await db.cms_settings.find_one({}, {'_id': 0}) or {}
+        
+        for days in reminder_days:
+            # Find quotes created X days ago that haven't been paid and haven't received this reminder
+            target_date = now - timedelta(days=days)
+            target_date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            target_date_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            reminder_field = f'reminder_{days}d_sent'
+            
+            # Query for quotes created on the target date
+            quotes = await db.manual_quotes.find({
+                'status': {'$in': ['draft', 'pending']},
+                'client_email': {'$exists': True, '$ne': ''},
+                reminder_field: {'$ne': True}
+            }, {'_id': 0}).to_list(100)
+            
+            for quote in quotes:
+                try:
+                    created_at = quote.get('created_at', '')
+                    if isinstance(created_at, str):
+                        quote_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    else:
+                        quote_date = created_at
+                    
+                    days_since_creation = (now - quote_date).days
+                    
+                    if days_since_creation == days:
+                        # Generate reminder email
+                        items_html = ""
+                        for item in quote.get('items', []):
+                            items_html += f"<tr><td style='padding:8px;border-bottom:1px solid #e5e7eb;'>{item.get('description','')}</td><td style='padding:8px;text-align:right;border-bottom:1px solid #e5e7eb;'>₦{item.get('total',0):,.2f}</td></tr>"
+                        
+                        urgency_text = {
+                            3: "This is a friendly reminder",
+                            7: "This is your second reminder", 
+                            14: "This is your final reminder - quote expires soon"
+                        }
+                        
+                        html_content = f"""
+                        <!DOCTYPE html>
+                        <html>
+                        <body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f5;">
+                            <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+                                <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                                    <div style="background:#D90429;padding:25px;text-align:center;">
+                                        <h1 style="color:white;margin:0;font-size:24px;">TEMARUCO</h1>
+                                        <p style="color:rgba(255,255,255,0.9);margin:5px 0 0;font-size:11px;letter-spacing:2px;">CLOTHING FACTORY</p>
+                                    </div>
+                                    <div style="padding:30px;">
+                                        <h2 style="color:#18181b;margin:0 0 15px;">Payment Reminder</h2>
+                                        <p style="color:#52525b;"><strong>Quote:</strong> {quote.get('quote_number','N/A')}</p>
+                                        <p style="color:#52525b;">Dear <strong>{quote.get('client_name','Valued Customer')}</strong>,</p>
+                                        <p style="color:#52525b;">{urgency_text.get(days, 'This is a reminder')} about your pending quote from Temaruco Clothing Factory.</p>
+                                        
+                                        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                                            <thead><tr style="background:#f4f4f5;"><th style="padding:8px;text-align:left;">Item</th><th style="padding:8px;text-align:right;">Amount</th></tr></thead>
+                                            <tbody>{items_html}</tbody>
+                                            <tfoot><tr style="background:#fef2f2;"><td style="padding:12px;font-weight:bold;">TOTAL</td><td style="padding:12px;text-align:right;font-weight:bold;color:#D90429;">₦{quote.get('total',0):,.2f}</td></tr></tfoot>
+                                        </table>
+                                        
+                                        <div style="background:#f8fafc;padding:15px;border-radius:8px;margin:20px 0;">
+                                            <p style="margin:0;color:#52525b;font-size:14px;">
+                                                <strong>Bank:</strong> {settings.get('bank_name','Contact us')}<br>
+                                                <strong>Account:</strong> {settings.get('account_number','Contact us')}<br>
+                                                <strong>Reference:</strong> {quote.get('quote_number','N/A')}
+                                            </p>
+                                        </div>
+                                        
+                                        <p style="color:#71717a;font-size:12px;margin-top:20px;">Quote valid for 30 days from creation. Please reply to this email with proof of payment.</p>
+                                    </div>
+                                    <div style="background:#18181b;padding:20px;text-align:center;">
+                                        <p style="color:#a1a1aa;margin:0;font-size:12px;">Temaruco Clothing Factory | +234 912 542 3902</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """
+                        
+                        subject = f"[Reminder] Your Quote {quote.get('quote_number','')} from Temaruco"
+                        success = await send_email_notification(quote.get('client_email'), subject, html_content)
+                        
+                        if success:
+                            await db.manual_quotes.update_one(
+                                {'id': quote['id']},
+                                {'$set': {
+                                    reminder_field: True,
+                                    f'reminder_{days}d_sent_at': now.isoformat()
+                                }}
+                            )
+                            logger.info(f"Sent {days}-day reminder for quote {quote.get('quote_number')} to {quote.get('client_email')}")
+                            
+                except Exception as e:
+                    logger.error(f"Error sending reminder for quote {quote.get('id')}: {str(e)}")
+                    continue
+                    
+        logger.info("Quote reminder check completed")
+    except Exception as e:
+        logger.error(f"Error in quote reminder scheduler: {str(e)}")
+
 @app.on_event("startup")
 async def startup_db_client():
     """Test MongoDB connection on startup"""
@@ -6489,6 +6600,11 @@ async def startup_db_client():
         # Ping the database to verify connection
         await client.admin.command('ping')
         logger.info(f"Successfully connected to MongoDB: {os.environ.get('DB_NAME', 'unknown')}")
+        
+        # Start the scheduler for automated reminders (runs daily at 9 AM)
+        scheduler.add_job(send_quote_reminder_emails, CronTrigger(hour=9, minute=0), id='quote_reminders', replace_existing=True)
+        scheduler.start()
+        logger.info("Quote reminder scheduler started - runs daily at 9 AM")
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}")
         # Don't fail startup - let Kubernetes restart the pod
