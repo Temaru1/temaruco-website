@@ -182,8 +182,10 @@ class AdminClothingTester:
         """Test creating Bulk clothing item"""
         print("\n➕ Testing Create Bulk Item...")
         
+        # Use timestamp to ensure unique name
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         item_data = {
-            "name": "Test Bulk T-Shirt",
+            "name": f"Test Bulk T-Shirt {timestamp}",
             "base_price": 1800,
             "image_url": image_url or "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80",
             "description": "Test t-shirt for bulk orders",
