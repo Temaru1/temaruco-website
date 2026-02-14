@@ -1024,6 +1024,16 @@ const AdminQuotesPage = () => {
                       >
                         View
                       </button>
+                      <button
+                        onClick={() => handleSendEmail(quote)}
+                        disabled={sendingEmail === quote.id}
+                        className={`flex items-center gap-1 ${sendingEmail === quote.id ? 'text-gray-400' : 'text-blue-600 hover:underline'}`}
+                        title={quote.email_sent ? "Resend Email" : "Send Email"}
+                        data-testid={`send-email-${quote.id}`}
+                      >
+                        <Send size={16} />
+                        {sendingEmail === quote.id ? 'Sending...' : (quote.email_sent ? 'Resend' : 'Email')}
+                      </button>
                       {quote.status !== 'paid' && (
                         <button
                           onClick={() => handleMarkAsPaid(quote.id)}
