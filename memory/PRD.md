@@ -131,6 +131,32 @@ Clone and enhance the Temaruco website with:
   - Email tracking stats API: GET /api/admin/email-tracking
   - Tracks open rate percentage
 
+### Admin Features
+- ✅ **Create Customer Manually:** Already available in Admin → Clients page
+- ✅ **Create Quote/Invoice/Receipt Manually:** Modal with full form in Admin → Quotes page
+  - Type dropdown: Quote, Invoice, Receipt
+  - Manual entry or lookup by Order/Enquiry code
+  - Add line items with description, quantity, price
+  - Tax and discount fields
+  - Auto-calculate totals
+
+### Multi-Currency Support
+- ✅ **Currency Detection:** Auto-detects visitor's country via IP/headers
+- ✅ **Currency Selector:** Dropdown in navigation bar
+- ✅ **12 Currencies Supported:** NGN, USD, EUR, GBP, CAD, AUD, ZAR, GHS, KES, INR, AED, CNY
+- ✅ **Price Display:** Shows converted price with original NGN below
+- ✅ **Persistent Selection:** Saves to localStorage
+- ✅ **APIs:**
+  - GET /api/currency/detect
+  - GET /api/currency/rates
+  - POST /api/currency/convert
+
+### Responsive Design
+- ✅ Mobile-first responsive layouts
+- ✅ Navigation collapses to hamburger menu on mobile
+- ✅ Cards stack vertically on small screens
+- ✅ Proper text sizing hierarchy across breakpoints
+
 ## Design System (design_guidelines.json)
 - **Fonts:** Syne (headings), Manrope (body)
 - **Brand Color:** #D90429 (Red)
