@@ -46,6 +46,7 @@ import FabricsPage from './pages/FabricsPage';
 import SouvenirsPage from './pages/SouvenirsPage';
 import DesignLabPage from './pages/DesignLabPage';
 import PriceCalculatorPage from './pages/PriceCalculatorPage';
+import MockupBuilderPage from './pages/MockupBuilderPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
