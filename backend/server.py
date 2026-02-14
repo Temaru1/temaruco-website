@@ -7250,6 +7250,92 @@ async def health_check():
     
     return health_status
 
+# ==================== WEBSOCKET ENDPOINTS ====================
+@app.websocket("/ws/notifications")
+async def websocket_notifications(websocket: WebSocket):
+    """WebSocket endpoint for real-time admin notifications"""
+    user_id = None
+    try:
+        # Get token from query params
+        token = websocket.query_params.get('token')
+        if not token:
+            await websocket.close(code=4001, reason="Token required")
+            return
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            user_id = payload.get('user_id')
+        except jwt.ExpiredSignatureError:
+            await websocket.close(code=4002, reason="Token expired")
+            return
+        except jwt.InvalidTokenError:
+            await websocket.close(code=4003, reason="Invalid token")
+            return
+        
+        # Get user and check if admin
+        user = await db.users.find_one({'$or': [{'id': user_id}, {'user_id': user_id}]}, {'_id': 0})
+        if not user:
+            await websocket.close(code=4004, reason="User not found")
+            return
+        
+        is_admin = user.get('is_admin') or user.get('is_super_admin')
+        
+        # Connect
+        await ws_manager.connect(websocket, user_id, is_admin)
+        
+        # Send initial notification count
+        if is_admin:
+            unread_count = await db.notifications.count_documents({'read': False})
+            pending_orders = await db.orders.count_documents({'status': 'pending_payment'})
+            payment_submitted = await db.orders.count_documents({'status': 'payment_submitted'})
+            
+            await websocket.send_json({
+                'event': 'connected',
+                'counts': {
+                    'unread_notifications': unread_count,
+                    'pending_orders': pending_orders,
+                    'payment_submitted': payment_submitted
+                }
+            })
+        
+        # Keep connection alive and listen for messages
+        while True:
+            try:
+                data = await websocket.receive_text()
+                message = json.loads(data)
+                
+                # Handle ping/pong for keepalive
+                if message.get('type') == 'ping':
+                    await websocket.send_json({'type': 'pong'})
+                
+                # Handle mark notification as read
+                elif message.get('type') == 'mark_read' and is_admin:
+                    notification_id = message.get('notification_id')
+                    if notification_id:
+                        await db.notifications.update_one(
+                            {'id': notification_id},
+                            {'$set': {'read': True}}
+                        )
+                        await websocket.send_json({
+                            'event': 'notification_read',
+                            'notification_id': notification_id
+                        })
+                        
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logger.error(f"WebSocket error: {e}")
+                break
+    
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {e}")
+    finally:
+        if user_id:
+            ws_manager.disconnect(user_id)
+
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
