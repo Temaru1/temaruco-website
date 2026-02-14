@@ -1525,6 +1525,145 @@ async def upload_product_image(file: UploadFile = File(...), request: Request = 
         'filename': filename
     }
 
+
+# ==================== FABRICS ====================
+@api_router.get("/fabrics")
+async def get_fabrics():
+    """Get all active fabrics"""
+    fabrics = await db.fabrics.find({'is_active': True}, {'_id': 0}).to_list(100)
+    return fabrics
+
+@api_router.post("/orders/fabric")
+async def create_fabric_order(order_data: Dict[str, Any]):
+    """Create a fabric order"""
+    order_id = f"FAB-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+    
+    order = {
+        'id': order_id,
+        'order_id': order_id,
+        'order_type': 'fabric',
+        'customer_name': order_data.get('customer_name'),
+        'customer_email': order_data.get('customer_email'),
+        'customer_phone': order_data.get('customer_phone'),
+        'items': order_data.get('items', []),
+        'total_price': order_data.get('total_price', 0),
+        'status': 'pending_payment',
+        'payment_status': 'pending',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.orders.insert_one(order)
+    
+    return {
+        'message': 'Fabric order created successfully',
+        'order_id': order_id,
+        'order': {k: v for k, v in order.items() if k != '_id'}
+    }
+
+# ==================== SOUVENIRS ====================
+@api_router.get("/souvenirs")
+async def get_souvenirs():
+    """Get all active souvenirs"""
+    souvenirs = await db.souvenirs.find({'is_active': True}, {'_id': 0}).to_list(100)
+    return souvenirs
+
+@api_router.post("/orders/souvenir")
+async def create_souvenir_order(order_data: Dict[str, Any]):
+    """Create a souvenir order"""
+    order_id = f"SOU-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+    
+    order = {
+        'id': order_id,
+        'order_id': order_id,
+        'order_type': 'souvenir',
+        'customer_name': order_data.get('customer_name'),
+        'customer_email': order_data.get('customer_email'),
+        'customer_phone': order_data.get('customer_phone'),
+        'items': order_data.get('items', []),
+        'total_price': order_data.get('total_price', 0),
+        'status': 'pending_payment',
+        'payment_status': 'pending',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.orders.insert_one(order)
+    
+    return {
+        'message': 'Souvenir order created successfully',
+        'order_id': order_id,
+        'order': {k: v for k, v in order.items() if k != '_id'}
+    }
+
+# ==================== DESIGN LAB ====================
+@api_router.post("/design-lab/request")
+async def create_design_request(
+    customer_name: str = Form(...),
+    customer_email: str = Form(...),
+    customer_phone: str = Form(...),
+    service_type: str = Form(...),
+    description: str = Form(...),
+    deadline: Optional[str] = Form(None),
+    budget: Optional[str] = Form(None),
+    reference_files: List[UploadFile] = File(None)
+):
+    """Submit a design lab request"""
+    enquiry_code = f"DES-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+    
+    # Handle file uploads
+    uploaded_files = []
+    if reference_files:
+        UPLOAD_DIR = ROOT_DIR / 'uploads' / 'design_references'
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        
+        for file in reference_files:
+            if file and file.filename:
+                file_ext = file.filename.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{file_ext}"
+                file_path = UPLOAD_DIR / filename
+                
+                with open(file_path, 'wb') as f:
+                    shutil.copyfileobj(file.file, f)
+                
+                uploaded_files.append(f"/uploads/design_references/{filename}")
+    
+    # Create enquiry
+    enquiry = {
+        'id': enquiry_code,
+        'enquiry_code': enquiry_code,
+        'type': 'design_lab',
+        'service_type': service_type,
+        'customer_name': customer_name,
+        'customer_email': customer_email,
+        'customer_phone': customer_phone,
+        'description': description,
+        'deadline': deadline,
+        'budget': budget,
+        'reference_files': uploaded_files,
+        'status': 'pending_review',
+        'quote_amount': None,
+        'quote_notes': None,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.enquiries.insert_one(enquiry)
+    
+    return {
+        'message': 'Design request submitted successfully',
+        'enquiry_code': enquiry_code,
+        'enquiry': {k: v for k, v in enquiry.items() if k != '_id'}
+    }
+
+@api_router.get("/design-lab/enquiry/{enquiry_code}")
+async def get_design_enquiry(enquiry_code: str):
+    """Get design lab enquiry status"""
+    enquiry = await db.enquiries.find_one({'enquiry_code': enquiry_code}, {'_id': 0})
+    if not enquiry:
+        raise HTTPException(status_code=404, detail="Enquiry not found")
+    return enquiry
+
 # ==================== PAYMENTS ====================
 @api_router.post("/payments/initialize")
 async def initialize_payment(payment_request: PaymentInitializeRequest):
