@@ -125,3 +125,4 @@ limits==5.8.0
 slowapi==0.1.9
 wrapt==2.1.1
 python-json-logger==4.0.0
+aiosmtplib==5.1.0
