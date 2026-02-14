@@ -158,8 +158,9 @@ class AdminClothingTester:
         
         # Use timestamp to ensure unique name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        item_name = f"Test Polo Shirt {timestamp}"
         item_data = {
-            "name": f"Test Polo Shirt {timestamp}",
+            "name": item_name,
             "base_price": 2500,
             "image_url": image_url or "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400&q=80",
             "description": "Test polo shirt for automated testing",
@@ -173,10 +174,10 @@ class AdminClothingTester:
             self.created_items.append(('pod', item_id))
             self.log_result("Create POD Item", True)
             print(f"   Created POD item ID: {item_id}")
-            return item_id
+            return item_id, item_name  # Return both ID and name
         else:
             self.log_result("Create POD Item", False, f"Status: {status}, Data: {data}")
-            return None
+            return None, None
 
     def test_create_bulk_item(self, image_url=None):
         """Test creating Bulk clothing item"""
