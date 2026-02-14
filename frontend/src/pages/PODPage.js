@@ -295,6 +295,11 @@ const PODPage = () => {
 
   return (
     <div className="min-h-screen py-16 px-4 bg-zinc-50">
+      <SEO 
+        title="Print on Demand Services"
+        description="Custom print on demand clothing in Nigeria. Upload your design, choose your garment, get it printed. High-quality DTF printing, fast turnaround. No minimum orders."
+        keywords="print on demand Nigeria, custom t-shirt printing Lagos, DTF printing, personalized clothing, custom apparel printing"
+      />
       <div className="max-w-6xl mx-auto">
         <h1 className="font-oswald text-5xl font-bold uppercase mb-4" data-testid="pod-title">
           Print on Demand
