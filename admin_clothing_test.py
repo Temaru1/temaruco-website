@@ -322,7 +322,7 @@ class AdminClothingTester:
         
         # Test creating duplicate item
         duplicate_data = {
-            "name": "Test Polo Shirt",  # Same name as created earlier
+            "name": f"Test Polo Shirt {timestamp}",  # Same name as created earlier
             "base_price": 2500,
             "image_url": "https://example.com/image.jpg",
             "description": "Duplicate test",
