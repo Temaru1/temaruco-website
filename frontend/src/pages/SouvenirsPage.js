@@ -276,9 +276,6 @@ const SouvenirsPage = () => {
                         onClose={handlePaymentClose}
                       />
                     )}
-                    >
-                      Place Order
-                    </button>
                   </>
                 )}
               </div>
