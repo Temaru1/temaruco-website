@@ -11,7 +11,7 @@ The images you upload through the Admin Dashboard **WILL** appear on the Bulk Or
 ### Step 1: Admin Uploads Image
 **Location**: Admin Dashboard → Clothing Management
 
-1. Login to: `https://temaru-payment.preview.emergentagent.com/admin/login`
+1. Login to: `https://fashion-hub-1013.preview.emergentagent.com/admin/login`
 2. Click **"Clothing Management"** in sidebar (Shirt icon)
 3. Switch to **"Bulk Order Items"** tab
 4. Click **"Add New Item"** button
@@ -35,7 +35,7 @@ In the Add/Edit modal:
 3. Click **"Add Item"** or **"Update Item"**
 
 ### Step 3: Customer Sees Image
-**Location**: `https://temaru-payment.preview.emergentagent.com/bulk-orders`
+**Location**: `https://fashion-hub-1013.preview.emergentagent.com/bulk-orders`
 
 When customers visit the Bulk Orders page:
 - They see a grid of clothing items
@@ -258,7 +258,7 @@ Example: abc123-def456-ghi789.jpg
 
 Accessible via URL:
 ```
-https://temaru-payment.preview.emergentagent.com/uploads/abc123-def456-ghi789.jpg
+https://fashion-hub-1013.preview.emergentagent.com/uploads/abc123-def456-ghi789.jpg
 ```
 
 ---
