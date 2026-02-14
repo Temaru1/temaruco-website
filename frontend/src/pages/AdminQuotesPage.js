@@ -1,13 +1,14 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, FileCheck, Receipt, Trash2, Edit, Download, Search, X, Eye } from 'lucide-react';
-import { createManualQuote, getManualQuotes, getReceipts, getCMSSettings, deleteManualQuote, lookupOrderByCode } from '../utils/api';
+import { Plus, FileText, FileCheck, Receipt, Trash2, Edit, Download, Search, X, Eye, Mail, Send } from 'lucide-react';
+import { createManualQuote, getManualQuotes, getReceipts, getCMSSettings, deleteManualQuote, lookupOrderByCode, sendQuoteEmail } from '../utils/api';
 import { toast } from 'sonner';
 import OrderCodeInput from '../components/OrderCodeInput';
 import { LOGO_BLACK } from '../utils/logoConstants';
 
 const AdminQuotesPage = () => {
   const [quotes, setQuotes] = useState([]);
+  const [sendingEmail, setSendingEmail] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
