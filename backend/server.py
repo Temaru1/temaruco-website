@@ -4408,11 +4408,57 @@ async def detect_currency(request: Request):
 
 @api_router.get("/currency/rates")
 async def get_currency_rates():
-    """Get all supported currency rates"""
+    """Get all supported currency rates - fetches live rates daily"""
+    # Check if we have cached rates from today
+    cached = await db.currency_cache.find_one({'date': datetime.now(timezone.utc).strftime('%Y-%m-%d')})
+    
+    if cached:
+        return {
+            'base_currency': 'NGN',
+            'rates': cached.get('rates', CURRENCY_RATES),
+            'updated_at': cached.get('updated_at'),
+            'source': 'cached'
+        }
+    
+    # Try to fetch live rates
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # Using exchangerate-api.com free tier (NGN base)
+            response = await client.get('https://open.er-api.com/v6/latest/NGN')
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('result') == 'success':
+                    live_rates = data.get('rates', {})
+                    # Update our rates with live data
+                    updated_rates = {
+                        'NGN': {'rate': 1, 'symbol': '₦', 'name': 'Nigerian Naira'},
+                        'USD': {'rate': live_rates.get('USD', 0.00063), 'symbol': '$', 'name': 'US Dollar'},
+                    }
+                    # Cache the rates
+                    await db.currency_cache.update_one(
+                        {'date': datetime.now(timezone.utc).strftime('%Y-%m-%d')},
+                        {'$set': {
+                            'rates': updated_rates,
+                            'updated_at': datetime.now(timezone.utc).isoformat(),
+                            'raw_rates': live_rates
+                        }},
+                        upsert=True
+                    )
+                    return {
+                        'base_currency': 'NGN',
+                        'rates': updated_rates,
+                        'updated_at': datetime.now(timezone.utc).isoformat(),
+                        'source': 'live'
+                    }
+    except Exception as e:
+        logger.error(f"Failed to fetch live rates: {str(e)}")
+    
+    # Fallback to hardcoded rates
     return {
         'base_currency': 'NGN',
         'rates': CURRENCY_RATES,
-        'updated_at': datetime.now(timezone.utc).isoformat()
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'source': 'fallback'
     }
 
 @api_router.post("/currency/convert")
