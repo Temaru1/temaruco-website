@@ -331,6 +331,7 @@ class AdminClothingTester:
         }
         
         success, data, status = self.make_request('POST', 'admin/pod/clothing-items', duplicate_data)
+        print(f"   Debug: Duplicate test - Name: {duplicate_data['name']}, Status: {status}, Response: {data}")
         if not success and status == 400:
             self.log_result("Duplicate Item Prevention", True)
             print("   Correctly prevented duplicate item creation")
