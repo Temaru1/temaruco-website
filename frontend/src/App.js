@@ -125,6 +125,7 @@ function AppRouter() {
         <Route path="/boutique/nigerian" element={<BoutiqueNigerianPage />} />
         <Route path="/boutique/modern" element={<BoutiqueModernPage />} />
         <Route path="/payment/callback" element={<PaymentCallbackPage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
         
         {/* Order Summary - Bank Transfer Page - NO AUTH REQUIRED */}
         <Route path="/order-summary/:orderId" element={<OrderSummaryPage />} />
