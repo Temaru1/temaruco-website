@@ -699,6 +699,43 @@ const MockupBuilderPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Save Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowSaveModal(false)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4">Save Your Design</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-zinc-700 mb-2">Design Name</label>
+              <input
+                type="text"
+                value={designName}
+                onChange={(e) => setDesignName(e.target.value)}
+                placeholder="e.g., My Logo T-Shirt"
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                autoFocus
+                data-testid="design-name-input"
+              />
+            </div>
+            <p className="text-sm text-zinc-500 mb-4">
+              Template: {TEMPLATES[selectedTemplate].name} • Color: {COLORS.find(c => c.value === selectedColor)?.name}
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSaveMockup}
+                disabled={saving}
+                className="flex-1 bg-[#D90429] hover:bg-[#B90322]"
+                data-testid="confirm-save-btn"
+              >
+                {saving ? 'Saving...' : 'Save Design'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowSaveModal(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
