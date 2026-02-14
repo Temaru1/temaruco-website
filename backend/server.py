@@ -4373,7 +4373,7 @@ COUNTRY_CURRENCY = {
 
 @api_router.get("/currency/detect")
 async def detect_currency(request: Request):
-    """Detect user's currency based on IP/headers"""
+    """Detect user's currency - Nigeria sees Naira, everyone else sees USD"""
     # Try to get country from Cloudflare header
     country_code = request.headers.get('CF-IPCountry', '').upper()
     
@@ -4386,17 +4386,25 @@ async def detect_currency(request: Request):
             if len(parts) > 1:
                 country_code = parts[1].upper()
     
-    # Get currency for country
-    currency_code = COUNTRY_CURRENCY.get(country_code, 'NGN')
-    currency_info = CURRENCY_RATES.get(currency_code, CURRENCY_RATES['NGN'])
+    # Simple logic: Nigeria = NGN, everyone else = USD
+    is_nigeria = country_code == 'NG'
     
-    return {
-        'country_code': country_code or 'NG',
-        'currency_code': currency_code,
-        'currency_symbol': currency_info['symbol'],
-        'currency_name': currency_info['name'],
-        'exchange_rate': currency_info['rate']
-    }
+    if is_nigeria:
+        return {
+            'country_code': 'NG',
+            'currency_code': 'NGN',
+            'currency_symbol': '₦',
+            'currency_name': 'Nigerian Naira',
+            'exchange_rate': 1
+        }
+    else:
+        return {
+            'country_code': country_code or 'US',
+            'currency_code': 'USD',
+            'currency_symbol': '$',
+            'currency_name': 'US Dollar',
+            'exchange_rate': 0.00063  # 1 NGN = 0.00063 USD (approx)
+        }
 
 @api_router.get("/currency/rates")
 async def get_currency_rates():
