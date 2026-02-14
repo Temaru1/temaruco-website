@@ -297,6 +297,11 @@ const BulkOrdersPage = () => {
 
   return (
     <div className="min-h-screen py-16 px-4 bg-zinc-50">
+      <SEO 
+        title="Bulk Clothing Orders"
+        description="Order bulk clothing in Nigeria. Minimum 50 pieces. Perfect for schools, corporate events, sports teams. Custom uniforms, t-shirts, and branded apparel. Get instant quotes."
+        keywords="bulk clothing orders Nigeria, school uniforms, corporate uniforms Lagos, custom t-shirts bulk, branded apparel wholesale"
+      />
       <div className="max-w-6xl mx-auto">
         <h1 className="font-oswald text-5xl font-bold uppercase mb-4" data-testid="bulk-orders-title">
           Bulk Orders
