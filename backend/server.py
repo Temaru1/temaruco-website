@@ -1844,7 +1844,7 @@ def get_order_confirmation_email(order_id: str, customer_name: str, total_amount
                 </p>
                 
                 <p style="text-align: center; margin-top: 30px;">
-                    <a href="https://temaru-web-clone.preview.emergentagent.com/order-summary/{order_id}" class="button">
+                    <a href="https://temaru-payment.preview.emergentagent.com/order-summary/{order_id}" class="button">
                         View Order Details
                     </a>
                 </p>
@@ -1895,7 +1895,7 @@ def get_order_status_email(order_id: str, customer_name: str, new_status: str):
                     <p><strong>Order ID:</strong> {order_id}</p>
                     <p><strong>New Status:</strong> {new_status.replace('_', ' ').title()}</p>
                 </div>
-                <p>Track your order anytime at: <a href="https://temaru-web-clone.preview.emergentagent.com/order-summary/{order_id}">View Order</a></p>
+                <p>Track your order anytime at: <a href="https://temaru-payment.preview.emergentagent.com/order-summary/{order_id}">View Order</a></p>
             </div>
             <div class="footer">
                 <p>Temaruco Limited | Premium Clothing Manufacturing</p>

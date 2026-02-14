@@ -82,7 +82,7 @@ Password: admin123
 
 1. **Open Admin Login Page**:
    ```
-   https://temaru-web-clone.preview.emergentagent.com/admin/login
+   https://temaru-payment.preview.emergentagent.com/admin/login
    ```
 
 2. **In Email/Username field**, paste:
@@ -235,13 +235,13 @@ EOF
 
 Try these to verify everything is working:
 
-1. **Backend API**: https://temaru-web-clone.preview.emergentagent.com/api/bank-details
+1. **Backend API**: https://temaru-payment.preview.emergentagent.com/api/bank-details
    - Should show bank details
 
-2. **Test Connection**: https://temaru-web-clone.preview.emergentagent.com/test-connection.html
+2. **Test Connection**: https://temaru-payment.preview.emergentagent.com/test-connection.html
    - Should show green checkmarks
 
-3. **Admin Login**: https://temaru-web-clone.preview.emergentagent.com/admin/login
+3. **Admin Login**: https://temaru-payment.preview.emergentagent.com/admin/login
    - Should show login form
 
 ---

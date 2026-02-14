@@ -2,7 +2,7 @@
 
 **Date**: February 14, 2026  
 **Application**: Temaruco Clothing Factory Website  
-**URL**: https://temaru-web-clone.preview.emergentagent.com
+**URL**: https://temaru-payment.preview.emergentagent.com
 
 ---
 
@@ -286,7 +286,7 @@ enquiries: Design requests tracked ✅
 Backend:  RUNNING (port 8001) ✅
 Frontend: RUNNING (port 3000) ✅
 MongoDB:  RUNNING (connected) ✅
-Preview:  https://temaru-web-clone.preview.emergentagent.com ✅
+Preview:  https://temaru-payment.preview.emergentagent.com ✅
 ```
 
 **Health Checks**:
