@@ -21,6 +21,7 @@ const Chatbot = () => {
     { label: 'Boutique', path: '/boutique' },
     { label: 'Buy Souvenirs', path: '/souvenirs' },
     { label: 'Design Lab', path: '/design-lab' },
+    { label: 'Price Calculator', path: '/price-calculator' },
     { label: 'Contact Temaruco', path: '/contact' },
     { label: 'Visit Site', path: '/' }
   ];
