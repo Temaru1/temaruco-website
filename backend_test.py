@@ -315,7 +315,7 @@ class TemarucoAPITester:
         payment_data = {
             "email": "test@payment.com",
             "amount": 7000,
-            "order_type": "fabric",
+            "order_type": "boutique",  # Use valid enum value
             "order_id": "FAB-TEST-001"
         }
         
