@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart, User, LogOut } from 'lucide-react';
 import { LOGO_BLACK } from '../utils/logoConstants';
 import NotificationsDropdown from './NotificationsDropdown';
-import CurrencySelector from './CurrencySelector';
 
 const Navigation = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
