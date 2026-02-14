@@ -3,6 +3,7 @@ import { ShoppingCart, Plus, Minus, Check } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import PaystackPayment from '../components/PaystackPayment';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
@@ -11,6 +12,8 @@ const SouvenirsPage = () => {
   const [souvenirs, setSouvenirs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
+  const [orderId, setOrderId] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
