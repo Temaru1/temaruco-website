@@ -6,8 +6,9 @@ import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { toast } from 'sonner';
-import { CheckCircle2, Upload, Copy, Phone, AlertCircle, Package, Truck, Clock } from 'lucide-react';
+import { CheckCircle2, Upload, Copy, Phone, AlertCircle, Package, Truck, Clock, CreditCard, Building } from 'lucide-react';
 import api from '../utils/api';
+import PaystackPayment from '../components/PaystackPayment';
 
 const OrderSummaryPage = () => {
   const { orderId } = useParams();
