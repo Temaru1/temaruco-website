@@ -97,9 +97,20 @@ Clone and enhance the Temaruco website with:
   - Supports manual entry or order/enquiry code lookup
 
 ## Known Limitations
-- Email notifications in **MOCK** mode (SMTP not configured)
-- Paystack popup may be blocked by Cloudflare in automated testing
 - Boutique products show placeholder text when no images uploaded
+
+## Completed Work (Feb 14, 2026 - Session 2)
+
+### Email System
+- ✅ Configured Gmail SMTP (temarucoltd@gmail.com)
+- ✅ Real email notifications now working (EMAIL_MOCK=false)
+- ✅ Professional Quote Email Template with:
+  - Branded header with Temaruco logo colors
+  - Itemized quote details with pricing table
+  - Payment terms and bank details
+  - Status tracking (draft → pending → paid)
+  - "Send Email" and "Resend" buttons in Admin Quotes page
+- ✅ API endpoint: POST /api/admin/quotes/{quote_id}/send-email
 
 ## Design System (design_guidelines.json)
 - **Fonts:** Syne (headings), Manrope (body)
