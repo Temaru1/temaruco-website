@@ -1682,6 +1682,62 @@ async def create_design_request(
     
     await db.enquiries.insert_one(enquiry)
     
+    # Send acknowledgment email
+    try:
+        email_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
+                .content {{ background: #f9f9f9; padding: 30px; }}
+                .enquiry-box {{ background: white; padding: 20px; border-left: 4px solid #D90429; margin: 20px 0; }}
+                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Design Request Received</h1>
+                </div>
+                <div class="content">
+                    <p>Dear {customer_name},</p>
+                    <p>Thank you for your design request! We've received your submission and our design team will review it shortly.</p>
+                    
+                    <div class="enquiry-box">
+                        <h2>Request Details</h2>
+                        <p><strong>Enquiry Code:</strong> {enquiry_code}</p>
+                        <p><strong>Service Type:</strong> {service_type.replace('_', ' ').title()}</p>
+                        <p><strong>Budget:</strong> {budget or 'To be discussed'}</p>
+                        <p><strong>Deadline:</strong> {deadline or 'Flexible'}</p>
+                    </div>
+                    
+                    <p><strong>What happens next:</strong></p>
+                    <ol>
+                        <li>Our design team will review your request within 24 hours</li>
+                        <li>You'll receive a custom quote via email</li>
+                        <li>Once approved, we'll start working on your design</li>
+                        <li>You'll receive drafts for review and feedback</li>
+                    </ol>
+                </div>
+                <div class="footer">
+                    <p>Temaruco Limited | Design Lab</p>
+                    <p>Keep this enquiry code for tracking: {enquiry_code}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        await send_email_notification(
+            to_email=customer_email,
+            subject=f'Design Request Received - {enquiry_code}',
+            html_content=email_html
+        )
+    except Exception as e:
+        logger.error(f"Failed to send design lab acknowledgment email: {str(e)}")
+    
     return {
         'message': 'Design request submitted successfully',
         'enquiry_code': enquiry_code,
