@@ -822,6 +822,14 @@ const AdminPage = () => {
             <TrendingUp size={20} />
             <span>Revenue Analytics</span>
           </Link>
+          <Link to="/admin/clothing-items" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
+            <Shirt size={20} />
+            <span>Clothing Items</span>
+          </Link>
+          <Link to="/admin/products" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
+            <Package size={20} />
+            <span>Fabrics & Souvenirs</span>
+          </Link>
           {(isSuperAdmin || userRole.can_view_financials) && (
             <Link to="/admin/dashboard/financials" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
               <TrendingUp size={20} />
