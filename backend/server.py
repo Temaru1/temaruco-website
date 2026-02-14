@@ -4347,6 +4347,87 @@ async def get_email_tracking_stats(admin_user: Dict = Depends(get_admin_user)):
         'recent_emails': recent
     }
 
+# Currency exchange rates (NGN base) - Updated periodically
+CURRENCY_RATES = {
+    'NGN': {'rate': 1, 'symbol': '₦', 'name': 'Nigerian Naira'},
+    'USD': {'rate': 0.00063, 'symbol': '$', 'name': 'US Dollar'},
+    'EUR': {'rate': 0.00058, 'symbol': '€', 'name': 'Euro'},
+    'GBP': {'rate': 0.00050, 'symbol': '£', 'name': 'British Pound'},
+    'CAD': {'rate': 0.00086, 'symbol': 'C$', 'name': 'Canadian Dollar'},
+    'AUD': {'rate': 0.00098, 'symbol': 'A$', 'name': 'Australian Dollar'},
+    'ZAR': {'rate': 0.0115, 'symbol': 'R', 'name': 'South African Rand'},
+    'GHS': {'rate': 0.0098, 'symbol': '₵', 'name': 'Ghanaian Cedi'},
+    'KES': {'rate': 0.081, 'symbol': 'KSh', 'name': 'Kenyan Shilling'},
+    'INR': {'rate': 0.053, 'symbol': '₹', 'name': 'Indian Rupee'},
+    'AED': {'rate': 0.0023, 'symbol': 'د.إ', 'name': 'UAE Dirham'},
+    'CNY': {'rate': 0.0046, 'symbol': '¥', 'name': 'Chinese Yuan'},
+}
+
+# Country to currency mapping
+COUNTRY_CURRENCY = {
+    'NG': 'NGN', 'US': 'USD', 'GB': 'GBP', 'DE': 'EUR', 'FR': 'EUR', 
+    'CA': 'CAD', 'AU': 'AUD', 'ZA': 'ZAR', 'GH': 'GHS', 'KE': 'KES',
+    'IN': 'INR', 'AE': 'AED', 'CN': 'CNY', 'IT': 'EUR', 'ES': 'EUR',
+    'NL': 'EUR', 'BE': 'EUR', 'AT': 'EUR', 'IE': 'EUR', 'PT': 'EUR',
+}
+
+@api_router.get("/currency/detect")
+async def detect_currency(request: Request):
+    """Detect user's currency based on IP/headers"""
+    # Try to get country from Cloudflare header
+    country_code = request.headers.get('CF-IPCountry', '').upper()
+    
+    # Fallback to Accept-Language header
+    if not country_code or country_code == 'XX':
+        accept_lang = request.headers.get('Accept-Language', '')
+        if accept_lang:
+            # Parse language tag (e.g., en-US, en-GB)
+            parts = accept_lang.split(',')[0].split('-')
+            if len(parts) > 1:
+                country_code = parts[1].upper()
+    
+    # Get currency for country
+    currency_code = COUNTRY_CURRENCY.get(country_code, 'NGN')
+    currency_info = CURRENCY_RATES.get(currency_code, CURRENCY_RATES['NGN'])
+    
+    return {
+        'country_code': country_code or 'NG',
+        'currency_code': currency_code,
+        'currency_symbol': currency_info['symbol'],
+        'currency_name': currency_info['name'],
+        'exchange_rate': currency_info['rate']
+    }
+
+@api_router.get("/currency/rates")
+async def get_currency_rates():
+    """Get all supported currency rates"""
+    return {
+        'base_currency': 'NGN',
+        'rates': CURRENCY_RATES,
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.post("/currency/convert")
+async def convert_currency(data: Dict[str, Any]):
+    """Convert amount from NGN to target currency"""
+    amount_ngn = data.get('amount', 0)
+    target_currency = data.get('currency', 'NGN').upper()
+    
+    if target_currency not in CURRENCY_RATES:
+        target_currency = 'NGN'
+    
+    rate_info = CURRENCY_RATES[target_currency]
+    converted_amount = amount_ngn * rate_info['rate']
+    
+    return {
+        'original_amount': amount_ngn,
+        'original_currency': 'NGN',
+        'converted_amount': round(converted_amount, 2),
+        'target_currency': target_currency,
+        'symbol': rate_info['symbol'],
+        'rate': rate_info['rate']
+    }
+
 @api_router.get("/public/track/{code}")
 async def track_order_public(code: str):
     """Public endpoint to track order or enquiry by code"""
