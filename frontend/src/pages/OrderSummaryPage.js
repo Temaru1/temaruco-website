@@ -20,6 +20,7 @@ const OrderSummaryPage = () => {
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('paystack'); // 'paystack' or 'bank'
 
   useEffect(() => {
     fetchOrderAndBankDetails();
