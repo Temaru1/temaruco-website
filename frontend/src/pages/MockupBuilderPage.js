@@ -249,6 +249,50 @@ const MockupBuilderPage = () => {
     }
   };
 
+  const handleSaveMockup = async () => {
+    if (!user) {
+      toast.error('Please sign in to save your designs');
+      navigate('/login');
+      return;
+    }
+
+    if (!designName.trim()) {
+      toast.error('Please enter a name for your design');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Generate thumbnail
+      setSelectedId(null);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const thumbnail = stageRef.current?.toDataURL({ pixelRatio: 0.5 });
+
+      // Serialize elements (without actual image data for storage)
+      const serializedElements = elements.map(el => ({
+        ...el,
+        image: el.type === 'image' ? el.image?.src : undefined
+      }));
+
+      await saveMockup({
+        name: designName.trim(),
+        template: selectedTemplate,
+        color: selectedColor,
+        elements: serializedElements,
+        thumbnail
+      });
+
+      toast.success('Design saved to your account!');
+      setShowSaveModal(false);
+      setDesignName('');
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to save design');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleStageClick = (e) => {
     if (e.target === e.target.getStage() || e.target.name() === 'background') {
       setSelectedId(null);
