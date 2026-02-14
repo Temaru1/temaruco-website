@@ -702,11 +702,61 @@ const AdminPage = () => {
   const isSuperAdmin = user.is_super_admin;
   const userRole = user.role || {};
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState('orders');
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
+
+  // Sidebar nav groups
+  const navGroups = [
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: Package,
+      items: [
+        { label: 'Dashboard', path: '/admin/dashboard/', icon: LayoutDashboard },
+        { label: 'All Orders', path: '/admin/dashboard/orders', icon: Package },
+        { label: 'POD Orders', path: '/admin/pod-orders', icon: Shirt },
+        { label: 'Enquiries', path: '/admin/dashboard/custom-requests', icon: FileQuestion },
+        { label: 'Quotes', path: '/admin/dashboard/quotes', icon: FileText },
+      ]
+    },
+    {
+      id: 'inventory',
+      label: 'Inventory',
+      icon: Package,
+      items: [
+        { label: 'Clothing Items', path: '/admin/clothing-items', icon: Shirt },
+        { label: 'Fabrics & Souvenirs', path: '/admin/products', icon: Package },
+        { label: 'Boutique', path: '/admin/inventory', icon: ShoppingBag },
+        { label: 'Materials', path: '/admin/dashboard/materials', icon: Package },
+      ]
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: BarChart3,
+      items: [
+        { label: 'Revenue', path: '/admin/revenue-analytics', icon: TrendingUp },
+        { label: 'Website', path: '/admin/analytics', icon: BarChart3 },
+        ...(isSuperAdmin || userRole.can_view_financials ? [{ label: 'Financials', path: '/admin/dashboard/financials', icon: DollarSign }] : []),
+      ]
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      items: [
+        { label: 'Staff', path: '/admin/staff', icon: Users },
+        { label: 'Clients', path: '/admin/dashboard/clients', icon: Users },
+        { label: 'Suppliers', path: '/admin/dashboard/suppliers', icon: Users },
+        ...(isSuperAdmin || userRole.can_manage_cms ? [{ label: 'Website CMS', path: '/admin/dashboard/cms', icon: Settings }] : []),
+        ...(isSuperAdmin ? [{ label: 'Manage Admins', path: '/admin/dashboard/super-admin', icon: Shield }] : []),
+      ]
+    },
+  ];
 
   return (
     <div className="flex min-h-screen bg-zinc-50">
@@ -722,127 +772,80 @@ const AdminPage = () => {
       <aside
         className={`
           fixed lg:sticky top-0 h-screen
-          w-64 bg-zinc-900 text-white p-6
+          w-64 bg-zinc-900 text-white
           transition-transform duration-300 ease-in-out
           z-50 lg:z-auto overflow-y-auto
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         data-testid="admin-sidebar"
       >
-        {/* Close button for mobile */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 lg:hidden text-white hover:text-zinc-300"
-          aria-label="Close sidebar"
-        >
-          <X size={24} />
-        </button>
-        <h2 className="font-oswald text-2xl font-bold mb-8">
-          {isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
-        </h2>
+        {/* Header */}
+        <div className="p-6 border-b border-zinc-800">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-4 right-4 lg:hidden text-white hover:text-zinc-300"
+            aria-label="Close sidebar"
+          >
+            <X size={24} />
+          </button>
+          <h2 className="text-xl font-bold tracking-wide">
+            {isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">Temaruco Control Panel</p>
+        </div>
         
-        <nav className="space-y-2">
-          <Link to="/admin/dashboard/" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <LayoutDashboard size={20} />
-            <span>Dashboard</span>
-          </Link>
-          <Link to="/admin/dashboard/production" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Package size={20} />
-            <span>Production</span>
-          </Link>
-          <Link to="/admin/dashboard/orders" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Package size={20} />
-            <span>Orders</span>
-          </Link>
-          <Link to="/admin/dashboard/custom-requests" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <FileQuestion size={20} />
-            <span>Enquiries</span>
-          </Link>
-          <Link to="/admin/dashboard/quotes" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <FileText size={20} />
-            <span>Quotes & Invoices</span>
-          </Link>
-          {(isSuperAdmin || userRole.can_manage_products || userRole.can_manage_cms) && (
-            <Link to="/admin/dashboard/pricing" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-              <DollarSign size={20} />
-              <span>Pricing Management</span>
-            </Link>
-          )}
-          {(isSuperAdmin || userRole.can_manage_products || userRole.can_manage_cms) && (
-            <Link to="/admin/dashboard/clothing-items" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-              <Shirt size={20} />
-              <span>Clothing Management</span>
-            </Link>
-          )}
-          {(isSuperAdmin || userRole.can_manage_cms) && (
-            <Link to="/admin/dashboard/cms" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-              <Settings size={20} />
-              <span>Website Settings</span>
-            </Link>
-          )}
-          {(isSuperAdmin || userRole.can_manage_cms) && (
-            <Link to="/admin/dashboard/images" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-              <Image size={20} />
-              <span>Image Management</span>
-            </Link>
-          )}
-          <Link to="/admin/dashboard/clients" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Users size={20} />
-            <span>Client Directory</span>
-          </Link>
-          <Link to="/admin/dashboard/procurement" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <ShoppingCart size={20} />
-            <span>Procurement</span>
-          </Link>
-          <Link to="/admin/dashboard/materials" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Package size={20} />
-            <span>Materials Inventory</span>
-          </Link>
-          <Link to="/admin/dashboard/suppliers" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Users size={20} />
-            <span>Suppliers</span>
-          </Link>
-          <Link to="/admin/staff" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Users size={20} />
-            <span>Staff Management</span>
-          </Link>
-          <Link to="/admin/inventory" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Package size={20} />
-            <span>Boutique Inventory</span>
-          </Link>
-          <Link to="/admin/pod-orders" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Shirt size={20} />
-            <span>POD Orders</span>
-          </Link>
-          <Link to="/admin/analytics" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <BarChart3 size={20} />
-            <span>Website Analytics</span>
-          </Link>
-          <Link to="/admin/revenue-analytics" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <TrendingUp size={20} />
-            <span>Revenue Analytics</span>
-          </Link>
-          <Link to="/admin/clothing-items" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Shirt size={20} />
-            <span>Clothing Items</span>
-          </Link>
-          <Link to="/admin/products" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-            <Package size={20} />
-            <span>Fabrics & Souvenirs</span>
-          </Link>
-          {(isSuperAdmin || userRole.can_view_financials) && (
-            <Link to="/admin/dashboard/financials" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors">
-              <TrendingUp size={20} />
-              <span>Financials</span>
-            </Link>
-          )}
-          {isSuperAdmin && (
-            <Link to="/admin/dashboard/super-admin" className="flex items-center gap-3 py-2 px-4 rounded hover:bg-zinc-800 transition-colors bg-purple-900">
-              <Shield size={20} />
-              <span>Manage Admins</span>
-            </Link>
-          )}
+        {/* Navigation */}
+        <nav className="p-4 space-y-2">
+          {navGroups.map((group) => (
+            <div key={group.id} className="mb-2">
+              <button
+                onClick={() => setExpandedGroup(expandedGroup === group.id ? '' : group.id)}
+                className={`w-full flex items-center justify-between py-3 px-4 rounded-lg text-left transition-colors ${
+                  expandedGroup === group.id ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <group.icon size={18} />
+                  <span className="font-medium">{group.label}</span>
+                </div>
+                <ChevronDown 
+                  size={16} 
+                  className={`transition-transform ${expandedGroup === group.id ? 'rotate-180' : ''}`}
+                />
+              </button>
+              
+              {expandedGroup === group.id && (
+                <div className="mt-1 ml-4 border-l border-zinc-800 pl-4 space-y-1">
+                  {group.items.map((item, idx) => (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      className={`flex items-center gap-3 py-2 px-3 rounded-lg text-sm transition-colors ${
+                        location.pathname === item.path 
+                          ? 'bg-[#D90429] text-white' 
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                      }`}
+                    >
+                      <item.icon size={16} />
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
+
+        {/* Bottom Actions */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-zinc-800 bg-zinc-900">
+          <Link
+            to="/"
+            className="flex items-center gap-3 py-2 px-4 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors text-sm"
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Website</span>
+          </Link>
+        </div>
       </aside>
 
       {/* Main Content */}
