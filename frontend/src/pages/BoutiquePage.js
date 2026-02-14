@@ -262,7 +262,7 @@ const BoutiquePage = () => {
                 <div className="bg-zinc-50 p-4 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Total:</span>
-                    <span className="text-2xl font-bold text-[#D90429]">₦{getTotalPrice().toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-[#D90429]">{formatPrice(getTotalPrice())}</span>
                   </div>
                   <p className="text-sm text-zinc-500">You'll be redirected to payment instructions after submitting.</p>
                 </div>
