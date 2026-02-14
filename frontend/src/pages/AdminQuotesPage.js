@@ -232,6 +232,26 @@ const AdminQuotesPage = () => {
     }
   };
 
+  const handleSendEmail = async (quote) => {
+    if (!quote.client_email) {
+      toast.error('Client email is required to send quote');
+      return;
+    }
+    
+    if (!window.confirm(`Send ${quote.quote_type || 'quote'} to ${quote.client_email}?`)) return;
+    
+    setSendingEmail(quote.id);
+    try {
+      const response = await sendQuoteEmail(quote.id);
+      toast.success(response.data.message || 'Email sent successfully!');
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send email');
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
   const handleViewQuote = (quote) => {
     setSelectedQuote(quote);
     setShowViewModal(true);
