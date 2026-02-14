@@ -224,6 +224,7 @@ function AppRouter() {
 
       <Footer />
       <Chatbot />
+      <WhatsAppButton phoneNumber="+2348000000000" defaultMessage="Hello Temaruco, I need assistance with my order." />
     </>
   );
 }
