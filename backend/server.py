@@ -1662,6 +1662,161 @@ async def get_design_enquiry(enquiry_code: str):
     enquiry = await db.enquiries.find_one({'enquiry_code': enquiry_code}, {'_id': 0})
     if not enquiry:
         raise HTTPException(status_code=404, detail="Enquiry not found")
+
+# ==================== EMAIL NOTIFICATIONS ====================
+async def send_email_notification(to_email: str, subject: str, html_content: str):
+    """Send email notification (mock mode or real SMTP)"""
+    email_mock = os.environ.get('EMAIL_MOCK', 'true').lower() == 'true'
+    
+    if email_mock:
+        # Mock mode - just log the email
+        logger.info(f"[MOCK EMAIL] To: {to_email}, Subject: {subject}")
+        logger.info(f"[MOCK EMAIL] Content: {html_content[:200]}...")
+        return True
+    
+    try:
+        # Real SMTP sending (configure your SMTP settings)
+        import aiosmtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('SMTP_PORT', 587))
+        smtp_user = os.environ.get('SMTP_USER', '')
+        smtp_password = os.environ.get('SMTP_PASSWORD', '')
+        from_email = os.environ.get('FROM_EMAIL', 'noreply@temaruco.com')
+        
+        message = MIMEMultipart('alternative')
+        message['Subject'] = subject
+        message['From'] = from_email
+        message['To'] = to_email
+        
+        html_part = MIMEText(html_content, 'html')
+        message.attach(html_part)
+        
+        await aiosmtplib.send(
+            message,
+            hostname=smtp_host,
+            port=smtp_port,
+            username=smtp_user,
+            password=smtp_password,
+            start_tls=True
+        )
+        
+        logger.info(f"Email sent successfully to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
+def get_order_confirmation_email(order_id: str, customer_name: str, total_amount: float, order_type: str):
+    """Generate order confirmation email HTML"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
+            .content {{ background: #f9f9f9; padding: 30px; }}
+            .order-box {{ background: white; padding: 20px; border-left: 4px solid #D90429; margin: 20px 0; }}
+            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            .button {{ background: #D90429; color: white; padding: 12px 30px; text-decoration: none; display: inline-block; border-radius: 5px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Order Confirmation</h1>
+            </div>
+            <div class="content">
+                <p>Dear {customer_name},</p>
+                <p>Thank you for your order! We've received your {order_type} order and are processing it.</p>
+                
+                <div class="order-box">
+                    <h2>Order Details</h2>
+                    <p><strong>Order ID:</strong> {order_id}</p>
+                    <p><strong>Total Amount:</strong> ₦{total_amount:,.2f}</p>
+                    <p><strong>Status:</strong> Pending Payment</p>
+                </div>
+                
+                <p><strong>Next Steps:</strong></p>
+                <ol>
+                    <li>Transfer ₦{total_amount:,.2f} to our bank account</li>
+                    <li>Use Order ID <strong>{order_id}</strong> as payment reference</li>
+                    <li>Upload payment proof on our website</li>
+                </ol>
+                
+                <p><strong>Bank Details:</strong></p>
+                <p>
+                    Bank: Stanbic IBTC Bank<br>
+                    Account Name: Temaruco Limited<br>
+                    Account Number: 0050431693
+                </p>
+                
+                <p style="text-align: center; margin-top: 30px;">
+                    <a href="https://temaru-web-clone.preview.emergentagent.com/order-summary/{order_id}" class="button">
+                        View Order Details
+                    </a>
+                </p>
+            </div>
+            <div class="footer">
+                <p>Temaruco Limited | Premium Clothing Manufacturing</p>
+                <p>Contact: info@temaruco.com | +234 XXX XXX XXXX</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+def get_order_status_email(order_id: str, customer_name: str, new_status: str):
+    """Generate order status update email HTML"""
+    status_messages = {
+        'payment_confirmed': 'Your payment has been confirmed!',
+        'in_production': 'Your order is now in production!',
+        'ready_for_delivery': 'Your order is ready for delivery!',
+        'completed': 'Your order has been completed!',
+        'delivered': 'Your order has been delivered!'
+    }
+    
+    message = status_messages.get(new_status, f'Your order status has been updated to: {new_status}')
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
+            .content {{ background: #f9f9f9; padding: 30px; }}
+            .status-box {{ background: white; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0; text-align: center; }}
+            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Order Status Update</h1>
+            </div>
+            <div class="content">
+                <p>Dear {customer_name},</p>
+                <div class="status-box">
+                    <h2>{message}</h2>
+                    <p><strong>Order ID:</strong> {order_id}</p>
+                    <p><strong>New Status:</strong> {new_status.replace('_', ' ').title()}</p>
+                </div>
+                <p>Track your order anytime at: <a href="https://temaru-web-clone.preview.emergentagent.com/order-summary/{order_id}">View Order</a></p>
+            </div>
+            <div class="footer">
+                <p>Temaruco Limited | Premium Clothing Manufacturing</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
     return enquiry
 
 # ==================== PAYMENTS ====================
