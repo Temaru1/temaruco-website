@@ -90,8 +90,8 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/souvenirs" className="nav-link text-sm font-medium" data-testid="nav-souvenirs">
               Souvenirs
             </Link>
-            <Link to="/design-lab" className="nav-link text-sm font-medium" data-testid="nav-design-lab">
-              Design Lab
+            <Link to="/mockup-builder" className="nav-link text-sm font-medium" data-testid="nav-mockup-builder">
+              Design Tool
             </Link>
             <Link to="/contact" className="nav-link text-sm font-medium" data-testid="nav-contact">
               Contact
