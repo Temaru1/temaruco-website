@@ -112,11 +112,18 @@ Clone and enhance the Temaruco website with:
   - "Send Email" and "Resend" buttons in Admin Quotes page
 - ✅ API endpoint: POST /api/admin/quotes/{quote_id}/send-email
 - ✅ **Automated Quote Reminders:**
-  - Scheduler runs daily at 9 AM
-  - Sends reminders at 3, 7, and 14 days for unpaid quotes
+  - Scheduler runs daily at configurable time
+  - Sends reminders at customizable intervals (default: 3, 7, 14 days)
   - Tracks reminder history per quote
   - API: GET /api/admin/quotes/reminder-status
   - API: POST /api/admin/quotes/trigger-reminders (super admin only)
+- ✅ **Reminder Settings Page** (Super Admin only):
+  - Enable/disable reminders toggle
+  - Add/remove reminder day intervals (1-90 days)
+  - Configure daily send time (hour:minute)
+  - Customize email subject prefix
+  - View scheduler status and reminder statistics
+  - API: GET/PUT /api/admin/settings/reminders
 
 ## Design System (design_guidelines.json)
 - **Fonts:** Syne (headings), Manrope (body)
