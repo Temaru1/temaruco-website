@@ -90,6 +90,7 @@ Clone and enhance the Temaruco website with:
   - Real-time refresh capability
   - CSV Export for Revenue and Products data
   - Added to admin sidebar for easy access
+- ✅ Fixed Chatbot visibility issue (moved above PWA install prompt, increased z-index)
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
