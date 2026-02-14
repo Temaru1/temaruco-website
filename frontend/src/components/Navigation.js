@@ -164,8 +164,8 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/souvenirs" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Souvenirs
             </Link>
-            <Link to="/design-lab" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
-              Design Lab
+            <Link to="/mockup-builder" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
+              Design Tool
             </Link>
             <Link to="/contact" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Contact
