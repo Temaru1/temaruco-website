@@ -99,6 +99,8 @@ Clone and enhance the Temaruco website with:
 - ✅ Added WhatsApp support button (bottom-left) for instant customer support
   - Single click shows tooltip with "Start Chat" button
   - Double-click opens WhatsApp directly
+- ✅ Fixed Navigation: Added Souvenirs and Design Lab links to main navigation
+  - Also fixed Fabric → Fabrics route
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
