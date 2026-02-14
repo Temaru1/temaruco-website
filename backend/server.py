@@ -133,7 +133,69 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 api_router = APIRouter(prefix="/api")
 
+# ==================== WEBSOCKET CONNECTION MANAGER ====================
+class ConnectionManager:
+    """Manages WebSocket connections for real-time notifications"""
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}  # user_id -> websocket
+        self.admin_connections: Set[WebSocket] = set()  # All admin connections
+    
+    async def connect(self, websocket: WebSocket, user_id: str, is_admin: bool = False):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+        if is_admin:
+            self.admin_connections.add(websocket)
+        logger.info(f"WebSocket connected: {user_id}, is_admin: {is_admin}")
+    
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            ws = self.active_connections.pop(user_id)
+            self.admin_connections.discard(ws)
+            logger.info(f"WebSocket disconnected: {user_id}")
+    
+    async def send_personal_message(self, message: dict, user_id: str):
+        if user_id in self.active_connections:
+            try:
+                await self.active_connections[user_id].send_json(message)
+            except Exception as e:
+                logger.error(f"Failed to send message to {user_id}: {e}")
+    
+    async def broadcast_to_admins(self, message: dict):
+        """Send message to all connected admin users"""
+        disconnected = []
+        for connection in self.admin_connections:
+            try:
+                await connection.send_json(message)
+            except Exception as e:
+                logger.error(f"Failed to broadcast to admin: {e}")
+                disconnected.append(connection)
+        # Clean up disconnected sockets
+        for conn in disconnected:
+            self.admin_connections.discard(conn)
 
+ws_manager = ConnectionManager()
+
+# Helper function to broadcast notification to admins
+async def broadcast_admin_notification(notification_type: str, title: str, message: str, data: dict = None):
+    """Create notification in DB and broadcast to connected admins"""
+    notification = {
+        'id': str(uuid.uuid4()),
+        'type': notification_type,
+        'title': title,
+        'message': message,
+        'data': data or {},
+        'read': False,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    # Broadcast to connected admins
+    await ws_manager.broadcast_to_admins({
+        'event': 'notification',
+        'notification': {k: v for k, v in notification.items() if k != '_id'}
+    })
+    
+    return notification
 
 # Helper function to create notifications
 async def create_notification(notification_type: str, title: str, message: str, order_id: str = None):
@@ -149,6 +211,12 @@ async def create_notification(notification_type: str, title: str, message: str, 
             'created_at': datetime.now(timezone.utc).isoformat()
         }
         await db.notifications.insert_one(notification)
+        
+        # Also broadcast via WebSocket
+        await ws_manager.broadcast_to_admins({
+            'event': 'notification',
+            'notification': {k: v for k, v in notification.items() if k != '_id'}
+        })
     except Exception as e:
         print(f"Failed to create notification: {e}")
 
