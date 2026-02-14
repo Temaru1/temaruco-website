@@ -194,7 +194,7 @@ const FabricsPage = () => {
                         />
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-zinc-500">₦{item.price?.toLocaleString()}/yard</p>
+                          <p className="text-sm text-zinc-500">{formatPrice(item.price)}/yard</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -224,8 +224,11 @@ const FabricsPage = () => {
                   <div className="border-t pt-4 mb-6">
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span>₦{getTotal().toLocaleString()}</span>
+                      <span>{formatPrice(getTotal())}</span>
                     </div>
+                    {currency.code !== 'NGN' && (
+                      <p className="text-sm text-zinc-500 text-right">₦{getTotal().toLocaleString()} NGN</p>
+                    )}
                   </div>
 
                   {!orderId ? (
