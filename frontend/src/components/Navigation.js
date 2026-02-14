@@ -112,6 +112,9 @@ const Navigation = ({ user, onLogout }) => {
               )}
             </button>
 
+            {/* Currency Selector */}
+            <CurrencySelector className="text-zinc-700" />
+
             {/* Notifications Dropdown (Admin Only) */}
             {user && (user.is_admin || user.is_super_admin) && (
               <NotificationsDropdown user={user} />
