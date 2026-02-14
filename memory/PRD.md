@@ -217,11 +217,28 @@ Clone and enhance the Temaruco website with:
 - Removed unused `CurrencySelector.js` component
 - Fixed backend syntax error in address save function
 
+### Feature 4: Real-time Admin Notifications (WebSocket) ✅
+- Implemented WebSocket connection manager in backend
+- `/ws/notifications` endpoint for real-time updates
+- Auto-reconnection logic on frontend
+- Ping/pong keepalive mechanism
+- Live notification indicator on bell icon
+- Toast notifications for new alerts
+- Mark as read via WebSocket
+
+### Feature 5: Advanced Analytics Dashboard ✅
+- New `/api/admin/analytics/advanced` endpoint
+- Customer insights: new customers, repeat customers, retention rate
+- Conversion metrics: completion rate, cancellation rate, avg fulfillment time
+- Quote conversion tracking
+- Orders by hour chart
+- Orders by day of week chart  
+- Top customer locations map
+- Added all visualizations to AdminRevenueAnalyticsPage
+
 ## Future Tasks (Backlog)
-- Backend refactoring (server.py is 6500+ lines - needs to be split into modules)
-- Advanced analytics dashboard expansion
+- Backend refactoring (server.py is 7500+ lines - needs to be split into modules)
 - Shipping integration
-- Real-time admin notifications (websockets)
 - Procurement/inventory tracking
 - Financial reports generation
 
