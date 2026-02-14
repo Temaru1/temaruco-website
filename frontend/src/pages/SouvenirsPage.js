@@ -143,11 +143,11 @@ const SouvenirsPage = () => {
                 <h3 className="font-semibold text-zinc-900">{souvenir.name}</h3>
                 <div className="mt-1">
                   <p className="text-[#D90429] font-bold text-lg">
-                    ₦{souvenir.price?.toLocaleString()}
+                    {formatPrice(souvenir.price)}
                   </p>
                   {souvenir.branded_price && (
                     <p className="text-zinc-500 text-sm">
-                      Branded: ₦{souvenir.branded_price?.toLocaleString()}
+                      Branded: {formatPrice(souvenir.branded_price)}
                     </p>
                   )}
                 </div>
