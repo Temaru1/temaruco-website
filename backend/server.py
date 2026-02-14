@@ -989,7 +989,8 @@ async def add_address(request: Request, data: Dict[str, Any]):
         )
     
     await db.user_addresses.insert_one(address)
-    del address['_id'] if '_id' in address else None
+    if '_id' in address:
+        del address['_id']
     
     return {'message': 'Address saved', 'address': address}
 
