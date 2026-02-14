@@ -3056,6 +3056,156 @@ async def delete_manual_quote(quote_id: str, admin_user: Dict = Depends(get_admi
     
     return {'message': 'Quote deleted successfully'}
 
+@api_router.post("/admin/quotes/{quote_id}/send-email")
+async def send_quote_email(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Send quote/invoice email to customer"""
+    quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    if not quote.get('client_email'):
+        raise HTTPException(status_code=400, detail="Client email is required")
+    
+    # Get CMS settings for bank details
+    settings = await db.cms_settings.find_one({}, {'_id': 0}) or {}
+    
+    # Generate professional quote email HTML
+    items_html = ""
+    for item in quote.get('items', []):
+        items_html += f"""
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">{item.get('description', '')}</td>
+            <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{item.get('quantity', 0)}</td>
+            <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">₦{item.get('unit_price', 0):,.2f}</td>
+            <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">₦{item.get('total', 0):,.2f}</td>
+        </tr>
+        """
+    
+    quote_type = quote.get('quote_type', 'quote').upper()
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>{quote_type} from Temaruco Clothing Factory</title>
+    </head>
+    <body style="font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <div style="background: #D90429; padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">TEMARUCO</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 12px; letter-spacing: 2px;">CLOTHING FACTORY</p>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 30px;">
+                    <h2 style="color: #18181b; margin: 0 0 20px 0; font-size: 24px;">{quote_type}</h2>
+                    <p style="color: #52525b; margin: 0 0 5px 0;"><strong>Reference:</strong> {quote.get('quote_number', 'N/A')}</p>
+                    <p style="color: #52525b; margin: 0 0 20px 0;"><strong>Date:</strong> {quote.get('created_at', '')[:10]}</p>
+                    
+                    <p style="color: #52525b; font-size: 16px; line-height: 1.6;">
+                        Dear <strong>{quote.get('client_name', 'Valued Customer')}</strong>,
+                    </p>
+                    <p style="color: #52525b; font-size: 16px; line-height: 1.6;">
+                        Thank you for your interest in Temaruco Clothing Factory. Please find your {quote_type.lower()} details below:
+                    </p>
+                    
+                    <!-- Items Table -->
+                    <table style="width: 100%; border-collapse: collapse; margin: 25px 0;">
+                        <thead>
+                            <tr style="background: #f4f4f5;">
+                                <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #52525b;">Description</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; text-transform: uppercase; color: #52525b;">Qty</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #52525b;">Unit Price</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #52525b;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+                    
+                    <!-- Totals -->
+                    <div style="background: #f4f4f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #52525b;">Subtotal:</span>
+                            <span style="color: #18181b; font-weight: 600;">₦{quote.get('subtotal', 0):,.2f}</span>
+                        </div>
+                        {"<div style='display: flex; justify-content: space-between; margin-bottom: 8px;'><span style='color: #52525b;'>Tax:</span><span style='color: #18181b;'>₦" + f"{quote.get('tax', 0):,.2f}</span></div>" if quote.get('tax', 0) > 0 else ""}
+                        {"<div style='display: flex; justify-content: space-between; margin-bottom: 8px;'><span style='color: #22c55e;'>Discount:</span><span style='color: #22c55e;'>-₦" + f"{quote.get('discount', 0):,.2f}</span></div>" if quote.get('discount', 0) > 0 else ""}
+                        <div style="border-top: 2px solid #D90429; padding-top: 12px; margin-top: 12px; display: flex; justify-content: space-between;">
+                            <span style="color: #18181b; font-size: 18px; font-weight: bold;">TOTAL:</span>
+                            <span style="color: #D90429; font-size: 24px; font-weight: bold;">₦{quote.get('total', 0):,.2f}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Terms -->
+                    <div style="background: #fef2f2; border-left: 4px solid #D90429; padding: 15px; margin: 20px 0;">
+                        <h3 style="color: #18181b; margin: 0 0 10px 0; font-size: 14px;">Payment Terms:</h3>
+                        <ul style="color: #52525b; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
+                            <li>100% payment required to commence production</li>
+                            <li>Production time: 14-21 working days from payment confirmation</li>
+                            <li>This {quote_type.lower()} is valid for 30 days</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Bank Details -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #18181b; margin: 0 0 15px 0; font-size: 14px;">Bank / Payment Details:</h3>
+                        <p style="color: #52525b; margin: 0; line-height: 1.8; font-size: 14px;">
+                            <strong>Account Name:</strong> Temaruco Clothing Factory<br>
+                            <strong>Bank:</strong> {settings.get('bank_name', 'Contact us for bank details')}<br>
+                            <strong>Account Number:</strong> {settings.get('account_number', 'Contact us')}<br>
+                            <strong>Contact Email:</strong> {settings.get('email', 'temarucoltd@gmail.com')}<br>
+                            <strong>Contact Phone:</strong> {settings.get('phone', '+234 912 542 3902')}
+                        </p>
+                        <p style="color: #71717a; font-size: 12px; margin: 15px 0 0 0; font-style: italic;">
+                            Please use your Quote ID ({quote.get('quote_number', 'N/A')}) as payment reference and send proof of payment to our email.
+                        </p>
+                    </div>
+                    
+                    {f"<div style='background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;'><h3 style='color: #18181b; margin: 0 0 10px 0; font-size: 14px;'>Notes:</h3><p style='color: #52525b; margin: 0; white-space: pre-wrap;'>{quote.get('notes', '')}</p></div>" if quote.get('notes') else ""}
+                </div>
+                
+                <!-- Footer -->
+                <div style="background: #18181b; padding: 25px; text-align: center;">
+                    <p style="color: white; margin: 0 0 5px 0; font-size: 14px;">Thank you for choosing Temaruco!</p>
+                    <p style="color: #a1a1aa; margin: 0; font-size: 12px;">
+                        Inspire • Empower • Accomplish
+                    </p>
+                    <p style="color: #71717a; margin: 15px 0 0 0; font-size: 11px;">
+                        Temaruco Clothing Factory | Lagos, Nigeria | +234 912 542 3902
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"Your {quote_type} from Temaruco Clothing Factory - {quote.get('quote_number', '')}"
+    
+    # Send the email
+    success = await send_email_notification(quote.get('client_email'), subject, html_content)
+    
+    if success:
+        # Update quote to mark as sent
+        await db.manual_quotes.update_one(
+            {'id': quote_id},
+            {
+                '$set': {
+                    'status': 'pending' if quote.get('status') == 'draft' else quote.get('status'),
+                    'email_sent': True,
+                    'email_sent_at': datetime.now(timezone.utc).isoformat(),
+                    'email_sent_by': admin_user['email']
+                }
+            }
+        )
+        return {'message': f'{quote_type} sent successfully to {quote.get("client_email")}', 'success': True}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send email. Please check SMTP configuration.")
+
 @api_router.post("/admin/quotes/{quote_id}/mark-paid")
 async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
     """Mark a quote as paid and create an order from it"""
