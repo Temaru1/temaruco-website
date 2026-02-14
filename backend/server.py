@@ -3040,6 +3040,69 @@ async def get_quote_reminder_status(admin_user: Dict = Depends(get_admin_user)):
         'scheduler_running': scheduler.running if scheduler else False
     }
 
+@api_router.get("/admin/settings/reminders")
+async def get_reminder_settings(admin_user: Dict = Depends(get_admin_user)):
+    """Get quote reminder settings"""
+    settings = await db.reminder_settings.find_one({}, {'_id': 0})
+    if not settings:
+        # Return defaults
+        settings = {
+            'enabled': True,
+            'reminder_days': [3, 7, 14],
+            'send_time_hour': 9,
+            'send_time_minute': 0,
+            'email_subject_prefix': '[Reminder]',
+            'max_reminders': 3
+        }
+    return settings
+
+@api_router.put("/admin/settings/reminders")
+async def update_reminder_settings(
+    settings: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Update quote reminder settings (super admin only)"""
+    if not admin_user.get('is_super_admin'):
+        raise HTTPException(status_code=403, detail="Super admin access required")
+    
+    # Validate settings
+    reminder_days = settings.get('reminder_days', [3, 7, 14])
+    if not isinstance(reminder_days, list) or len(reminder_days) == 0:
+        raise HTTPException(status_code=400, detail="reminder_days must be a non-empty list")
+    
+    for day in reminder_days:
+        if not isinstance(day, int) or day < 1 or day > 90:
+            raise HTTPException(status_code=400, detail="Each reminder day must be between 1 and 90")
+    
+    send_hour = settings.get('send_time_hour', 9)
+    if not isinstance(send_hour, int) or send_hour < 0 or send_hour > 23:
+        raise HTTPException(status_code=400, detail="send_time_hour must be between 0 and 23")
+    
+    # Sort reminder days
+    reminder_days = sorted(list(set(reminder_days)))
+    
+    update_data = {
+        'enabled': settings.get('enabled', True),
+        'reminder_days': reminder_days,
+        'send_time_hour': send_hour,
+        'send_time_minute': settings.get('send_time_minute', 0),
+        'email_subject_prefix': settings.get('email_subject_prefix', '[Reminder]'),
+        'max_reminders': min(settings.get('max_reminders', 3), len(reminder_days)),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'updated_by': admin_user['email']
+    }
+    
+    await db.reminder_settings.update_one({}, {'$set': update_data}, upsert=True)
+    
+    # Reschedule the job with new time
+    try:
+        scheduler.reschedule_job('quote_reminders', trigger=CronTrigger(hour=send_hour, minute=update_data['send_time_minute']))
+        logger.info(f"Reminder scheduler rescheduled to {send_hour}:{update_data['send_time_minute']:02d}")
+    except Exception as e:
+        logger.error(f"Failed to reschedule reminder job: {str(e)}")
+    
+    return {'message': 'Reminder settings updated successfully', 'settings': update_data}
+
 @api_router.get("/admin/quotes/{quote_id}")
 async def get_manual_quote(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
     quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
