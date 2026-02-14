@@ -1535,6 +1535,41 @@ async def get_fabrics():
     fabrics = await db.fabrics.find({'is_active': True}, {'_id': 0}).to_list(100)
     return fabrics
 
+# Admin Fabrics Management
+@api_router.post("/admin/fabrics")
+async def create_fabric(fabric_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Create a new fabric product"""
+    fabric = {
+        'id': str(uuid.uuid4()),
+        'name': fabric_data.get('name'),
+        'price': fabric_data.get('price'),
+        'branded_price': fabric_data.get('branded_price'),
+        'image_url': fabric_data.get('image_url', ''),
+        'description': fabric_data.get('description', ''),
+        'is_active': fabric_data.get('is_active', True),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.fabrics.insert_one(fabric)
+    return {'message': 'Fabric created', 'id': fabric['id']}
+
+@api_router.put("/admin/fabrics/{fabric_id}")
+async def update_fabric(fabric_id: str, fabric_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Update a fabric product"""
+    update_data = {k: v for k, v in fabric_data.items() if k not in ['id', '_id', 'created_at']}
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    result = await db.fabrics.update_one({'id': fabric_id}, {'$set': update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Fabric not found")
+    return {'message': 'Fabric updated'}
+
+@api_router.delete("/admin/fabrics/{fabric_id}")
+async def delete_fabric(fabric_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Delete a fabric product"""
+    result = await db.fabrics.delete_one({'id': fabric_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Fabric not found")
+    return {'message': 'Fabric deleted'}
+
 @api_router.post("/orders/fabric")
 async def create_fabric_order(order_data: Dict[str, Any]):
     """Create a fabric order"""
