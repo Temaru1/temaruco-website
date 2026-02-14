@@ -88,6 +88,8 @@ Clone and enhance the Temaruco website with:
   - Order status distribution
   - 7/30/90 day filter options
   - Real-time refresh capability
+  - CSV Export for Revenue and Products data
+  - Added to admin sidebar for easy access
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
