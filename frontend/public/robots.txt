@@ -1,0 +1,25 @@
+# Robots.txt for Temaruco Clothing Factory
+# https://temaruco.com
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /login
+Disallow: /api/
+
+# Allow search engines to index assets
+Allow: /static/
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+
+# Sitemap location
+Sitemap: https://temaruco.com/sitemap.xml
+
+# Crawl-delay for politeness
+Crawl-delay: 1
