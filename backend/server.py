@@ -3026,6 +3026,20 @@ async def get_manual_quotes(
     quotes = await db.manual_quotes.find(query, {'_id': 0}).sort('created_at', -1).to_list(1000)
     return quotes
 
+@api_router.get("/admin/quotes/reminder-status")
+async def get_quote_reminder_status(admin_user: Dict = Depends(get_admin_user)):
+    """Get status of quote reminders"""
+    total_pending = await db.manual_quotes.count_documents({'status': {'$in': ['draft', 'pending']}})
+    reminder_3d = await db.manual_quotes.count_documents({'reminder_3d_sent': True})
+    reminder_7d = await db.manual_quotes.count_documents({'reminder_7d_sent': True})
+    reminder_14d = await db.manual_quotes.count_documents({'reminder_14d_sent': True})
+    
+    return {
+        'total_pending_quotes': total_pending,
+        'reminders_sent': {'3_day': reminder_3d, '7_day': reminder_7d, '14_day': reminder_14d},
+        'scheduler_running': scheduler.running if scheduler else False
+    }
+
 @api_router.get("/admin/quotes/{quote_id}")
 async def get_manual_quote(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
     quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
