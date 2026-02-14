@@ -142,9 +142,12 @@ const FabricsPage = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold text-zinc-900">{fabric.name}</h3>
                 <p className="text-[#D90429] font-bold text-lg mt-1">
-                  ₦{fabric.price?.toLocaleString()}
+                  {formatPrice(fabric.price)}
                   <span className="text-zinc-400 text-sm font-normal">/yard</span>
                 </p>
+                {currency.code !== 'NGN' && (
+                  <p className="text-xs text-zinc-400">₦{fabric.price?.toLocaleString()}</p>
+                )}
                 <Button
                   onClick={() => addToCart(fabric)}
                   className="w-full mt-3 bg-zinc-900 hover:bg-zinc-800"
