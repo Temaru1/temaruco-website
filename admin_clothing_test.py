@@ -402,7 +402,7 @@ class AdminClothingTester:
         # Test public endpoints
         self.test_public_endpoints()
         
-        # Test error handling
+        # Test error handling (before deleting items)
         self.test_error_handling(created_pod_name)
         
         # Test deleting items
