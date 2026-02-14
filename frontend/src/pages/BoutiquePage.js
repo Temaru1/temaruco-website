@@ -290,7 +290,7 @@ const BoutiquePage = () => {
                 <h3 className="text-2xl font-bold mb-2">{lightboxImage.name}</h3>
                 <p className="text-zinc-600 mb-3">{lightboxImage.description}</p>
                 <div className="flex justify-between items-center">
-                  <span className="text-3xl font-bold text-[#D90429]">₦{lightboxImage.price.toLocaleString()}</span>
+                  <span className="text-3xl font-bold text-[#D90429]">{formatPrice(lightboxImage.price)}</span>
                   <Button onClick={(e) => { e.stopPropagation(); addToCart(lightboxImage); setLightboxImage(null); }} className="bg-[#D90429] hover:bg-[#B90322]">Add to Cart</Button>
                 </div>
               </CardContent>
