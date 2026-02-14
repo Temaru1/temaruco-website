@@ -308,6 +308,44 @@ class TemarucoAPITester:
         else:
             self.log_result("Quick Quote Calculation", False, f"Status: {status}, Data: {data}")
 
+    def test_payment_initialization(self):
+        """Test Paystack payment initialization"""
+        print("\n💳 Testing Payment Initialization...")
+        
+        payment_data = {
+            "email": "test@payment.com",
+            "amount": 7000,
+            "order_type": "fabric",
+            "order_id": "FAB-TEST-001"
+        }
+        
+        success, data, status = self.make_request('POST', 'payments/initialize', payment_data)
+        
+        if success and 'data' in data:
+            self.log_result("Payment Initialization", True)
+            print(f"   Reference: {data['data'].get('reference', 'N/A')}")
+            print(f"   Authorization URL: {data['data'].get('authorization_url', 'N/A')[:50]}...")
+            return data['data'].get('reference')
+        else:
+            self.log_result("Payment Initialization", False, f"Status: {status}, Data: {data}")
+            return None
+
+    def test_payment_verification(self, reference):
+        """Test payment verification"""
+        if not reference:
+            self.log_result("Payment Verification", False, "No reference to verify")
+            return
+            
+        print("\n✅ Testing Payment Verification...")
+        
+        success, data, status = self.make_request('GET', f'payments/verify/{reference}')
+        
+        if success:
+            self.log_result("Payment Verification", True)
+            print(f"   Status: {data.get('data', {}).get('status', 'N/A')}")
+        else:
+            self.log_result("Payment Verification", False, f"Status: {status}, Data: {data}")
+
     def run_all_tests(self):
         """Run all backend API tests"""
         print("🚀 Starting Temaruco Backend API Tests")
