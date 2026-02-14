@@ -169,8 +169,10 @@ Clone and enhance the Temaruco website with:
 
 ### Feature 1: Drag-and-Drop Mockup Builder ✅
 - New page at `/mockup-builder` (nav: "Design Tool")
-- 4 templates: T-Shirt Front/Back, Hoodie Front, Polo Front
-- 8 garment colors
+- **14 templates in 2 categories:**
+  - **Apparel (7):** T-Shirt Front/Back, Hoodie Front/Back, Polo Shirt, Sweatshirt, Tank Top
+  - **Accessories (7):** Cap Front/Side, Tote Bag, Backpack, Coffee Mug, Phone Case, Face Mask
+- 10 garment colors
 - Upload custom images (drag, resize, rotate)
 - Add text with font size and color controls
 - Download mockup as PNG
