@@ -213,7 +213,7 @@ const BoutiquePage = () => {
                 <div className="border-t pt-6">
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-xl font-semibold">Total:</span>
-                    <span className="text-3xl font-bold text-[#D90429]">₦{getTotalPrice().toLocaleString()}</span>
+                    <span className="text-3xl font-bold text-[#D90429]">{formatPrice(getTotalPrice())}</span>
                   </div>
                   <Button onClick={() => setShowCheckoutModal(true)} disabled={checkoutLoading} className="w-full bg-[#D90429] hover:bg-[#B90322] py-6 text-lg rounded-full" data-testid="checkout-btn">
                     {checkoutLoading ? 'Processing...' : 'Proceed to Checkout'}
