@@ -133,6 +133,22 @@ const AdminRevenueAnalyticsPage = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => exportToCSV(revenueData?.daily_data, 'revenue_report')}
+            data-testid="export-revenue-btn"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Revenue
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => exportToCSV(productData?.top_products, 'products_report')}
+            data-testid="export-products-btn"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Products
+          </Button>
         </div>
       </div>
 
