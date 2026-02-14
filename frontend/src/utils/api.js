@@ -150,6 +150,9 @@ export const updateReminderSettings = (settings) =>
 export const getReminderStatus = () =>
   axios.get(`${API}/admin/quotes/reminder-status`, { headers: getAuthHeaders() });
 
+export const getEmailTrackingStats = () =>
+  axios.get(`${API}/admin/email-tracking`, { headers: getAuthHeaders() });
+
 // Receipts APIs
 export const getReceipts = () =>
   axios.get(`${API}/admin/receipts`, { headers: getAuthHeaders() });
