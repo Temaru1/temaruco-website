@@ -79,6 +79,15 @@ Clone and enhance the Temaruco website with:
   - robots.txt created
   - react-helmet-async for dynamic page titles
   - SEO component for per-page customization
+- ✅ Advanced Analytics Dashboard with:
+  - Revenue trend area chart
+  - Total revenue, orders, avg order value KPI cards
+  - Revenue by order type pie chart
+  - Daily orders bar chart
+  - Top selling products list
+  - Order status distribution
+  - 7/30/90 day filter options
+  - Real-time refresh capability
 
 ## Known Limitations
 - Email notifications in **MOCK** mode (SMTP not configured)
