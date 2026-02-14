@@ -7,11 +7,13 @@ import PaystackPayment from '../components/PaystackPayment';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
 const FabricsPage = () => {
   const navigate = useNavigate();
+  const { formatPrice, currency } = useCurrency();
   const [fabrics, setFabrics] = useState([]);
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
