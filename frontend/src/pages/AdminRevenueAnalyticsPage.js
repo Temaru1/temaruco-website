@@ -383,6 +383,196 @@ const AdminRevenueAnalyticsPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Advanced Analytics Section */}
+      {advancedData && (
+        <>
+          {/* Customer & Conversion Insights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <Card data-testid="new-customers-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-600">New Customers</CardTitle>
+                <Users className="h-5 w-5 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{advancedData.customer_insights?.new_customers || 0}</div>
+                <p className="text-sm text-zinc-500">Last {days} days</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="repeat-customers-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-600">Repeat Customers</CardTitle>
+                <Repeat className="h-5 w-5 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{advancedData.customer_insights?.repeat_customers || 0}</div>
+                <p className="text-sm text-zinc-500">{advancedData.customer_insights?.customer_retention_rate?.toFixed(1)}% retention</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="completion-rate-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-600">Order Completion</CardTitle>
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{advancedData.conversion_metrics?.completion_rate || 0}%</div>
+                <p className="text-sm text-zinc-500">{advancedData.conversion_metrics?.completed_orders} completed</p>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="avg-completion-card">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-600">Avg. Fulfillment</CardTitle>
+                <Clock className="h-5 w-5 text-amber-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{advancedData.conversion_metrics?.avg_completion_days || 0} days</div>
+                <p className="text-sm text-zinc-500">Order to delivery</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            {/* Orders by Day of Week */}
+            {advancedData.weekday_breakdown?.length > 0 && (
+              <Card data-testid="weekday-chart-card">
+                <CardHeader>
+                  <CardTitle>Orders by Day of Week</CardTitle>
+                  <CardDescription>Best days for business</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={advancedData.weekday_breakdown}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          formatter={(value, name) => [
+                            name === 'revenue' ? formatCurrency(value) : value,
+                            name === 'revenue' ? 'Revenue' : 'Orders'
+                          ]}
+                        />
+                        <Bar dataKey="orders" fill="#2B2D42" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Orders by Hour */}
+            {advancedData.hourly_breakdown?.length > 0 && (
+              <Card data-testid="hourly-chart-card">
+                <CardHeader>
+                  <CardTitle>Orders by Hour</CardTitle>
+                  <CardDescription>Peak ordering times</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={advancedData.hourly_breakdown}>
+                        <defs>
+                          <linearGradient id="colorHourly" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis 
+                          dataKey="hour" 
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(h) => `${h}:00`}
+                        />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          formatter={(value, name) => [value, name === 'orders' ? 'Orders' : 'Revenue']}
+                          labelFormatter={(h) => `${h}:00 - ${h}:59`}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="orders" 
+                          stroke="#8884d8" 
+                          strokeWidth={2}
+                          fillOpacity={1} 
+                          fill="url(#colorHourly)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Top Locations */}
+          {advancedData.top_locations?.length > 0 && (
+            <Card className="mt-8" data-testid="locations-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" /> Top Customer Locations
+                </CardTitle>
+                <CardDescription>Where your customers are ordering from</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {advancedData.top_locations.slice(0, 5).map((loc, index) => (
+                    <div key={index} className="p-4 bg-zinc-50 rounded-lg text-center">
+                      <p className="font-semibold text-lg">{loc.location}</p>
+                      <p className="text-2xl font-bold text-primary">{loc.orders}</p>
+                      <p className="text-xs text-zinc-500">orders</p>
+                      <p className="text-sm font-medium text-green-600 mt-1">{formatCurrency(loc.revenue)}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quote Conversion */}
+          <Card className="mt-8" data-testid="quote-conversion-card">
+            <CardHeader>
+              <CardTitle>Quote Conversion Performance</CardTitle>
+              <CardDescription>From quote to paid order</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-center p-6">
+                  <p className="text-4xl font-bold text-primary">{advancedData.conversion_metrics?.quote_conversion_rate || 0}%</p>
+                  <p className="text-sm text-zinc-600 mt-2">Quote Conversion Rate</p>
+                </div>
+                <div className="flex-1 px-8">
+                  <div className="h-4 bg-zinc-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-red-400 transition-all duration-500"
+                      style={{ width: `${advancedData.conversion_metrics?.quote_conversion_rate || 0}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-2 text-sm text-zinc-600">
+                    <span>0%</span>
+                    <span>Target: 50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <XCircle className="h-6 w-6 text-red-500 mx-auto mb-1" />
+                    <p className="font-bold">{advancedData.conversion_metrics?.cancellation_rate || 0}%</p>
+                    <p className="text-xs text-zinc-600">Cancellation</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-1" />
+                    <p className="font-bold">{advancedData.conversion_metrics?.completed_orders || 0}</p>
+                    <p className="text-xs text-zinc-600">Completed</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
