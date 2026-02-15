@@ -163,7 +163,7 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/bulk-orders" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Bulk Orders
             </Link>
-            <Link to="/pod" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
+            <Link to="/print-on-demand" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Print-On-Demand
             </Link>
             <Link to="/custom-order" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
@@ -178,9 +178,6 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/souvenirs" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Souvenirs
             </Link>
-            <Link to="/mockup-builder" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
-              Design Tool
-            </Link>
             <Link to="/contact" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
               Contact
             </Link>
@@ -193,7 +190,7 @@ const Navigation = ({ user, onLogout }) => {
                 <span>Cart ({cartCount})</span>
               </div>
             </button>
-            {user && user.is_admin && (
+            {user && (user.is_admin || user.is_super_admin) && (
               <>
                 <Link to="/admin/dashboard" className="block py-2 px-4 hover:bg-zinc-50 rounded-lg text-sm font-medium text-zinc-700" onClick={() => setIsOpen(false)}>
                   Admin
