@@ -10,6 +10,15 @@ import FlutterwavePayment from '../components/FlutterwavePayment';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get full image URL
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/api/uploads')) return `${API_URL}${url}`;
+  if (url.startsWith('/uploads')) return `${API_URL}/api${url}`;
+  return url;
+};
+
 // Variant display config
 const VARIANT_CONFIG = {
   standard: { label: 'Standard', icon: Star, color: 'bg-zinc-100 text-zinc-700', badgeColor: 'bg-zinc-600' },
