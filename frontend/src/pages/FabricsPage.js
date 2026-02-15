@@ -132,12 +132,13 @@ const FabricsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {fabrics.map((fabric) => (
             <Card key={fabric.id} className="overflow-hidden group">
-              <div className="aspect-square bg-zinc-100 overflow-hidden">
+              {/* ISSUE 2 FIX: Use object-contain to show full fabric without cropping */}
+              <div className="aspect-square bg-white overflow-hidden flex items-center justify-center">
                 <img
-                  src={fabric.image_url}
+                  src={getImageUrl(fabric.image_url)}
                   alt={fabric.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => { e.target.src = `https://placehold.co/400x400/e2e8f0/64748b?text=${fabric.name}`; }}
+                  className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => { e.target.src = getPlaceholderImage(fabric.name); }}
                 />
               </div>
               <CardContent className="p-4">
