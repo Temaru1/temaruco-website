@@ -352,10 +352,11 @@ const OrderSummaryPage = () => {
               <CardDescription>Select your preferred payment method</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Handle Stripe return */}
-              {stripeSessionId ? (
-                <StripePaymentSuccess 
-                  sessionId={stripeSessionId}
+              {/* Handle Flutterwave return */}
+              {txRef ? (
+                <FlutterwavePaymentSuccess 
+                  txRef={txRef}
+                  transactionId={transactionId}
                   onSuccess={() => {
                     toast.success('Payment successful! Your order is being processed.');
                     fetchOrderAndBankDetails();
