@@ -231,7 +231,7 @@ const BulkOrderDetailsPage = () => {
             {/* Product Info with Variant Badge */}
             <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-lg mb-6">
               <img 
-                src={selectedItem.image_url}
+                src={getImageUrl(selectedItem.image_url)}
                 alt={selectedItem.name}
                 className="w-24 h-24 rounded-lg object-cover"
                 onError={(e) => { e.target.src = `https://placehold.co/300x300/e2e8f0/64748b?text=${selectedItem.name}`; }}
