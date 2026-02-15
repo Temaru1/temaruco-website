@@ -54,6 +54,21 @@ const PODPage = () => {
     }
   };
 
+  // Handle item selection - auto navigate to next step
+  const handleItemSelect = (item) => {
+    setSelectedItem(item);
+    setTimeout(() => setStep(2), 300);
+  };
+
+  // Toggle color selection
+  const toggleColor = (color) => {
+    if (orderData.color === color) {
+      // If clicking same color, keep it (at least one must be selected)
+      return;
+    }
+    setOrderData({...orderData, color: color});
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
