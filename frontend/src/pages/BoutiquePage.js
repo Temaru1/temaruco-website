@@ -22,6 +22,30 @@ const BoutiquePage = () => {
     delivery_address: '', delivery_city: '', delivery_state: '', delivery_notes: ''
   });
 
+  // Category filters
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedAudience, setSelectedAudience] = useState('all');
+  const [selectedGender, setSelectedGender] = useState('all');
+
+  const CATEGORIES = [
+    { value: 'all', label: 'All Items' },
+    { value: 'traditional', label: 'Nigerian Traditional Wear' },
+    { value: 'modern', label: 'Modern Wear' },
+  ];
+
+  const AUDIENCES = [
+    { value: 'all', label: 'All' },
+    { value: 'adults', label: 'Adults' },
+    { value: 'kids', label: 'Kids' },
+  ];
+
+  const GENDERS = [
+    { value: 'all', label: 'All' },
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' },
+    { value: 'unisex', label: 'Unisex' },
+  ];
+
   useEffect(() => {
     loadProducts();
     const savedCart = localStorage.getItem('cart');
@@ -38,6 +62,14 @@ const BoutiquePage = () => {
       setLoading(false);
     }
   };
+
+  // Filter products
+  const filteredProducts = products.filter(product => {
+    const matchCategory = selectedCategory === 'all' || product.style === selectedCategory;
+    const matchAudience = selectedAudience === 'all' || product.audience === selectedAudience;
+    const matchGender = selectedGender === 'all' || product.gender === selectedGender;
+    return matchCategory && matchAudience && matchGender;
+  });
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
