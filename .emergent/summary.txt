@@ -1,72 +1,64 @@
-<analysis>**original_problem_statement**: The project began as a major enhancement of an existing application, focused on fixing payment bugs and a complete UI/UX redesign. It has since expanded to include a wide array of features, turning it into a comprehensive e-commerce and service platform for an apparel business.
+<analysis>**original_problem_statement**: The project is a comprehensive e-commerce and service platform for an apparel business. It started as a UI/UX redesign with payment bug fixes and has evolved to include a mockup builder, multi-currency support, customer accounts, admin dashboards, and more.
 
-Key features added throughout the project:
-- **Core Commerce:** Multi-currency support (NGN/USD based on location), Stripe and Paystack payment integrations, and a complete UI/UX redesign.
-- **Product Customization:** A drag-and-drop mockup builder (now integrated into the Print-on-Demand flow), a bulk order system, and a print-on-demand service.
-- **Admin & Operations:** Manual creation of quotes/invoices, staff management, customer measurements database, and an inventory management backend.
-- **Customer Engagement:** A live email notification system (Gmail SMTP), automated quote reminders with open-tracking, customer accounts (order history, saved designs), and a Design Services inquiry page.
-- **Analytics & Notifications:** An advanced analytics dashboard with revenue and customer insights, and real-time admin notifications via WebSockets.
-- **Backend Architecture:** A significant, ongoing effort to refactor the monolithic  into a modular structure.
-
-Most recent user requests include UI fixes for the boutique and bulk order pages, restructuring the Print-on-Demand workflow, adding a Design Services page, and making several specific changes to the landing page (hero image, price calculator, track order button). The user has now requested a full, critical test of the entire application.
+In this session, the user's focus shifted dramatically. The initial plan to fix landing page UI and run a site-wide test was abandoned. Instead, the user requested a complete overhaul of the payment system, replacing Stripe and Paystack with Flutterwave. Following that, the user requested an improved checkout flow for cart and bulk orders, a fix for the navbar logo size, and a fix for products not appearing on the frontend. The user then specified a new, three-tier variant pricing system (Standard, Premium, Luxury) to be implemented for both Bulk Orders and Print-on-Demand products. Finally, the user reported that uploaded product images were not rendering and provided a specific image to be used for the T-shirt product.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack React/FastAPI/MongoDB application with a substantially redesigned UI. Key functionalities like the mockup builder, live email system, automated reminders, multi-currency pricing, and real-time admin notifications are implemented. Stripe has been added for international payments alongside the existing Paystack integration. Backend logic for customer accounts, inventory, and analytics is in place, with most of the corresponding frontend UIs now built.
-
-The backend is in a transitional state. A modular structure (, , ) has been created as part of a major refactoring effort, but the original monolithic  is still the primary entry point and contains the bulk of the application logic.
+A full-stack React/FastAPI/MongoDB application. The original payment gateways (Stripe, Paystack) have been completely removed and replaced with Flutterwave, which is configured with live keys. A major new feature has been implemented: a three-tier variant pricing system (Standard, Premium, Luxury) for both Bulk Order and Print-on-Demand products, affecting the backend, frontend product pages, and the admin management panel. The bulk order process has been enhanced with a dedicated order review page before checkout. An issue preventing uploaded images from rendering has been fixed by correcting the static file serving path on the backend and adding a URL resolver on the frontend. The backend remains a hybrid, with the monolithic  still in use but heavily modified.
 
 **Last working item**:
--   **Last item agent was working:** The user requested a comprehensive, critical test of the entire site to find and fix any bugs. The agent was about to begin this task when the user interrupted with a new request to replace the landing page hero image. The agent acknowledged the image replacement before the session ended. The core pending task is the site-wide test.
--   **Status:** NOT STARTED
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** Frontend testing agent. This is a large, site-wide test that requires comprehensive user flow validation, which is the perfect use case for the testing agent.
+-   **Last item agent was working:** The user provided an image and requested that it be used for the T-shirt product. This came immediately after the agent fixed a site-wide issue where uploaded product images were not rendering. The agent had just finished fixing the image serving path and was about to update the specific T-shirt product in the database.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** Manual testing by using  to update the database record for the T-Shirt product with the new image URL. Afterward, use the screenshot tool to view the  page and verify the new image renders correctly.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Implement pending landing page and admin UI changes. (P0)
--   **Issue 2:** Execute the user-requested full, critical site test. (P1)
--   **Issue 3:** Complete the backend refactoring. (P2)
+-   **Issue 1:** Update T-shirt product image. (P0)
+-   **Issue 2:** Implement pending landing page and admin UI changes. (P1)
+-   **Issue 3:** Execute the user-requested full, critical site test. (P2)
+-   **Issue 4:** Complete the backend refactoring. (P3)
 
 **Issues Detail:**
--   **Issue 1:**
-    -   **Description:** The user made several specific requests that have not been implemented yet.
-        1.  Replace the landing page hero image with the one provided in the last message.
-        2.  Add a Quick Price Calculator section to the landing page.
-        3.  Position the Track Order button on the landing page and make the input on the tracking page auto-format the Order ID (e.g., ).
-        4.  The newly created  needs to be linked in the admin sidebar and have its route added to .
-    -   **Attempted fixes:** None. These were the user's latest requests.
+-   **Issue 1:** Update T-shirt product image.
+    -   **Attempted fixes:** None for this specific request. The underlying image rendering bug was just fixed.
     -   **Next debug checklist:**
-        1.  Edit  to replace the image URL and add the new  component.
-        2.  Find the  and implement a formatting handler for the order ID input field.
-        3.  Edit  to add the  route.
-        4.  Edit the admin sidebar component () to add the link to the new page.
-    -   **Why fix this issue and what will be achieved with the fix?** To complete the user's most recent and explicit requests for the landing page and admin panel.
+        1.  Write and execute a Python script to connect to the database.
+        2.  Find the 'T-Shirt' product document in the  collection.
+        3.  Update its  field with .
+        4.  Take a screenshot of the Print-on-Demand page to verify the change.
+    -   **Why fix this issue and what will be achieved with the fix?** To fulfill the user's latest explicit request and provide a final validation of the image rendering fix.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** No
 
--   **Issue 2:**
-    -   **Description:** The user wants a full, critical test of the entire site to identify and fix any remaining bugs before proceeding.
-    -   **Attempted fixes:** None. The task was interrupted.
-    -   **Next debug checklist:** Call the  with a comprehensive test plan covering all major user flows (auth, boutique, POD, bulk order, design services, payments, admin panel).
-    -   **Why fix this issue and what will be achieved with the fix?** To ensure application-wide stability and catch any regressions or bugs before adding more features.
+-   **Issue 2:** Implement pending landing page and admin UI changes.
+    -   **Attempted fixes:** None. This was the original plan for the session but was deferred.
+    -   **Next debug checklist:**
+        1.  Edit  to replace the hero image and add a Quick Price Calculator section.
+        2.  Edit the track order page to auto-format the Order ID input.
+        3.  Edit  and the admin sidebar component to add the route and link for .
+    -   **Why fix this issue and what will be achieved with the fix?** To complete the user's outstanding requests from the previous session.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** No
+
+-   **Issue 3:** Execute the user-requested full, critical site test.
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:** Call the  with a comprehensive plan covering all major user flows, especially the new Flutterwave payment and tiered pricing systems.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure application-wide stability and catch regressions after major architectural changes (payment system, pricing model).
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** Should ideally be done after fixing **Issue 1**.
+    -   **Blocked on other issue:** No
 
--   **Issue 3:**
-    -   **Description:** The backend  file is still a monolith of over 7,000 lines. While a modular structure has been created, the migration of endpoints and logic is incomplete, and the new  is not yet used by the process manager.
-    -   **Attempted fixes:** A new directory structure was created, and some auth/payment routes were moved as a proof-of-concept.
-    -   **Next debug checklist:**
-        1.  Systematically move endpoints from  into the appropriate files in .
-        2.  Extract business logic into a new  directory.
-        3.  Update the supervisor configuration to run  instead of .
-        4.  Once verified, delete the monolithic .
-    -   **Why fix this issue and what will be achieved with the fix?** To drastically improve backend maintainability, reduce complexity, and enable faster, safer future development.
+-   **Issue 4:** Complete the backend refactoring.
+    -   **Attempted fixes:** The modular structure exists, but migration of logic from  is stalled.
+    -   **Next debug checklist:** Systematically move endpoints and business logic from  into the  and a new  directory, then switch the supervisor process to use .
+    -   **Why fix this issue and what will be achieved with the fix?** To improve backend maintainability, reduce technical debt, and enable safer future development.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Backend
@@ -74,36 +66,29 @@ The backend is in a transitional state. A modular structure (, , ) has been crea
 
 **In progress Task List**:
 -   **Task 1:** Complete backend refactoring.
-    -   **Where to resume:** Continue migrating routes and logic from  to the new modular structure in  and .
+    -   **Where to resume:** Continue migrating routes and business logic from  into the new modular file structure.
     -   **What will be achieved with this?** A maintainable, scalable, and organized backend codebase.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on something:** No
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks:**
--   **Admin Inventory Page:** Build the frontend UI for admins to manage product stock levels, connecting to the existing backend APIs. (P1)
--   **Shipping Integration:** Integrate with a shipping provider for delivery options and tracking. (P2)
-
-**Future Tasks:**
--   **Multiple Print Areas:** Enhance the design tool to support designing on the front, back, and sleeves of garments.
--   **Browser Push Notifications:** Implement browser-level notifications for admins (e.g., for new orders).
+-   **Upcoming Tasks:**
+    -   **Admin Inventory Page:** Build the frontend UI for admins to manage product stock levels. (P1)
+    -   **Shipping Integration:** Integrate with a shipping provider for delivery options and tracking. (P2)
+-   **Future Tasks:**
+    -   **Multiple Print Areas:** Enhance the design tool to support designing on the front, back, and sleeves.
+    -   **Browser Push Notifications:** Implement browser-level notifications for admins.
 
 **Completed work in this session**
--   **Customer Account & Save Mockup:** Implemented the frontend account page and integrated the Save Mockup feature into the .
--   **Real-time Admin Notifications:** Added WebSocket support to the backend and frontend for live admin notifications.
--   **Advanced Analytics:** Enhanced the admin analytics page with new customer insight and conversion metric charts.
--   **Stripe Integration:** Added Stripe as a payment option for international users, including a  component.
--   **Backend Refactoring (Initiated):** Created the new modular directory structure and migrated a few initial routes.
--   **Major UI/UX Fixes:**
-    -   **Boutique:** Implemented a new category and filtering system (Type, Audience, Gender).
-    -   **Bulk/POD Pages:** Added size selectors and improved the UX with auto-navigation on item selection.
-    -   **Currency:** Fixed the currency detection logic to be more reliable.
--   **Print-on-Demand (POD) Workflow Restructure:** Removed the standalone Design Tool page and embedded it directly into the POD product selection flow for a more intuitive user experience.
--   **Design Services Page:** Created a new page for users to request professional design services, complete with an inquiry form and a new backend endpoint.
+-   **Payment System Overhaul:** Successfully removed Stripe and Paystack and integrated Flutterwave as the sole payment provider.
+-   **Tiered Variant Pricing System (Bulk & POD):** Implemented a three-tier pricing system (Standard, Premium, Luxury) across backend models, frontend selection UI, and the admin management panel for both bulk and POD products.
+-   **Improved Bulk Order Flow:** Created a new  for order review and integrated it into the purchasing flow, culminating in a Flutterwave payment modal.
+-   **Image Rendering Fix:** Diagnosed and fixed a bug where uploaded images were not displaying. Corrected the backend static file route to  and updated all relevant frontend components to correctly resolve image URLs.
+-   **Checkout & UI Fixes:** Updated the main cart checkout to use Flutterwave directly, fixed an issue where products were reported as not showing, and increased the navbar logo size.
 
 **Earlier issues found/mentioned but not fixed**
--   None.
+-   None new; the outstanding issues are captured in the Pending/In progress Issue list.
 
 **Known issue recurrence from previous fork**
 -   None.
@@ -112,96 +97,88 @@ The backend is in a transitional state. A modular structure (, , ) has been crea
 
 
 **Key Technical Concepts**
--   **Frontend:** React, Tailwind CSS, Axios, Konva.js (), .
--   **Backend:** FastAPI, Motor (async MongoDB), JWT,  (for reminders), WebSockets (for live notifications).
+-   **Frontend:** React, Tailwind CSS, Axios.
+-   **Backend:** FastAPI, Motor (async MongoDB), JWT.
 -   **Database:** MongoDB.
--   **Architecture:** Hybrid monolithic/modular. The application is in the process of being refactored from a single  file to a more organized structure with routers, services, and models.
+-   **Architecture:** Hybrid monolithic/modular.  is still the entry point.
+-   **Payments:** **Flutterwave** (integrated via  library).
 
 **key DB schema**
--   **users:** 
--   **design_inquiries:** 
--   **boutique_items:** 
+-   **bulk_clothing_items / pod_clothing_items:** 
+-   **orders:** 
 
 **changes in tech stack**
--   **WebSockets:** Added to FastAPI for real-time communication.
--   **emergentintegrations:** Added to facilitate the Stripe integration.
--   **ip-api.com:** A new external service is being used for more reliable IP-based geolocation for currency detection.
+-   **Flutterwave:** Replaced Stripe and Paystack. The  library for payments is no longer in use.
 
 **All files of reference**
 -   **Created:**
     -   
     -   
     -   
-    -    & 
-    -    & 
-    -    and the , ,  directories for the refactor.
--   **Updated:**
-    -   : Heavily modified to add WebSockets, Stripe, advanced analytics, and design inquiry endpoints.
-    -   : Links updated for new/restructured pages.
-    -   : Routes added for new pages.
-    -   : Added new category structure and filtering UI.
-    -    & : UI/UX improvements (size selectors, auto-navigation).
-    -   : Switched to a more reliable geolocation API.
-    -   : Added new data visualizations.
+-   **Updated (Major):**
+    -   : Removed Stripe/Paystack logic, added Flutterwave endpoints, implemented variant pricing models and logic for bulk/POD items, fixed image serving path.
+    -   : Rebuilt to support variant selection and new order flow.
+    -    & : Rebuilt to support variant selection.
+    -   : Rebuilt to support managing variant prices for both bulk and POD items.
+    -   : Updated with a new direct Flutterwave checkout flow.
 -   **Deleted:**
-    -    (made obsolete by automatic detection).
+    -   
+    -   
 
 **Areas that need refactoring**:
--   ** is critically monolithic.** The ongoing refactoring to a modular structure ( and subdirectories) is the highest priority technical debt and must be completed to ensure the project's long-term health and maintainability.
+-   The  file remains critically monolithic and is the highest priority technical debt. The refactoring effort needs to be completed.
 
 **key api endpoints**
--   : WebSocket for real-time admin notifications.
--   : (POST) Creates a Stripe payment session.
--   : (GET) Callback for successful Stripe payments.
--   : (POST) Submits the form from the Design Services page.
--   : (GET) Provides data for the enhanced analytics dashboard.
+-   : (POST) Creates a Flutterwave payment session.
+-   : (POST) Handles Flutterwave payment notifications.
+-   : (GET) Serves uploaded product images.
+-   , : (POST, PUT) Manage products with variant pricing.
+-   : (POST) Creates a bulk order, now including variant information.
 
 **Critical Info for New Agent**
--   **PRIORITY 1: Implement Pending UI Changes.** The user's last set of requests for the landing page (hero image, price calculator) and admin panel (linking the design inquiries page) must be completed first.
--   **PRIORITY 2: Execute Full Site Test.** Immediately after implementing the UI changes, you MUST honor the user's request for a full, critical test of the application using the .
--   **PRIORITY 3: Continue Backend Refactoring.** The  monolith is a significant risk. The next major backend task should be to continue migrating all remaining endpoints and logic into the new modular structure and eventually switch the supervisor process to run .
+-   **PRIORITY 0:** Fulfill the user's latest request to update the T-shirt image using the provided URL.
+-   **Payment System is Flutterwave:** The entire payment system was replaced. Do not look for Stripe or Paystack code. All payment flows now use Flutterwave.
+-   **Variant Pricing is Live:** A three-tier pricing system (Standard, Premium, Luxury) is active for both Bulk and POD products. This affects product display, price calculation, order creation, and admin management.
+-   **Image URLs:** Uploaded images are now served from the  path. A helper function  exists in  and should be used to display all product images to ensure they render correctly.
+-   **Deferred Tasks:** The original plan to work on the landing page and run a full site test is still pending and should be addressed after the current image update task.
 
 **documents and test reports created in this job**
--   
+-   None.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Replace image:** User provided a new hero image for the landing page. (PENDING)
-2.  **Run full test:** User requested a critical and detailed test of the entire site, with bug fixes. (PENDING)
-3.  **Landing page changes:** User requested to replace the track order section with a price calculator and to auto-format the order ID input. (PENDING)
-4.  **Inquiry:** What is left? (ADDRESSED)
-5.  **New Feature:** User specified requirements for the Design Services page. (COMPLETED)
-6.  **Workflow Change:** User mandated the restructuring of the Print-on-Demand flow. (COMPLETED)
-7.  **Bug Fixes:** User reported multiple issues with the boutique, currency, and bulk order UI. (COMPLETED)
-8.  **Approval:** User approved the backend refactoring plan. (IN PROGRESS)
-9.  **New Feature:** User requested Stripe integration for international payments. (COMPLETED)
-10. **Approval:** User approved working on backend refactor, analytics, and real-time notifications. (COMPLETED)
+1.  **Use this as the shirt image**: User provided an image to use for the T-shirt. (PENDING)
+2.  **Uploaded product images dont render/show on products**: User reported a bug with image rendering. (FIXED)
+3.  **Do the same for print on demand**: User requested variant pricing for POD products. (COMPLETED)
+4.  **Update the Bulk Clothing Order System...**: User provided detailed requirements for the tiered pricing system on bulk orders. (COMPLETED)
+5.  **In bulk order, when a guest clicks on Place Order...**: User provided detailed requirements for the new bulk order review page and flow. (COMPLETED)
+6.  **after guest is done ordering...**: User reported issues with cart checkout, product visibility, and logo size. (FIXED)
+7.  **remove both and add flutterwave**: User requested to replace Stripe/Paystack with Flutterwave. (COMPLETED)
+8.  **what payment integrations are in the app?**: User asked for clarification on existing payment methods. (ADDRESSED)
+9.  **User approved initial plan**: This plan was then superseded by subsequent requests.
+10. **System Message**: Start of session.
 
 **Project Health Check:**
--   **Broken:** The landing page is missing user-requested features (new image, price calculator). The admin panel is missing the link to the design inquiries page. The track order page is missing the input auto-formatting.
--   **Mocked:** None.
--   **At Risk:** The monolithic  file poses a significant risk to future development speed and stability. The backend refactoring is incomplete.
+-   **Broken:** None are known to be actively broken.
+-   **Mocked:** Flutterwave is configured with live keys.
+-   **At Risk:** The monolithic  file is a major liability. The stability of the application is at risk due to the lack of a full regression test after the major payment and pricing model changes.
 
 **3rd Party Integrations**
--   **Stripe (Payments):** Integrated via  for international payments. A test key is present.
--   **Paystack (Payments):** Existing integration for Nigerian payments.
--   **ip-api.com:** Used for IP-based geolocation for currency detection.
--   **MongoDB (Database):** Connected via .
--   **Recharts:** Used for charts in the analytics dashboard.
--   **Konva.js:** Used for the mockup builder canvas.
--   **APScheduler:** Used for background jobs (email reminders) in the backend.
--   **exchangerate-api.com:** Used for fetching live currency exchange rates.
+-   **Flutterwave (Payments):** Live and operational. Replaced Stripe and Paystack.
+-   **ip-api.com:** Geolocation for currency.
+-   **MongoDB:** Database.
+-   **Recharts:** Analytics dashboard charts.
+-   **Konva.js:** Mockup builder canvas.
+-   **APScheduler:** Backend background jobs.
+-   **exchangerate-api.com:** Live currency rates.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO, not in the most recent session. The user has explicitly requested this.
+-   **Testing agent used after significant changes:** NO. All testing in this session was performed manually by the agent using ,  scripts, and extensive screenshot verification of the frontend flows.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** Unknown. A full site test is required.
+-   **Known regressions:** Unknown. A full site test is strongly recommended.
 
 **Credentials to test flow:**
 -   **Admin Login:**  / 
 
 **What agent forgot to execute**
--   The agent did not implement the user's most recent requests: replacing the landing page hero image, adding the price calculator, and implementing the auto-formatting for the track order ID.
--   The agent did not add the necessary route and sidebar link for the  after creating it.
--   The agent did not perform the critical, full-site test that the user requested.
--   The backend refactoring remains unfinished.</analysis>
+-   The original high-priority tasks from the start of the session (implement landing page UI changes, run a full site test) were not executed because the user's requests led to a complete pivot. These tasks are still pending.</analysis>
