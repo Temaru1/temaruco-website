@@ -2618,6 +2618,41 @@ async def verify_flutterwave_payment(verify_request: dict):
                 {'$set': {'payment_status': 'paid', 'payment_reference': tx_ref, 'payment_provider': 'flutterwave', 'status': OrderStatus.PAYMENT_VERIFIED}}
             )
             
+            # Auto-generate receipt for the order
+            order = await db.orders.find_one({'id': order_id}, {'_id': 0})
+            if order and not order.get('receipt_id'):
+                receipt_id = await generate_invoice_id()
+                order_details = {
+                    'clothing_item': order.get('clothing_item', ''),
+                    'quantity': order.get('quantity', order.get('total_quantity', 0)),
+                    'color_quantities': order.get('color_quantities', {}),
+                    'size_breakdown': order.get('size_breakdown', order.get('sizes', {})),
+                    'print_type': order.get('print_type', ''),
+                    'colors': order.get('colors', []),
+                    'notes': order.get('notes', ''),
+                    'cart_items': order.get('cart_items', []),
+                }
+                receipt_data = {
+                    'id': str(uuid.uuid4()),
+                    'receipt_id': receipt_id,
+                    'receipt_number': receipt_id,
+                    'order_id': order_id,
+                    'order_number': order.get('order_id', order_id),
+                    'customer_name': order.get('user_name', payment_record.get('customer_name', 'Customer')),
+                    'customer_email': order.get('user_email', payment_record.get('email', '')),
+                    'customer_phone': order.get('user_phone', payment_record.get('phone', '')),
+                    'amount_paid': order.get('total_price', payment_record.get('amount', 0)),
+                    'payment_method': 'Flutterwave',
+                    'payment_reference': tx_ref,
+                    'order_type': order.get('type', 'bulk'),
+                    'order_details': order_details,
+                    'created_at': datetime.now(timezone.utc).isoformat(),
+                    'issued_by': 'system'
+                }
+                await db.receipts.insert_one(receipt_data)
+                await db.orders.update_one({'id': order_id}, {'$set': {'receipt_id': receipt_id}})
+                logger.info(f"Receipt {receipt_id} created for order {order_id}")
+            
             # Create notification
             await create_notification('payment_received', 'Payment Received', f"Flutterwave payment received for order {order_id}", order_id)
             
