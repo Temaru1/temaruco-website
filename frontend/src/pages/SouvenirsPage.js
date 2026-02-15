@@ -132,12 +132,13 @@ const SouvenirsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {souvenirs.map((souvenir) => (
             <Card key={souvenir.id} className="overflow-hidden group">
-              <div className="aspect-square bg-zinc-100 overflow-hidden">
+              {/* ISSUE 2 FIX: Use object-contain to show full item without cropping */}
+              <div className="aspect-square bg-white overflow-hidden flex items-center justify-center">
                 <img
-                  src={souvenir.image_url}
+                  src={getImageUrl(souvenir.image_url)}
                   alt={souvenir.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => { e.target.src = `https://placehold.co/400x400/e2e8f0/64748b?text=${souvenir.name}`; }}
+                  className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => { e.target.src = getPlaceholderImage(souvenir.name); }}
                 />
               </div>
               <CardContent className="p-4">
