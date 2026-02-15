@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { CheckCircle2, Upload, Copy, Phone, AlertCircle, Package, Truck, Clock, CreditCard, Building } from 'lucide-react';
 import api from '../utils/api';
 import PaymentSelector from '../components/PaymentSelector';
-import { StripePaymentSuccess } from '../components/StripePayment';
+import { FlutterwavePaymentSuccess } from '../components/FlutterwavePayment';
 
 const OrderSummaryPage = () => {
   const { orderId } = useParams();
