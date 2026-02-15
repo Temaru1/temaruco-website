@@ -442,6 +442,8 @@ const BulkOrdersPage = () => {
                     placeholder="Any specific requirements..."
                   />
                 </div>
+                  </div>{/* End lg:w-1/2 Selection Panel */}
+                </div>{/* End flex container */}
               </CardContent>
             </Card>
 
