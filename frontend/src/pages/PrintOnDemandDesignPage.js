@@ -1,13 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Stage, Layer, Image as KonvaImage, Text, Transformer, Rect } from 'react-konva';
-import { ArrowLeft, Upload, Type, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, ShoppingCart, Check, Star, Crown, Gem } from 'lucide-react';
+import { ArrowLeft, Upload, Type, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, ShoppingCart, Check, Star, Crown, Gem, Move, Maximize2, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { getImageUrl } from '../utils/imageUtils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -17,6 +18,14 @@ const QUALITY_VARIANTS = [
   { id: 'premium', label: 'Premium', icon: Crown, color: 'bg-blue-50 border-blue-200 text-blue-700', activeColor: 'bg-blue-600 border-blue-600 text-white', badgeColor: 'bg-blue-600' },
   { id: 'luxury', label: 'Luxury', icon: Gem, color: 'bg-amber-50 border-amber-200 text-amber-700', activeColor: 'bg-amber-500 border-amber-500 text-white', badgeColor: 'bg-amber-500' }
 ];
+
+// Print size configurations
+const PRINT_SIZES = {
+  badge: { width: 120, height: 120, label: 'Badge', description: '80-120px', scaleFactor: 0.15 },
+  a4: { width: 2480, height: 3508, label: 'A4', description: '210×297mm', scaleFactor: 0.5 },
+  a3: { width: 3508, height: 4961, label: 'A3', description: '297×420mm', scaleFactor: 0.7 },
+  a2: { width: 4961, height: 7016, label: 'A2', description: '420×594mm', scaleFactor: 1.0 }
+};
 
 // Product catalog with print areas
 const POD_PRODUCTS = {
@@ -45,11 +54,13 @@ const PrintOnDemandDesignPage = () => {
   const stageRef = useRef(null);
   const fileInputRef = useRef(null);
   const transformerRef = useRef(null);
+  const originalImageRef = useRef(null); // Store original image for resizing
   
   const productFromState = location.state?.product;
   const fallbackProduct = POD_PRODUCTS[productId];
   const product = productFromState || fallbackProduct;
   
+  // Design state
   const [selectedVariant, setSelectedVariant] = useState('standard');
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || 'White');
   const [selectedSize, setSelectedSize] = useState('M');
@@ -59,6 +70,18 @@ const PrintOnDemandDesignPage = () => {
   const [productImage, setProductImage] = useState(null);
   const [scale, setScale] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  
+  // Print size state
+  const [printSize, setPrintSize] = useState('a4');
+  
+  // Guest contact state
+  const [guestInfo, setGuestInfo] = useState({ name: '', email: '', phone: '' });
+  const [guestId, setGuestId] = useState(null);
+  const [designId, setDesignId] = useState(null);
+  const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
+  
+  // Upload state
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!product) {
@@ -67,7 +90,7 @@ const PrintOnDemandDesignPage = () => {
     }
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    img.src = product.image_url || product.image;
+    img.src = getImageUrl(product.image_url || product.image);
     img.onload = () => setProductImage(img);
   }, [product, navigate]);
 
@@ -97,31 +120,200 @@ const PrintOnDemandDesignPage = () => {
     return (getVariantPrice() + printFee) * quantity;
   };
 
-  const handleImageUpload = (e) => {
+  // Calculate design dimensions based on print size
+  const calculateDesignDimensions = (originalWidth, originalHeight, targetPrintSize) => {
+    const printConfig = PRINT_SIZES[targetPrintSize];
+    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    
+    // Scale factor based on print size
+    const maxWidth = printArea.width * printConfig.scaleFactor;
+    const maxHeight = printArea.height * printConfig.scaleFactor;
+    
+    let width = originalWidth;
+    let height = originalHeight;
+    
+    // Maintain aspect ratio
+    const aspectRatio = originalWidth / originalHeight;
+    
+    if (width > maxWidth) {
+      width = maxWidth;
+      height = width / aspectRatio;
+    }
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * aspectRatio;
+    }
+    
+    return { width, height };
+  };
+
+  // Handle print size change - resize design without re-upload
+  const handlePrintSizeChange = (newSize) => {
+    setPrintSize(newSize);
+    
+    // Update existing image elements with new size
+    if (elements.length > 0 && originalImageRef.current) {
+      const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+      
+      setElements(prevElements => 
+        prevElements.map(el => {
+          if (el.type === 'image' && el.originalWidth && el.originalHeight) {
+            const { width, height } = calculateDesignDimensions(
+              el.originalWidth, 
+              el.originalHeight, 
+              newSize
+            );
+            
+            return {
+              ...el,
+              width,
+              height,
+              // Re-center in print area
+              x: printArea.x + (printArea.width - width) / 2,
+              y: printArea.y + (printArea.height - height) / 2
+            };
+          }
+          return el;
+        })
+      );
+      
+      // Update design transform on server if we have a design ID
+      if (designId) {
+        updateDesignTransform({ print_size: newSize });
+      }
+    }
+  };
+
+  // Update design transform on server
+  const updateDesignTransform = async (transformData) => {
+    if (!designId) return;
+    
+    try {
+      await axios.put(`${API_URL}/api/pod/design/${designId}/transform`, transformData);
+    } catch (error) {
+      console.error('Failed to update design transform:', error);
+    }
+  };
+
+  // Handle image upload with dual file storage
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { toast.error('Image must be less than 10MB'); return; }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
+      return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Only JPG, PNG, and WebP images are allowed');
+      return;
+    }
+    
+    // Read file for local preview
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const img = new window.Image();
       img.src = event.target.result;
       img.onload = () => {
+        // Store original dimensions
+        originalImageRef.current = {
+          width: img.width,
+          height: img.height,
+          src: event.target.result
+        };
+        
         const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
-        const maxWidth = printArea.width * 0.8;
-        const maxHeight = printArea.height * 0.8;
-        let width = img.width, height = img.height;
-        if (width > maxWidth) { height = (maxWidth / width) * height; width = maxWidth; }
-        if (height > maxHeight) { width = (maxHeight / height) * width; height = maxHeight; }
-        setElements([...elements, {
-          id: `img-${Date.now()}`, type: 'image', image: img,
+        const { width, height } = calculateDesignDimensions(img.width, img.height, printSize);
+        
+        // Add to canvas elements
+        const newElement = {
+          id: `img-${Date.now()}`,
+          type: 'image',
+          image: img,
+          originalWidth: img.width,
+          originalHeight: img.height,
           x: printArea.x + (printArea.width - width) / 2,
           y: printArea.y + (printArea.height - height) / 2,
-          width, height, rotation: 0
-        }]);
-        toast.success('Design uploaded!');
+          width,
+          height,
+          rotation: 0
+        };
+        
+        setElements([...elements, newElement]);
+        toast.success('Design uploaded! You can now resize and position it.');
       };
     };
     reader.readAsDataURL(file);
+    
+    // Upload to server if guest info provided
+    if (guestInfo.email) {
+      await uploadDesignToServer(file);
+    }
+  };
+
+  // Upload design to server
+  const uploadDesignToServer = async (file) => {
+    if (!guestInfo.email) {
+      toast.error('Please enter your email first');
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('design_file', file);
+      formData.append('product_id', product.id || productId);
+      formData.append('guest_email', guestInfo.email);
+      formData.append('guest_name', guestInfo.name);
+      formData.append('guest_phone', guestInfo.phone);
+      
+      const response = await axios.post(`${API_URL}/api/pod/upload-design`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setDesignId(response.data.design_id);
+      setGuestId(response.data.guest_id);
+      setUploadedOriginalUrl(response.data.original_file_url);
+      
+      toast.success('Design saved to your account!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to save design to server');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Upload mockup to server
+  const uploadMockupToServer = async () => {
+    if (!designId || !stageRef.current) return null;
+    
+    try {
+      // Generate mockup image from canvas
+      const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2 });
+      
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      
+      const formData = new FormData();
+      formData.append('mockup_file', blob, 'mockup.png');
+      
+      const uploadResponse = await axios.post(
+        `${API_URL}/api/pod/upload-mockup/${designId}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      
+      return uploadResponse.data.mockup_file_url;
+    } catch (error) {
+      console.error('Mockup upload error:', error);
+      return null;
+    }
   };
 
   const addText = () => {
@@ -140,29 +332,124 @@ const PrintOnDemandDesignPage = () => {
     }
   };
 
+  // Center design in print area
+  const centerDesign = () => {
+    if (!selectedId) return;
+    
+    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    
+    setElements(prevElements =>
+      prevElements.map(el => {
+        if (el.id === selectedId) {
+          return {
+            ...el,
+            x: printArea.x + (printArea.width - el.width) / 2,
+            y: printArea.y + (printArea.height - el.height) / 2
+          };
+        }
+        return el;
+      })
+    );
+    
+    if (designId) {
+      const el = elements.find(e => e.id === selectedId);
+      if (el) {
+        updateDesignTransform({
+          position_x: printArea.x + (printArea.width - el.width) / 2,
+          position_y: printArea.y + (printArea.height - el.height) / 2
+        });
+      }
+    }
+  };
+
+  // Reset design position and scale
+  const resetDesign = () => {
+    if (elements.length === 0 || !originalImageRef.current) return;
+    
+    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    
+    setElements(prevElements =>
+      prevElements.map(el => {
+        if (el.type === 'image') {
+          const { width, height } = calculateDesignDimensions(
+            el.originalWidth || originalImageRef.current.width,
+            el.originalHeight || originalImageRef.current.height,
+            printSize
+          );
+          
+          return {
+            ...el,
+            width,
+            height,
+            x: printArea.x + (printArea.width - width) / 2,
+            y: printArea.y + (printArea.height - height) / 2,
+            rotation: 0
+          };
+        }
+        return el;
+      })
+    );
+  };
+
   const handleAddToCart = async () => {
-    if (elements.length === 0) { toast.error('Please add a design before adding to cart'); return; }
+    if (elements.length === 0) {
+      toast.error('Please add a design before adding to cart');
+      return;
+    }
+    
+    if (!guestInfo.email || !guestInfo.name || !guestInfo.phone) {
+      toast.error('Please fill in your contact information');
+      return;
+    }
+    
     setAddingToCart(true);
+    
     try {
       setSelectedId(null);
       await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Upload mockup if we have a design ID
+      let mockupUrl = null;
+      if (designId) {
+        mockupUrl = await uploadMockupToServer();
+      }
+      
       const previewImage = stageRef.current?.toDataURL({ pixelRatio: 1 });
       const variantInfo = QUALITY_VARIANTS.find(v => v.id === selectedVariant);
+      
       const cartItem = {
-        id: `pod-${Date.now()}`, type: 'pod',
+        id: `pod-${Date.now()}`,
+        type: 'pod',
         name: `Custom ${product.name} (${variantInfo?.label})`,
-        product_id: product.id, product_name: product.name,
-        product_variant: selectedVariant, unit_price: getVariantPrice(),
-        color: selectedColor, size: selectedSize, quantity,
-        price: calculateTotal() / quantity, total_price: calculateTotal(),
+        product_id: product.id || productId,
+        product_name: product.name,
+        product_variant: selectedVariant,
+        unit_price: getVariantPrice(),
+        color: selectedColor,
+        size: selectedSize,
+        quantity,
+        price: calculateTotal() / quantity,
+        total_price: calculateTotal(),
         preview_image: previewImage,
-        design_data: elements.map(el => ({ ...el, image: el.type === 'image' ? el.image?.src : undefined })),
+        print_size: printSize,
+        print_size_label: PRINT_SIZES[printSize].label,
+        design_id: designId,
+        guest_id: guestId,
+        original_file_url: uploadedOriginalUrl,
+        mockup_file_url: mockupUrl,
+        guest_info: guestInfo,
+        design_data: elements.map(el => ({
+          ...el,
+          image: el.type === 'image' ? el.image?.src : undefined
+        })),
         created_at: new Date().toISOString()
       };
+      
       const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
       existingCart.push(cartItem);
       localStorage.setItem('cart', JSON.stringify(existingCart));
       window.dispatchEvent(new Event('cartUpdated'));
+      
       toast.success('Added to cart!');
       navigate('/cart');
     } catch (error) {
@@ -196,7 +483,11 @@ const PrintOnDemandDesignPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-[#D90429]">{formatPrice(calculateTotal())}</span>
-              <Button onClick={handleAddToCart} disabled={addingToCart || elements.length === 0} className="bg-[#D90429] hover:bg-[#B90322]">
+              <Button 
+                onClick={handleAddToCart} 
+                disabled={addingToCart || elements.length === 0 || !guestInfo.email} 
+                className="bg-[#D90429] hover:bg-[#B90322]"
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" />{addingToCart ? 'Adding...' : 'Add to Cart'}
               </Button>
             </div>
@@ -210,37 +501,197 @@ const PrintOnDemandDesignPage = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardContent className="p-4">
-                <div className="flex gap-2 mb-4">
-                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Upload className="w-4 h-4 mr-1" />Upload</Button>
-                  <Button variant="outline" size="sm" onClick={addText}><Type className="w-4 h-4 mr-1" />Text</Button>
+                {/* Toolbar */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                    <Upload className="w-4 h-4 mr-1" />{isUploading ? 'Uploading...' : 'Upload Design'}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={addText}><Type className="w-4 h-4 mr-1" />Add Text</Button>
                   <Button variant="outline" size="sm" onClick={deleteSelected} disabled={!selectedId}><Trash2 className="w-4 h-4 mr-1" />Delete</Button>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <Button variant="outline" size="sm" onClick={centerDesign} disabled={!selectedId}><Move className="w-4 h-4 mr-1" />Center</Button>
+                  <Button variant="outline" size="sm" onClick={resetDesign} disabled={elements.length === 0}><RotateCcw className="w-4 h-4 mr-1" />Reset</Button>
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
                 </div>
+                
+                {/* Canvas Area */}
                 <div className="bg-zinc-200 rounded-lg overflow-hidden flex items-center justify-center" style={{ minHeight: '500px' }}>
-                  <Stage ref={stageRef} width={500} height={500} scaleX={scale} scaleY={scale} onClick={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
+                  <Stage 
+                    ref={stageRef} 
+                    width={500} 
+                    height={500} 
+                    scaleX={scale} 
+                    scaleY={scale} 
+                    onClick={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}
+                  >
                     <Layer>
                       {productImage && <KonvaImage image={productImage} width={500} height={500} />}
                       <Rect x={printArea.x} y={printArea.y} width={printArea.width} height={printArea.height} stroke="#D90429" strokeWidth={1} dash={[5, 5]} listening={false} />
                       {elements.map((el) => {
                         if (el.type === 'image') {
-                          return <KonvaImage key={el.id} id={el.id} image={el.image} x={el.x} y={el.y} width={el.width} height={el.height} rotation={el.rotation} draggable onClick={() => setSelectedId(el.id)} onTap={() => setSelectedId(el.id)} onDragEnd={(e) => { setElements(elements.map(item => item.id === el.id ? { ...item, x: e.target.x(), y: e.target.y() } : item)); }} onTransformEnd={(e) => { const node = e.target; setElements(elements.map(item => item.id === el.id ? { ...item, x: node.x(), y: node.y(), width: node.width() * node.scaleX(), height: node.height() * node.scaleY(), rotation: node.rotation() } : item)); node.scaleX(1); node.scaleY(1); }} />;
+                          return (
+                            <KonvaImage
+                              key={el.id}
+                              id={el.id}
+                              image={el.image}
+                              x={el.x}
+                              y={el.y}
+                              width={el.width}
+                              height={el.height}
+                              rotation={el.rotation}
+                              draggable
+                              onClick={() => setSelectedId(el.id)}
+                              onTap={() => setSelectedId(el.id)}
+                              onDragEnd={(e) => {
+                                const newX = e.target.x();
+                                const newY = e.target.y();
+                                setElements(elements.map(item => 
+                                  item.id === el.id ? { ...item, x: newX, y: newY } : item
+                                ));
+                                if (designId) {
+                                  updateDesignTransform({ position_x: newX, position_y: newY });
+                                }
+                              }}
+                              onTransformEnd={(e) => {
+                                const node = e.target;
+                                const newWidth = node.width() * node.scaleX();
+                                const newHeight = node.height() * node.scaleY();
+                                setElements(elements.map(item => 
+                                  item.id === el.id ? {
+                                    ...item,
+                                    x: node.x(),
+                                    y: node.y(),
+                                    width: newWidth,
+                                    height: newHeight,
+                                    rotation: node.rotation()
+                                  } : item
+                                ));
+                                node.scaleX(1);
+                                node.scaleY(1);
+                                if (designId) {
+                                  updateDesignTransform({
+                                    position_x: node.x(),
+                                    position_y: node.y(),
+                                    scale: newWidth / (el.originalWidth || 1),
+                                    rotation: node.rotation()
+                                  });
+                                }
+                              }}
+                            />
+                          );
                         }
                         if (el.type === 'text') {
-                          return <Text key={el.id} id={el.id} text={el.text} x={el.x} y={el.y} fontSize={el.fontSize} fontFamily={el.fontFamily} fill={el.fill} rotation={el.rotation} draggable onClick={() => setSelectedId(el.id)} onTap={() => setSelectedId(el.id)} onDragEnd={(e) => { setElements(elements.map(item => item.id === el.id ? { ...item, x: e.target.x(), y: e.target.y() } : item)); }} onDblClick={() => { const newText = prompt('Enter text:', el.text); if (newText) setElements(elements.map(item => item.id === el.id ? { ...item, text: newText } : item)); }} />;
+                          return (
+                            <Text
+                              key={el.id}
+                              id={el.id}
+                              text={el.text}
+                              x={el.x}
+                              y={el.y}
+                              fontSize={el.fontSize}
+                              fontFamily={el.fontFamily}
+                              fill={el.fill}
+                              rotation={el.rotation}
+                              draggable
+                              onClick={() => setSelectedId(el.id)}
+                              onTap={() => setSelectedId(el.id)}
+                              onDragEnd={(e) => {
+                                setElements(elements.map(item => 
+                                  item.id === el.id ? { ...item, x: e.target.x(), y: e.target.y() } : item
+                                ));
+                              }}
+                              onDblClick={() => {
+                                const newText = prompt('Enter text:', el.text);
+                                if (newText) setElements(elements.map(item => 
+                                  item.id === el.id ? { ...item, text: newText } : item
+                                ));
+                              }}
+                            />
+                          );
                         }
                         return null;
                       })}
-                      {selectedId && <Transformer ref={transformerRef} boundBoxFunc={(oldBox, newBox) => (newBox.width < 20 || newBox.height < 20 ? oldBox : newBox)} />}
+                      {selectedId && (
+                        <Transformer
+                          ref={transformerRef}
+                          boundBoxFunc={(oldBox, newBox) => (newBox.width < 20 || newBox.height < 20 ? oldBox : newBox)}
+                          keepRatio={true}
+                        />
+                      )}
                     </Layer>
                   </Stage>
                 </div>
-                <p className="text-xs text-zinc-500 mt-2 text-center">Click inside the dashed area to add your design. Drag to reposition.</p>
+                <p className="text-xs text-zinc-500 mt-2 text-center">
+                  Click inside the dashed area to add your design. Drag to reposition, use corners to resize.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Print Size Selector */}
+            <Card className="mt-4">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Maximize2 className="w-4 h-4" /> Print Size
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {Object.entries(PRINT_SIZES).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => handlePrintSizeChange(key)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        printSize === key
+                          ? 'border-[#D90429] bg-red-50'
+                          : 'border-zinc-200 hover:border-zinc-300'
+                      }`}
+                      data-testid={`print-size-${key}`}
+                    >
+                      <p className="font-medium">{config.label}</p>
+                      <p className="text-xs text-zinc-500">{config.description}</p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Design will automatically resize while maintaining aspect ratio. No re-upload needed.
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Options Panel */}
           <div className="space-y-4">
+            {/* Guest Contact Info */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">Your Contact Info</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Your Name *"
+                    value={guestInfo.name}
+                    onChange={(e) => setGuestInfo({ ...guestInfo, name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                    data-testid="guest-name"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email Address *"
+                    value={guestInfo.email}
+                    onChange={(e) => setGuestInfo({ ...guestInfo, email: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                    data-testid="guest-email"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone Number *"
+                    value={guestInfo.phone}
+                    onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                    data-testid="guest-phone"
+                  />
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Required to save your design and process orders.</p>
+              </CardContent>
+            </Card>
+            
             {/* Quality Variant Selector */}
             <Card>
               <CardContent className="p-4">
@@ -323,6 +774,7 @@ const PrintOnDemandDesignPage = () => {
                     <span className="text-zinc-400">Quality</span>
                     <span className={`px-2 py-0.5 rounded text-xs ${variantInfo?.badgeColor}`}>{variantInfo?.label}</span>
                   </div>
+                  <div className="flex justify-between"><span className="text-zinc-400">Print Size</span><span>{PRINT_SIZES[printSize].label}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Unit Price</span><span>₦{getVariantPrice()?.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Print Fee</span><span>{elements.length > 0 ? '₦500' : 'N/A'}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Quantity</span><span>×{quantity}</span></div>
