@@ -53,6 +53,7 @@ import PrintOnDemandDesignPage from './pages/PrintOnDemandDesignPage';
 import DesignServicesPage from './pages/DesignServicesPage';
 import AdminDesignInquiriesPage from './pages/AdminDesignInquiriesPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import BulkOrderDetailsPage from './pages/BulkOrderDetailsPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
