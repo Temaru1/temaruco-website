@@ -268,9 +268,10 @@ const BulkOrdersPage = () => {
                 {/* Selected Item Summary */}
                 <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-lg">
                   <img 
-                    src={selectedItem?.image_url}
+                    src={getImageUrl(selectedItem?.image_url)}
                     alt={selectedItem?.name}
                     className="w-16 h-16 rounded-lg object-cover"
+                    onError={(e) => { e.target.src = `https://placehold.co/100x100/e2e8f0/64748b?text=${selectedItem?.name}`; }}
                   />
                   <div>
                     <p className="font-semibold">{selectedItem?.name}</p>
