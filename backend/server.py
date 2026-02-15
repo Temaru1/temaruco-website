@@ -4549,15 +4549,28 @@ async def update_admin_settings(settings: AdminSettings, request: Request):
 @api_router.post("/admin/upload-image")
 async def upload_admin_image(
     image: UploadFile = File(...),
+    module: str = "general",
     request: Request = None
 ):
-    """Admin: Upload image for clothing items"""
+    """
+    Admin: Unified image upload endpoint for all modules
+    Supports: bulk, pod, fabric, boutique, souvenir
+    """
     admin_user = await get_admin_user(request)
     
-    # Save image
-    file_data = await save_upload_file(image, ALLOWED_IMAGE_EXTENSIONS)
+    logger.info(f"[UPLOAD][{module}] Admin upload initiated by: {admin_user['email']}")
     
-    return {'image_url': file_data['file_path'], 'message': 'Image uploaded successfully'}
+    # Save image with module context for logging
+    file_data = await save_upload_file(image, ALLOWED_IMAGE_EXTENSIONS, module=module)
+    
+    logger.info(f"[UPLOAD][{module}] Upload complete. URL: {file_data['file_path']}")
+    
+    return {
+        'image_url': file_data['file_path'], 
+        'message': 'Image uploaded successfully',
+        'file_name': file_data['file_name'],
+        'file_size': file_data['file_size']
+    }
 
 # ==================== FABRIC QUALITIES MANAGEMENT ====================
 @api_router.get("/fabric-qualities")
