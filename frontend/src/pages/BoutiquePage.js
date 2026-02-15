@@ -286,6 +286,21 @@ const BoutiquePage = () => {
               </Card>
             ))}
           </div>
+        ) : (
+          <div className="text-center py-16 mb-16">
+            <p className="text-zinc-500 text-lg">No products found matching your filters.</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedAudience('all');
+                setSelectedGender('all');
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
         )}
 
         {/* Cart Section */}
