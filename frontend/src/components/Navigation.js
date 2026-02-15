@@ -75,7 +75,7 @@ const Navigation = ({ user, onLogout }) => {
             <Link to="/bulk-orders" className="nav-link text-sm font-medium" data-testid="nav-bulk-orders">
               Bulk Orders
             </Link>
-            <Link to="/pod" className="nav-link text-sm font-medium" data-testid="nav-pod">
+            <Link to="/print-on-demand" className="nav-link text-sm font-medium" data-testid="nav-pod">
               Print-On-Demand
             </Link>
             <Link to="/custom-order" className="nav-link text-sm font-medium" data-testid="nav-custom">
@@ -89,9 +89,6 @@ const Navigation = ({ user, onLogout }) => {
             </Link>
             <Link to="/souvenirs" className="nav-link text-sm font-medium" data-testid="nav-souvenirs">
               Souvenirs
-            </Link>
-            <Link to="/mockup-builder" className="nav-link text-sm font-medium" data-testid="nav-mockup-builder">
-              Design Tool
             </Link>
             <Link to="/contact" className="nav-link text-sm font-medium" data-testid="nav-contact">
               Contact
