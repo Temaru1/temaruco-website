@@ -6454,6 +6454,29 @@ class PODClothingItem(BaseModel):
     description: Optional[str] = None
     is_active: Optional[bool] = True
 
+# Bulk Clothing Item with Variant Pricing
+class BulkClothingItem(BaseModel):
+    name: str
+    standard_price: float
+    premium_price: float
+    luxury_price: float
+    image_url: str
+    description: Optional[str] = None
+    is_active: Optional[bool] = True
+
+# Helper to get variant prices
+QUALITY_VARIANTS = ['standard', 'premium', 'luxury']
+
+def get_variant_price(item: dict, variant: str) -> float:
+    """Get price for a specific quality variant"""
+    variant = variant.lower() if variant else 'standard'
+    if variant == 'premium':
+        return item.get('premium_price', item.get('base_price', 0) * 1.5)
+    elif variant == 'luxury':
+        return item.get('luxury_price', item.get('base_price', 0) * 2)
+    else:
+        return item.get('standard_price', item.get('base_price', 0))
+
 @api_router.get("/pod/clothing-items")
 async def get_pod_clothing_items():
     """Public: Get all active POD clothing items"""
