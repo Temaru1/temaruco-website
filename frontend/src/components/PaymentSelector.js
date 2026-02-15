@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import PaystackPayment from './PaystackPayment';
-import StripePayment from './StripePayment';
-import { Globe, MapPin } from 'lucide-react';
+import FlutterwavePayment from './FlutterwavePayment';
+import { Globe, MapPin, Loader2 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
@@ -12,46 +11,48 @@ const PaymentSelector = ({
   amount,  // Amount in NGN
   email,
   customerName,
+  phone,
   onSuccess,
   onClose
 }) => {
-  const [provider, setProvider] = useState(null);
+  const [currency, setCurrency] = useState('NGN');
   const [detectedLocation, setDetectedLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [manualOverride, setManualOverride] = useState(false);
 
   useEffect(() => {
-    // Detect user location and recommended payment provider
-    const detectProvider = async () => {
+    // Detect user location for currency preference
+    const detectLocation = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/payments/provider`);
-        setProvider(response.data.provider);
+        setCurrency(response.data.currency || 'NGN');
         setDetectedLocation({
           isNigerian: response.data.is_nigerian,
           country: response.data.country_detected
         });
       } catch {
-        // Default to Paystack for Nigeria
-        setProvider('paystack');
+        // Default to NGN
+        setCurrency('NGN');
         setDetectedLocation({ isNigerian: true, country: 'NG' });
       } finally {
         setLoading(false);
       }
     };
 
-    detectProvider();
+    detectLocation();
   }, []);
+
+  const toggleCurrency = () => {
+    setCurrency(prev => prev === 'NGN' ? 'USD' : 'NGN');
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-3 text-zinc-600">Detecting your location...</span>
       </div>
     );
   }
-
-  const currentProvider = manualOverride ? (provider === 'paystack' ? 'stripe' : 'paystack') : provider;
 
   return (
     <div className="space-y-4">
@@ -60,62 +61,38 @@ const PaymentSelector = ({
         <div className="flex items-center gap-2">
           <MapPin size={18} className="text-zinc-500" />
           <span className="text-sm text-zinc-600">
-            {detectedLocation?.isNigerian ? 'Nigeria' : 'International'} payment
+            {detectedLocation?.isNigerian ? 'Nigeria' : 'International'} • {currency === 'NGN' ? '🇳🇬 Naira' : '🌍 USD'}
           </span>
         </div>
         <button
-          onClick={() => setManualOverride(!manualOverride)}
+          onClick={toggleCurrency}
           className="text-xs text-primary hover:underline flex items-center gap-1"
-          data-testid="switch-payment-provider"
+          data-testid="switch-currency-btn"
         >
           <Globe size={14} />
-          {manualOverride ? 'Use detected location' : 'Pay in different currency'}
+          Switch to {currency === 'NGN' ? 'USD' : 'NGN'}
         </button>
       </div>
 
-      {/* Payment buttons */}
-      {currentProvider === 'paystack' ? (
-        <div>
-          <PaystackPayment
-            orderId={orderId}
-            orderType={orderType}
-            amount={amount}
-            email={email}
-            customerName={customerName}
-            onSuccess={onSuccess}
-            onClose={onClose}
-          />
-          {!detectedLocation?.isNigerian && (
-            <p className="text-xs text-amber-600 text-center mt-2">
-              Note: Paystack is optimized for Nigerian cards. International cards may not work.
-            </p>
-          )}
-        </div>
-      ) : (
-        <div>
-          <StripePayment
-            orderId={orderId}
-            orderType={orderType}
-            amountNGN={amount}
-            email={email}
-            customerName={customerName}
-            onSuccess={onSuccess}
-            onClose={onClose}
-          />
-          {detectedLocation?.isNigerian && (
-            <p className="text-xs text-amber-600 text-center mt-2">
-              Note: Stripe charges in USD. Exchange rate applied.
-            </p>
-          )}
-        </div>
-      )}
+      {/* Flutterwave Payment Button */}
+      <FlutterwavePayment
+        orderId={orderId}
+        orderType={orderType}
+        amount={amount}
+        email={email}
+        customerName={customerName}
+        phone={phone}
+        currency={currency}
+        onSuccess={onSuccess}
+        onClose={onClose}
+      />
 
       {/* Payment info */}
       <div className="border-t pt-4 mt-4">
         <p className="text-xs text-zinc-500 text-center">
-          {currentProvider === 'paystack' 
-            ? '🇳🇬 Best for Nigerian bank cards and transfers'
-            : '🌍 Best for international Visa/Mastercard payments'
+          {currency === 'NGN' 
+            ? '🇳🇬 Pay with Nigerian bank cards, bank transfer, USSD, or mobile money'
+            : '🌍 Pay with international Visa/Mastercard'
           }
         </p>
       </div>
