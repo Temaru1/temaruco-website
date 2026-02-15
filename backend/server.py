@@ -1353,6 +1353,10 @@ async def create_bulk_order(
     
     days = calculate_production_time(order_dict.get('quantity'), order_dict.get('print_type'))
     
+    # Get variant pricing
+    product_variant = order_dict.get('product_variant', 'standard')
+    unit_price = order_dict.get('unit_price', 0)
+    
     bulk_order = {
         'id': order_id,
         'order_id': order_id,
@@ -1362,6 +1366,9 @@ async def create_bulk_order(
         'user_phone': customer_phone,
         'type': OrderType.BULK,
         'clothing_item': order_dict.get('clothing_item'),
+        'clothing_item_id': order_dict.get('clothing_item_id'),
+        'product_variant': product_variant,
+        'unit_price': unit_price,
         'quantity': order_dict.get('quantity'),
         'color_quantities': order_dict.get('color_quantities', {}),
         'size_breakdown': order_dict.get('size_breakdown', {}),
@@ -1369,8 +1376,12 @@ async def create_bulk_order(
         'fabric_quality': order_dict.get('fabric_quality'),
         'design_url': design_url,
         'notes': order_dict.get('notes'),
-        'price_breakdown': breakdown,
-        'total_price': order_dict.get('quote', {}).get('total_price', breakdown['total_price']),
+        'price_breakdown': {
+            **breakdown,
+            'product_variant': product_variant,
+            'unit_price': unit_price
+        },
+        'total_price': order_dict.get('quote', {}).get('total_price', unit_price * order_dict.get('quantity', 0)),
         'estimated_days': days,
         'status': OrderStatus.PENDING_PAYMENT,
         'payment_status': 'pending_payment',
@@ -1385,10 +1396,11 @@ async def create_bulk_order(
     await db.orders.insert_one(bulk_order)
     
     # Create admin notification
+    variant_label = product_variant.capitalize()
     await create_notification(
         'new_order',
         'New Bulk Order',
-        f"Order {order_id} from {customer_name} - {order_dict.get('clothing_item')} x{order_dict.get('quantity')}",
+        f"Order {order_id} from {customer_name} - {order_dict.get('clothing_item')} ({variant_label}) x{order_dict.get('quantity')}",
         order_id=order_id
     )
     
