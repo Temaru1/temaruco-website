@@ -1674,6 +1674,9 @@ class NewBoutiqueProduct(BaseModel):
     image_url: Optional[str] = ''
     colors: Optional[List[str]] = []
     sizes: Optional[List[str]] = []
+    style: Optional[str] = 'modern'  # 'traditional' or 'modern'
+    audience: Optional[str] = 'adults'  # 'adults' or 'kids'
+    gender: Optional[str] = 'unisex'  # 'male', 'female', 'unisex'
 
 @api_router.post("/admin/boutique/products")
 async def create_boutique_product(product: NewBoutiqueProduct, request: Request):
