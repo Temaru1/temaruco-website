@@ -98,27 +98,17 @@ const BulkOrdersPage = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/api/orders/bulk`, {
-        clothing_item: selectedItem.name,
-        quantity: orderData.quantity,
-        print_type: orderData.print_type,
-        colors: orderData.colors,
-        notes: orderData.notes,
-        customer_name: customerInfo.name,
-        customer_email: customerInfo.email,
-        customer_phone: customerInfo.phone,
-        total_price: calculateTotal()
-      });
-
-      toast.success('Order placed successfully!');
-      navigate(`/order-summary/${response.data.order_id}`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to place order');
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to order details page for review and payment
+    navigate('/bulk-orders/details', {
+      state: {
+        orderData: {
+          ...orderData,
+          quantity: getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity
+        },
+        customerInfo,
+        selectedItem
+      }
+    });
   };
 
   const steps = [
