@@ -46,6 +46,22 @@ Clone and enhance the Temaruco website with:
 - Client directory
 - Revenue analytics dashboard
 
+### Print-On-Demand Design System (ENHANCED - Feb 2026)
+- **Dual File Storage**: Original design + Generated mockup saved separately
+- **Guest Contact Linking**: Designs automatically linked to guest contact records
+- **Print Size Selection**: Badge, A4, A3, A2 with dynamic resizing
+- **Canvas-Based Rendering**: Transformable design layer using Konva.js
+- **Position Controls**: Drag, center, reset functionality
+- **Backend Endpoints**:
+  - `/api/pod/print-sizes` - Get available print sizes
+  - `/api/pod/guest-contact` - Create/get guest contact
+  - `/api/pod/upload-design` - Upload original design with guest linking
+  - `/api/pod/upload-mockup/{design_id}` - Upload generated mockup
+  - `/api/pod/design/{design_id}/transform` - Update design transform
+- **Storage Locations**:
+  - `/uploads/designs/original/` - Original design files
+  - `/uploads/designs/mockups/` - Generated mockups
+
 ### Payments (COMPLETED)
 - Flutterwave integration (Live keys configured)
 - Payment initialization and verification
