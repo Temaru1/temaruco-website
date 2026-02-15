@@ -584,7 +584,7 @@ async def save_upload_file(file: UploadFile, allowed_extensions: set = None) -> 
     
     return {
         'file_name': filename,
-        'file_path': f"/uploads/{filename}",
+        'file_path': f"/api/uploads/{filename}",
         'original_name': safe_original_name,
         'file_size': len(contents)
     }
