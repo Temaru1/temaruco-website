@@ -79,20 +79,45 @@ const PrintOnDemandDesignPage = () => {
   const [guestId, setGuestId] = useState(null);
   const [designId, setDesignId] = useState(null);
   const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
+  const [dbProduct, setDbProduct] = useState(null);
   
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
 
+  // Fetch product from database
   useEffect(() => {
-    if (!product) {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/pod/clothing-items`);
+        const items = response.data || [];
+        // Find matching product by name or id
+        const matchingProduct = items.find(item => 
+          item.name?.toLowerCase().includes(productId?.toLowerCase()) ||
+          item.id === productId
+        );
+        if (matchingProduct) {
+          setDbProduct(matchingProduct);
+        }
+      } catch (error) {
+        console.error('Failed to fetch product:', error);
+      }
+    };
+    fetchProduct();
+  }, [productId]);
+
+  // Use database product if available, otherwise fallback
+  const activeProduct = dbProduct || product;
+
+  useEffect(() => {
+    if (!activeProduct) {
       navigate('/print-on-demand');
       return;
     }
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    img.src = getImageUrl(product.image_url || product.image);
+    img.src = getImageUrl(activeProduct.image_url || activeProduct.image);
     img.onload = () => setProductImage(img);
-  }, [product, navigate]);
+  }, [activeProduct, navigate]);
 
   useEffect(() => {
     if (selectedId && transformerRef.current) {
@@ -105,9 +130,10 @@ const PrintOnDemandDesignPage = () => {
     }
   }, [selectedId]);
 
-  if (!product) return null;
+  if (!activeProduct) return null;
 
   const getVariantPrice = () => {
+    const p = activeProduct;
     switch (selectedVariant) {
       case 'premium': return product.premium_price || (product.standard_price || product.base_price || 2000) * 1.5;
       case 'luxury': return product.luxury_price || (product.standard_price || product.base_price || 2000) * 2;
