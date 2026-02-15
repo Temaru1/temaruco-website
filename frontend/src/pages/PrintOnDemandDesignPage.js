@@ -91,10 +91,13 @@ const PrintOnDemandDesignPage = () => {
         const response = await axios.get(`${API_URL}/api/pod/clothing-items`);
         const items = response.data || [];
         // Find matching product by name or id
-        const matchingProduct = items.find(item => 
-          item.name?.toLowerCase().includes(productId?.toLowerCase()) ||
-          item.id === productId
-        );
+        const normalizedId = productId?.toLowerCase().replace(/[-_]/g, '');
+        const matchingProduct = items.find(item => {
+          const normalizedName = item.name?.toLowerCase().replace(/[-_\s]/g, '');
+          return normalizedName === normalizedId ||
+                 normalizedName.includes(normalizedId) ||
+                 item.id === productId;
+        });
         if (matchingProduct) {
           setDbProduct(matchingProduct);
         }
