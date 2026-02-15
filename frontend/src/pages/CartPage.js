@@ -157,11 +157,13 @@ const CartPage = () => {
                   className="bg-white rounded-xl shadow-lg p-6 flex gap-4"
                   data-testid={`cart-item-${item.id}`}
                 >
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
+                  <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border">
+                    <img
+                      src={getImageUrl(item.image_url)}
+                      alt={item.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
                     <p className="text-sm text-zinc-600 mb-2">{item.category}</p>
