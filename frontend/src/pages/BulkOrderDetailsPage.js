@@ -53,20 +53,32 @@ const BulkOrderDetailsPage = () => {
   const handleProceedToPayment = async () => {
     setLoading(true);
     try {
-      // Create the order first
-      const response = await axios.post(`${API_URL}/api/orders/bulk`, {
+      // Create the order using FormData (as required by backend)
+      const formData = new FormData();
+      
+      // Prepare order data as JSON string
+      const orderDataPayload = {
         clothing_item: selectedItem.name,
         clothing_item_id: selectedItem.id,
         quantity: orderData.quantity,
         print_type: orderData.print_type,
         colors: orderData.colors,
-        sizes: orderData.sizes,
-        notes: orderData.notes,
-        customer_name: customerInfo.name,
-        customer_email: customerInfo.email,
-        customer_phone: customerInfo.phone,
-        total_price: calculateTotal(),
-        status: 'pending_payment'
+        color_quantities: orderData.colors.reduce((acc, color) => {
+          acc[color] = orderData.quantity;
+          return acc;
+        }, {}),
+        size_breakdown: orderData.sizes || {},
+        notes: orderData.notes || '',
+        quote: { total_price: calculateTotal() }
+      };
+      
+      formData.append('order_data', JSON.stringify(orderDataPayload));
+      formData.append('customer_name', customerInfo.name);
+      formData.append('customer_email', customerInfo.email);
+      formData.append('customer_phone', customerInfo.phone);
+
+      const response = await axios.post(`${API_URL}/api/orders/bulk`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       const newOrderId = response.data.order_id || response.data.id;
@@ -74,7 +86,13 @@ const BulkOrderDetailsPage = () => {
       setOrderPlaced(true);
       toast.success('Order created! Please complete payment.');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create order');
+      console.error('Order creation error:', error);
+      const errorMsg = error.response?.data?.detail;
+      if (typeof errorMsg === 'string') {
+        toast.error(errorMsg);
+      } else {
+        toast.error('Failed to create order. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
