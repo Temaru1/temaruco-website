@@ -134,7 +134,14 @@ function AppRouter() {
         
         {/* Public pages - no auth required */}
         <Route path="/bulk-orders" element={<BulkOrdersPage />} />
-        <Route path="/pod" element={<PODPage />} />
+        
+        {/* Print on Demand - New Structure */}
+        <Route path="/print-on-demand" element={<PrintOnDemandPage />} />
+        <Route path="/print-on-demand/:productId" element={<PrintOnDemandDesignPage />} />
+        
+        {/* Legacy POD route - redirect to new */}
+        <Route path="/pod" element={<Navigate to="/print-on-demand" replace />} />
+        
         <Route path="/custom-order" element={<CustomOrderPage />} />
         <Route path="/custom-order-confirmation" element={<CustomOrderConfirmationPage />} />
         <Route path="/fabric" element={<FabricPage />} />
