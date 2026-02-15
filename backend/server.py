@@ -6690,13 +6690,22 @@ async def get_bulk_clothing_items():
 
 @api_router.get("/admin/bulk/clothing-items")
 async def get_all_bulk_clothing_items(admin_user: Dict = Depends(get_admin_user)):
-    """Admin: Get all bulk order clothing items (including inactive)"""
+    """Admin: Get all bulk order clothing items (including inactive) with variant pricing"""
     items = await db.bulk_clothing_items.find({}, {'_id': 0}).sort('name', 1).to_list(100)
+    
+    # Ensure all items have variant pricing
+    for item in items:
+        if 'standard_price' not in item:
+            base = item.get('base_price', 2000)
+            item['standard_price'] = base
+            item['premium_price'] = int(base * 1.5)
+            item['luxury_price'] = int(base * 2)
+    
     return items
 
 @api_router.post("/admin/bulk/clothing-items")
-async def create_bulk_clothing_item(item: PODClothingItem, admin_user: Dict = Depends(get_admin_user)):
-    """Admin: Create new bulk order clothing item"""
+async def create_bulk_clothing_item(item: BulkClothingItem, admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Create new bulk order clothing item with variant pricing"""
     
     # Check if item with same name exists
     existing = await db.bulk_clothing_items.find_one({
@@ -6709,7 +6718,10 @@ async def create_bulk_clothing_item(item: PODClothingItem, admin_user: Dict = De
     item_doc = {
         'id': str(uuid.uuid4()),
         'name': item.name,
-        'base_price': item.base_price,
+        'standard_price': item.standard_price,
+        'premium_price': item.premium_price,
+        'luxury_price': item.luxury_price,
+        'base_price': item.standard_price,  # Legacy compatibility
         'image_url': item.image_url,
         'description': item.description or '',
         'is_active': item.is_active if item.is_active is not None else True,
@@ -6733,14 +6745,17 @@ async def create_bulk_clothing_item(item: PODClothingItem, admin_user: Dict = De
 @api_router.put("/admin/bulk/clothing-items/{item_id}")
 async def update_bulk_clothing_item(
     item_id: str,
-    item: PODClothingItem,
+    item: BulkClothingItem,
     admin_user: Dict = Depends(get_admin_user)
 ):
-    """Admin: Update bulk order clothing item"""
+    """Admin: Update bulk order clothing item with variant pricing"""
     
     update_data = {
         'name': item.name,
-        'base_price': item.base_price,
+        'standard_price': item.standard_price,
+        'premium_price': item.premium_price,
+        'luxury_price': item.luxury_price,
+        'base_price': item.standard_price,  # Legacy compatibility
         'image_url': item.image_url,
         'description': item.description,
         'is_active': item.is_active if item.is_active is not None else True,
