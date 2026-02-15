@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, ChevronRight, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Package, ChevronRight, CheckCircle, ArrowLeft, Star, Crown, Gem } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -9,12 +9,40 @@ import { Card, CardContent } from '../components/ui/card';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Quality Variants Configuration
+const QUALITY_VARIANTS = [
+  { 
+    id: 'standard', 
+    label: 'Standard', 
+    description: 'Quality basics for everyday use',
+    icon: Star,
+    color: 'bg-zinc-100 border-zinc-300 text-zinc-700',
+    activeColor: 'bg-zinc-900 border-zinc-900 text-white'
+  },
+  { 
+    id: 'premium', 
+    label: 'Premium', 
+    description: 'Enhanced quality with better finish',
+    icon: Crown,
+    color: 'bg-blue-50 border-blue-200 text-blue-700',
+    activeColor: 'bg-blue-600 border-blue-600 text-white'
+  },
+  { 
+    id: 'luxury', 
+    label: 'Luxury', 
+    description: 'Top-tier materials and craftsmanship',
+    icon: Gem,
+    color: 'bg-amber-50 border-amber-200 text-amber-700',
+    activeColor: 'bg-amber-500 border-amber-500 text-white'
+  }
+];
+
 const BulkOrdersPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [clothingItems, setClothingItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState('standard');
 
   const [orderData, setOrderData] = useState({
     quantity: 50,
@@ -53,19 +81,39 @@ const BulkOrdersPage = () => {
     }
   };
 
+  // Get price for current variant
+  const getVariantPrice = (item) => {
+    if (!item) return 0;
+    switch (selectedVariant) {
+      case 'premium':
+        return item.premium_price || item.base_price * 1.5;
+      case 'luxury':
+        return item.luxury_price || item.base_price * 2;
+      default:
+        return item.standard_price || item.base_price;
+    }
+  };
+
   // Handle item selection - auto navigate to next step
   const handleItemSelect = (item) => {
     setSelectedItem(item);
-    // Auto navigate to customize step
+    setSelectedVariant('standard'); // Reset variant on item change
     setTimeout(() => setStep(2), 300);
   };
 
   const calculateTotal = () => {
     if (!selectedItem) return 0;
-    const basePrice = selectedItem.base_price || 0;
+    const unitPrice = getVariantPrice(selectedItem);
     const printPrice = PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price || 0;
     const qty = getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity;
-    return (basePrice + printPrice) * qty;
+    return (unitPrice + printPrice) * qty;
+  };
+
+  const getUnitPrice = () => {
+    if (!selectedItem) return 0;
+    const basePrice = getVariantPrice(selectedItem);
+    const printPrice = PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price || 0;
+    return basePrice + printPrice;
   };
 
   // Toggle color selection
@@ -103,10 +151,13 @@ const BulkOrdersPage = () => {
       state: {
         orderData: {
           ...orderData,
-          quantity: getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity
+          quantity: getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity,
+          product_variant: selectedVariant,
+          unit_price: getUnitPrice()
         },
         customerInfo,
-        selectedItem
+        selectedItem,
+        selectedVariant
       }
     });
   };
@@ -187,7 +238,10 @@ const BulkOrdersPage = () => {
                   </div>
                   <CardContent className="p-3">
                     <p className="font-medium text-sm">{item.name}</p>
-                    <p className="text-[#D90429] font-semibold">₦{item.base_price?.toLocaleString()}</p>
+                    <p className="text-[#D90429] font-semibold">
+                      From ₦{(item.standard_price || item.base_price)?.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">3 quality options</p>
                   </CardContent>
                 </Card>
               ))}
@@ -211,7 +265,7 @@ const BulkOrdersPage = () => {
                   />
                   <div>
                     <p className="font-semibold">{selectedItem?.name}</p>
-                    <p className="text-sm text-zinc-500">₦{selectedItem?.base_price?.toLocaleString()} per piece</p>
+                    <p className="text-sm text-zinc-500">Select quality variant below</p>
                   </div>
                   <Button 
                     variant="outline" 
@@ -221,6 +275,53 @@ const BulkOrdersPage = () => {
                   >
                     Change Item
                   </Button>
+                </div>
+
+                {/* Quality Variant Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-3">
+                    Select Quality Variant *
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {QUALITY_VARIANTS.map((variant) => {
+                      const Icon = variant.icon;
+                      const price = selectedItem ? (
+                        variant.id === 'premium' ? selectedItem.premium_price :
+                        variant.id === 'luxury' ? selectedItem.luxury_price :
+                        selectedItem.standard_price
+                      ) || selectedItem.base_price : 0;
+                      
+                      const isSelected = selectedVariant === variant.id;
+                      
+                      return (
+                        <button
+                          key={variant.id}
+                          onClick={() => setSelectedVariant(variant.id)}
+                          className={`relative p-4 rounded-xl border-2 transition-all duration-300 text-left ${
+                            isSelected ? variant.activeColor : variant.color
+                          } hover:scale-[1.02]`}
+                          data-testid={`variant-${variant.id}`}
+                        >
+                          {isSelected && (
+                            <div className="absolute -top-2 -right-2">
+                              <CheckCircle className="w-6 h-6 text-white bg-green-500 rounded-full" />
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon className="w-5 h-5" />
+                            <span className="font-bold">{variant.label}</span>
+                          </div>
+                          <p className={`text-xs mb-2 ${isSelected ? 'opacity-90' : 'opacity-70'}`}>
+                            {variant.description}
+                          </p>
+                          <p className="text-xl font-bold">
+                            ₦{price?.toLocaleString()}
+                            <span className="text-xs font-normal opacity-70">/piece</span>
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Quick Quantity or use Size Breakdown below */}
@@ -336,14 +437,27 @@ const BulkOrdersPage = () => {
               </CardContent>
             </Card>
 
-            {/* Order Summary */}
+            {/* Order Summary with Variant */}
             <Card className="bg-zinc-900 text-white">
               <CardContent className="p-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-zinc-400 text-sm">Estimated Total</p>
-                    <p className="text-3xl font-bold">₦{calculateTotal().toLocaleString()}</p>
-                    <p className="text-zinc-400 text-sm mt-1">{orderData.quantity} pieces × ₦{((calculateTotal() / orderData.quantity) || 0).toLocaleString()}</p>
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-zinc-400 text-sm">Quality:</p>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        selectedVariant === 'luxury' ? 'bg-amber-500' :
+                        selectedVariant === 'premium' ? 'bg-blue-500' : 'bg-zinc-600'
+                      }`}>
+                        {selectedVariant.charAt(0).toUpperCase() + selectedVariant.slice(1)}
+                      </span>
+                    </div>
+                    <p className="text-zinc-400 text-sm">
+                      Unit Price: ₦{getUnitPrice().toLocaleString()}
+                    </p>
+                    <p className="text-zinc-400 text-sm">
+                      Quantity: {getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity} pieces
+                    </p>
+                    <p className="text-3xl font-bold mt-2">₦{calculateTotal().toLocaleString()}</p>
                   </div>
                   <Package className="w-12 h-12 text-zinc-600" />
                 </div>
@@ -404,7 +518,7 @@ const BulkOrdersPage = () => {
               </CardContent>
             </Card>
 
-            {/* Final Summary */}
+            {/* Final Summary with Variant */}
             <Card className="bg-zinc-900 text-white">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
@@ -413,9 +527,22 @@ const BulkOrdersPage = () => {
                     <span className="text-zinc-400">Item</span>
                     <span>{selectedItem?.name}</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-zinc-400">Quality</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      selectedVariant === 'luxury' ? 'bg-amber-500' :
+                      selectedVariant === 'premium' ? 'bg-blue-500' : 'bg-zinc-600'
+                    }`}>
+                      {selectedVariant.charAt(0).toUpperCase() + selectedVariant.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Unit Price</span>
+                    <span>₦{getUnitPrice().toLocaleString()}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-400">Quantity</span>
-                    <span>{orderData.quantity} pieces</span>
+                    <span>{getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity} pieces</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-400">Print</span>
