@@ -454,22 +454,6 @@ const AdminClothingItemsPage = () => {
                     <p className="text-xs text-zinc-500 mt-1">Suggested: ₦{Math.round((parseFloat(formData.standard_price) || 0) * 2).toLocaleString()}</p>
                   </div>
                 </div>
-              ) : (
-                // Single price for POD items
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">
-                    Base Price (₦) *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.base_price}
-                    onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
-                    placeholder="e.g., 2500"
-                    required
-                  />
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-1">
