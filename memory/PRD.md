@@ -278,6 +278,29 @@ Clone and enhance the Temaruco website with:
 - Supports 12 currencies (NGN, USD, GBP, EUR, CAD, AUD, GHS, KES, ZAR, INR, AED)
 - Shows prices in user's local currency automatically
 
+### Feature 11: Restructured Print-on-Demand with Embedded Design Tool ✅
+- **Removed "Design Tool" from Navigation** - No longer a standalone page
+- **New route structure:**
+  - `/print-on-demand` → Product selection page (T-Shirt, Hoodie, Polo, etc.)
+  - `/print-on-demand/:productId` → Design tool opens with selected product
+- **Correct user flow:**
+  1. User clicks Print-On-Demand from Navbar
+  2. User sees product cards only
+  3. User selects a product (click)
+  4. Design tool opens immediately with that product
+  5. User designs → Adds to Cart → Checkout
+- **Design Tool features:**
+  - Upload image (PNG/JPG up to 10MB)
+  - Add text (double-click to edit)
+  - Drag to position, corners to resize
+  - Color selection for garment
+  - Size selection (XS to XXL)
+  - Quantity selector
+  - Real-time price calculation
+  - Print area guide (dashed box)
+- **Products available:** T-Shirt, Hoodie, Polo, Joggers, Varsity Jacket, Tank Top, Sweatshirt, Cap
+- Legacy `/pod` route redirects to `/print-on-demand`
+
 ## Future Tasks (Backlog)
 - Backend refactoring (server.py is 7500+ lines - needs to be split into modules)
 - Shipping integration
