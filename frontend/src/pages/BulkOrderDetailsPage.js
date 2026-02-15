@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Package, ArrowLeft, CheckCircle, CreditCard, Receipt, Copy, Check } from 'lucide-react';
+import { Package, ArrowLeft, CheckCircle, CreditCard, Receipt, Copy, Check, Star, Crown, Gem } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import SEO from '../components/SEO';
@@ -9,6 +9,13 @@ import { Card, CardContent } from '../components/ui/card';
 import FlutterwavePayment from '../components/FlutterwavePayment';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Variant display config
+const VARIANT_CONFIG = {
+  standard: { label: 'Standard', icon: Star, color: 'bg-zinc-100 text-zinc-700', badgeColor: 'bg-zinc-600' },
+  premium: { label: 'Premium', icon: Crown, color: 'bg-blue-50 text-blue-700', badgeColor: 'bg-blue-600' },
+  luxury: { label: 'Luxury', icon: Gem, color: 'bg-amber-50 text-amber-700', badgeColor: 'bg-amber-500' }
+};
 
 const BulkOrderDetailsPage = () => {
   const location = useLocation();
@@ -23,6 +30,7 @@ const BulkOrderDetailsPage = () => {
   const orderData = location.state?.orderData;
   const customerInfo = location.state?.customerInfo;
   const selectedItem = location.state?.selectedItem;
+  const selectedVariant = location.state?.selectedVariant || orderData?.product_variant || 'standard';
 
   const PRINT_OPTIONS = [
     { value: 'none', label: 'No Print', price: 0 },
@@ -32,7 +40,6 @@ const BulkOrderDetailsPage = () => {
   ];
 
   useEffect(() => {
-    // Redirect if no order data
     if (!orderData || !customerInfo || !selectedItem) {
       toast.error('No order data found. Please start again.');
       navigate('/bulk-orders');
@@ -43,24 +50,27 @@ const BulkOrderDetailsPage = () => {
     return null;
   }
 
+  // Get variant info
+  const variantInfo = VARIANT_CONFIG[selectedVariant] || VARIANT_CONFIG.standard;
+  const VariantIcon = variantInfo.icon;
+
   const calculateTotal = () => {
-    const basePrice = selectedItem.base_price || 0;
-    const printPrice = PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price || 0;
+    const unitPrice = orderData.unit_price || 0;
     const qty = orderData.quantity;
-    return (basePrice + printPrice) * qty;
+    return unitPrice * qty;
   };
 
   const handleProceedToPayment = async () => {
     setLoading(true);
     try {
-      // Create the order using FormData (as required by backend)
       const formData = new FormData();
       
-      // Prepare order data as JSON string
       const orderDataPayload = {
         clothing_item: selectedItem.name,
         clothing_item_id: selectedItem.id,
         quantity: orderData.quantity,
+        product_variant: selectedVariant,
+        unit_price: orderData.unit_price,
         print_type: orderData.print_type,
         colors: orderData.colors,
         color_quantities: orderData.colors.reduce((acc, color) => {
@@ -101,12 +111,6 @@ const BulkOrderDetailsPage = () => {
   const handlePaymentSuccess = async (paymentData) => {
     setPaymentSuccess(true);
     toast.success('Payment successful! Your order is confirmed.');
-    
-    // Order status will be updated by the payment verification endpoint
-    // Navigate to success view after a short delay
-    setTimeout(() => {
-      // Stay on this page to show order ID
-    }, 500);
   };
 
   const copyOrderId = () => {
@@ -215,7 +219,7 @@ const BulkOrderDetailsPage = () => {
               <h2 className="text-xl font-bold">Order Details</h2>
             </div>
 
-            {/* Product Info */}
+            {/* Product Info with Variant Badge */}
             <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-lg mb-6">
               <img 
                 src={selectedItem.image_url}
@@ -224,8 +228,14 @@ const BulkOrderDetailsPage = () => {
                 onError={(e) => { e.target.src = `https://placehold.co/300x300/e2e8f0/64748b?text=${selectedItem.name}`; }}
               />
               <div className="flex-1">
-                <h3 className="font-bold text-lg">{selectedItem.name}</h3>
-                <p className="text-zinc-500">₦{selectedItem.base_price?.toLocaleString()} per piece</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-lg">{selectedItem.name}</h3>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium text-white ${variantInfo.badgeColor}`}>
+                    <VariantIcon className="w-3 h-3 inline mr-1" />
+                    {variantInfo.label}
+                  </span>
+                </div>
+                <p className="text-zinc-500">₦{orderData.unit_price?.toLocaleString()} per piece</p>
                 {selectedItem.description && (
                   <p className="text-sm text-zinc-600 mt-1">{selectedItem.description}</p>
                 )}
@@ -240,6 +250,19 @@ const BulkOrderDetailsPage = () => {
               <div className="space-y-4">
                 <h4 className="font-semibold text-zinc-700 border-b pb-2">Order Specifications</h4>
                 
+                <div className="flex justify-between py-2 border-b border-zinc-100 items-center">
+                  <span className="text-zinc-500">Quality Variant</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${variantInfo.color}`}>
+                    <VariantIcon className="w-4 h-4 inline mr-1" />
+                    {variantInfo.label}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between py-2 border-b border-zinc-100">
+                  <span className="text-zinc-500">Unit Price</span>
+                  <span className="font-semibold">₦{orderData.unit_price?.toLocaleString()}</span>
+                </div>
+                
                 <div className="flex justify-between py-2 border-b border-zinc-100">
                   <span className="text-zinc-500">Quantity</span>
                   <span className="font-semibold">{orderData.quantity} pieces</span>
@@ -249,15 +272,10 @@ const BulkOrderDetailsPage = () => {
                   <span className="text-zinc-500">Print Option</span>
                   <span className="font-semibold">
                     {PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.label}
-                    {orderData.print_type !== 'none' && (
-                      <span className="text-zinc-500 text-sm ml-1">
-                        (+₦{PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price}/pc)
-                      </span>
-                    )}
                   </span>
                 </div>
                 
-                {orderData.colors.length > 0 && (
+                {orderData.colors && orderData.colors.length > 0 && (
                   <div className="py-2 border-b border-zinc-100">
                     <span className="text-zinc-500 block mb-2">Selected Colors</span>
                     <div className="flex flex-wrap gap-2">
@@ -320,14 +338,19 @@ const BulkOrderDetailsPage = () => {
             
             <div className="space-y-3">
               <div className="flex justify-between text-zinc-300">
-                <span>Base Price ({selectedItem.name})</span>
-                <span>₦{selectedItem.base_price?.toLocaleString()} × {orderData.quantity}</span>
+                <span className="flex items-center gap-2">
+                  {selectedItem.name}
+                  <span className={`px-2 py-0.5 rounded text-xs ${variantInfo.badgeColor}`}>
+                    {variantInfo.label}
+                  </span>
+                </span>
+                <span>₦{orderData.unit_price?.toLocaleString()} × {orderData.quantity}</span>
               </div>
               
               {orderData.print_type !== 'none' && (
                 <div className="flex justify-between text-zinc-300">
                   <span>Print ({PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.label})</span>
-                  <span>₦{PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price} × {orderData.quantity}</span>
+                  <span>Included in unit price</span>
                 </div>
               )}
               
