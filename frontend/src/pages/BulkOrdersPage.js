@@ -20,6 +20,7 @@ const BulkOrdersPage = () => {
     quantity: 50,
     print_type: 'none',
     colors: [],
+    sizes: {},
     notes: ''
   });
 
@@ -37,6 +38,7 @@ const BulkOrdersPage = () => {
   ];
 
   const COLORS = ['Black', 'White', 'Navy', 'Red', 'Grey', 'Blue', 'Green', 'Yellow'];
+  const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
 
   useEffect(() => {
     loadClothingItems();
@@ -51,11 +53,42 @@ const BulkOrdersPage = () => {
     }
   };
 
+  // Handle item selection - auto navigate to next step
+  const handleItemSelect = (item) => {
+    setSelectedItem(item);
+    // Auto navigate to customize step
+    setTimeout(() => setStep(2), 300);
+  };
+
   const calculateTotal = () => {
     if (!selectedItem) return 0;
     const basePrice = selectedItem.base_price || 0;
     const printPrice = PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price || 0;
     return (basePrice + printPrice) * orderData.quantity;
+  };
+
+  // Toggle color selection
+  const toggleColor = (color) => {
+    const newColors = orderData.colors.includes(color)
+      ? orderData.colors.filter(c => c !== color)
+      : [...orderData.colors, color];
+    setOrderData({...orderData, colors: newColors});
+  };
+
+  // Update size quantity
+  const updateSizeQty = (size, qty) => {
+    const newSizes = { ...orderData.sizes };
+    if (qty > 0) {
+      newSizes[size] = qty;
+    } else {
+      delete newSizes[size];
+    }
+    setOrderData({...orderData, sizes: newSizes});
+  };
+
+  // Calculate total from sizes
+  const getTotalFromSizes = () => {
+    return Object.values(orderData.sizes).reduce((sum, qty) => sum + (parseInt(qty) || 0), 0);
   };
 
   const handleSubmit = async () => {
