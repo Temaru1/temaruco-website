@@ -292,7 +292,7 @@ const PrintOnDemandDesignPage = () => {
     try {
       const formData = new FormData();
       formData.append('design_file', file);
-      formData.append('product_id', product.id || productId);
+      formData.append('product_id', activeProduct.id || productId);
       formData.append('guest_email', guestInfo.email);
       formData.append('guest_name', guestInfo.name);
       formData.append('guest_phone', guestInfo.phone);
@@ -446,9 +446,9 @@ const PrintOnDemandDesignPage = () => {
       const cartItem = {
         id: `pod-${Date.now()}`,
         type: 'pod',
-        name: `Custom ${product.name} (${variantInfo?.label})`,
-        product_id: product.id || productId,
-        product_name: product.name,
+        name: `Custom ${activeProduct.name} (${variantInfo?.label})`,
+        product_id: activeProduct.id || productId,
+        product_name: activeProduct.name,
         product_variant: selectedVariant,
         unit_price: getVariantPrice(),
         color: selectedColor,
@@ -491,7 +491,7 @@ const PrintOnDemandDesignPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-100">
-      <SEO title={`Design Your ${product.name}`} description="Create your custom design" />
+      <SEO title={`Design Your ${activeProduct.name}`} description="Create your custom design" />
 
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
@@ -502,7 +502,7 @@ const PrintOnDemandDesignPage = () => {
                 <ArrowLeft className="w-5 h-5 mr-1" /><span className="hidden sm:inline">Back</span>
               </button>
               <div className="hidden sm:block h-6 w-px bg-zinc-300" />
-              <h1 className="font-semibold text-lg">{product.name}</h1>
+              <h1 className="font-semibold text-lg">{activeProduct.name}</h1>
               <span className={`px-2 py-0.5 rounded text-xs font-medium text-white ${variantInfo?.badgeColor}`}>
                 {variantInfo?.label}
               </span>
@@ -725,9 +725,9 @@ const PrintOnDemandDesignPage = () => {
                 <div className="space-y-2">
                   {QUALITY_VARIANTS.map((variant) => {
                     const Icon = variant.icon;
-                    const price = variant.id === 'premium' ? (product.premium_price || (product.standard_price || product.base_price) * 1.5) :
-                                  variant.id === 'luxury' ? (product.luxury_price || (product.standard_price || product.base_price) * 2) :
-                                  (product.standard_price || product.base_price);
+                    const price = variant.id === 'premium' ? (activeProduct.premium_price || (activeProduct.standard_price || activeProduct.base_price) * 1.5) :
+                                  variant.id === 'luxury' ? (activeProduct.luxury_price || (activeProduct.standard_price || activeProduct.base_price) * 2) :
+                                  (activeProduct.standard_price || activeProduct.base_price);
                     const isSelected = selectedVariant === variant.id;
                     return (
                       <button key={variant.id} onClick={() => setSelectedVariant(variant.id)}
@@ -753,7 +753,7 @@ const PrintOnDemandDesignPage = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Color</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(product.colors || ['White', 'Black']).map((color) => (
+                  {(activeProduct.colors || ['White', 'Black']).map((color) => (
                     <button key={color} onClick={() => setSelectedColor(color)}
                       className={`w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color ? 'border-[#D90429] ring-2 ring-[#D90429]/30' : 'border-zinc-300'}`}
                       style={{ backgroundColor: COLOR_HEX[color] || '#ccc' }} title={color} />
@@ -768,7 +768,7 @@ const PrintOnDemandDesignPage = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Size</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(product.sizes || ['S', 'M', 'L', 'XL']).map((size) => (
+                  {(activeProduct.sizes || ['S', 'M', 'L', 'XL']).map((size) => (
                     <button key={size} onClick={() => setSelectedSize(size)}
                       className={`px-4 py-2 rounded border transition-all ${selectedSize === size ? 'bg-[#D90429] text-white border-[#D90429]' : 'border-zinc-300 hover:border-zinc-400'}`}>
                       {size}
@@ -795,7 +795,7 @@ const PrintOnDemandDesignPage = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Order Summary</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-zinc-400">Product</span><span>{product.name}</span></div>
+                  <div className="flex justify-between"><span className="text-zinc-400">Product</span><span>{activeProduct.name}</span></div>
                   <div className="flex justify-between items-center">
                     <span className="text-zinc-400">Quality</span>
                     <span className={`px-2 py-0.5 rounded text-xs ${variantInfo?.badgeColor}`}>{variantInfo?.label}</span>
