@@ -262,12 +262,13 @@ const FabricsPage = () => {
                         <p className="text-green-800 font-medium">Order placed successfully!</p>
                         <p className="text-sm text-green-600">Order ID: {orderId}</p>
                       </div>
-                      <PaystackPayment
+                      <PaymentSelector
                         orderId={orderId}
                         orderType="fabric"
                         amount={getTotal()}
                         email={customerInfo.email}
                         customerName={customerInfo.name}
+                        phone={customerInfo.phone}
                         onSuccess={() => {
                           toast.success('Payment successful!');
                           navigate(`/order-summary/${orderId}`);
