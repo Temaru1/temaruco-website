@@ -186,11 +186,13 @@ const FabricsPage = () => {
                   <div className="space-y-4 mb-6">
                     {cart.map((item) => (
                       <div key={item.id} className="flex items-center gap-4 p-4 bg-zinc-50 rounded-lg">
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
+                        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
+                          <img
+                            src={getImageUrl(item.image_url)}
+                            alt={item.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-zinc-500">{formatPrice(item.price)}/yard</p>
