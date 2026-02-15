@@ -7,6 +7,7 @@ import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
 
 const BoutiquePage = () => {
   const navigate = useNavigate();
