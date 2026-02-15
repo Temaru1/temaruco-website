@@ -3,7 +3,7 @@ import { ShoppingCart, Plus, Minus, X, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import PaystackPayment from '../components/PaystackPayment';
+import PaymentSelector from '../components/PaymentSelector';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
