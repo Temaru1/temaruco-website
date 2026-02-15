@@ -229,12 +229,13 @@ const BulkOrdersPage = () => {
                   onClick={() => handleItemSelect(item)}
                   data-testid={`bulk-item-${item.id}`}
                 >
-                  <div className="aspect-square bg-zinc-100 rounded-t-lg overflow-hidden">
+                  {/* ISSUE 2 FIX: Use object-contain to show full outfit without cropping */}
+                  <div className="aspect-square bg-white rounded-t-lg overflow-hidden flex items-center justify-center">
                     <img 
                       src={getImageUrl(item.image_url)} 
                       alt={item.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = `https://placehold.co/300x300/e2e8f0/64748b?text=${item.name}`; }}
+                      className="w-full h-full object-contain object-center"
+                      onError={(e) => { e.target.src = getPlaceholderImage(item.name); }}
                     />
                   </div>
                   <CardContent className="p-3">
@@ -257,41 +258,46 @@ const BulkOrdersPage = () => {
             
             <Card>
               <CardContent className="p-6 space-y-6">
-                {/* Selected Item Summary */}
-                <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-lg">
-                  <img 
-                    src={getImageUrl(selectedItem?.image_url)}
-                    alt={selectedItem?.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                    onError={(e) => { e.target.src = `https://placehold.co/100x100/e2e8f0/64748b?text=${selectedItem?.name}`; }}
-                  />
-                  <div>
-                    <p className="font-semibold">{selectedItem?.name}</p>
-                    <p className="text-sm text-zinc-500">Select quality variant below</p>
+                {/* ISSUE 3 FIX: Large preview container for variation selection */}
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Large Image Preview */}
+                  <div className="lg:w-1/2">
+                    <div className="max-h-[450px] w-full flex justify-center items-center bg-white rounded-lg border p-4">
+                      <img 
+                        src={getImageUrl(selectedItem?.image_url)}
+                        alt={selectedItem?.name}
+                        className="object-contain max-h-[420px] w-auto"
+                        onError={(e) => { e.target.src = getPlaceholderImage(selectedItem?.name, 400, 450); }}
+                      />
+                    </div>
+                    <div className="mt-3 text-center">
+                      <p className="font-semibold text-lg">{selectedItem?.name}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setStep(1)}
+                        className="mt-2"
+                      >
+                        Change Item
+                      </Button>
+                    </div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setStep(1)}
-                    className="ml-auto"
-                  >
-                    Change Item
-                  </Button>
-                </div>
-
-                {/* Quality Variant Selector */}
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-3">
-                    Select Quality Variant *
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {QUALITY_VARIANTS.map((variant) => {
-                      const Icon = variant.icon;
-                      const price = selectedItem ? (
-                        variant.id === 'premium' ? selectedItem.premium_price :
-                        variant.id === 'luxury' ? selectedItem.luxury_price :
-                        selectedItem.standard_price
-                      ) || selectedItem.base_price : 0;
+                  
+                  {/* Selection Panel */}
+                  <div className="lg:w-1/2 space-y-6">
+                    {/* Quality Variant Selector */}
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-3">
+                        Select Quality Variant *
+                      </label>
+                      <div className="grid grid-cols-1 gap-3">
+                        {QUALITY_VARIANTS.map((variant) => {
+                          const Icon = variant.icon;
+                          const price = selectedItem ? (
+                            variant.id === 'premium' ? selectedItem.premium_price :
+                            variant.id === 'luxury' ? selectedItem.luxury_price :
+                            selectedItem.standard_price
+                          ) || selectedItem.base_price : 0;
                       
                       const isSelected = selectedVariant === variant.id;
                       
