@@ -74,17 +74,12 @@ const AdminClothingItemsPage = () => {
         ? `${API_URL}/api/admin/pod/clothing-items`
         : `${API_URL}/api/admin/bulk/clothing-items`;
       
-      const payload = activeTab === 'bulk' ? {
+      // Both POD and Bulk items use variant pricing
+      const payload = {
         name: formData.name,
         standard_price: parseFloat(formData.standard_price),
         premium_price: parseFloat(formData.premium_price),
         luxury_price: parseFloat(formData.luxury_price),
-        image_url: imageUrl,
-        description: formData.description,
-        is_active: formData.is_active
-      } : {
-        name: formData.name,
-        base_price: parseFloat(formData.base_price),
         image_url: imageUrl,
         description: formData.description,
         is_active: formData.is_active
@@ -111,17 +106,12 @@ const AdminClothingItemsPage = () => {
         ? `${API_URL}/api/admin/pod/clothing-items/${editingItem.id}`
         : `${API_URL}/api/admin/bulk/clothing-items/${editingItem.id}`;
       
-      const payload = activeTab === 'bulk' ? {
+      // Both POD and Bulk items use variant pricing
+      const payload = {
         name: formData.name,
         standard_price: parseFloat(formData.standard_price),
         premium_price: parseFloat(formData.premium_price),
         luxury_price: parseFloat(formData.luxury_price),
-        image_url: formData.image_url,
-        description: formData.description,
-        is_active: formData.is_active
-      } : {
-        name: formData.name,
-        base_price: parseFloat(formData.base_price),
         image_url: formData.image_url,
         description: formData.description,
         is_active: formData.is_active
