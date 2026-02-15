@@ -121,6 +121,7 @@ function AppRouter() {
         
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/design-services" element={<DesignServicesPage />} />
         <Route path="/track" element={<OrderTrackingPage />} />
         <Route path="/receipts" element={<ReceiptLookupPage />} />
         <Route path="/cart" element={<CartPage />} />
