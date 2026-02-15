@@ -123,8 +123,8 @@ const LandingPage = () => {
             <div className="relative">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-zinc-100 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1590670796065-5c2469672e18?w=800&q=80"
-                  alt="Fashion model in elegant African attire"
+                  src="https://customer-assets.emergentagent.com/job_apparel-manager-31/artifacts/hnb61331_237537.png"
+                  alt="Temaruco Clothing Services - Bulk Orders, Print on Demand, Boutique"
                   className="w-full h-full object-cover"
                 />
               </div>
