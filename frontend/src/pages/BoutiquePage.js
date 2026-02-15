@@ -268,8 +268,9 @@ const BoutiquePage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {filteredProducts.map(product => (
               <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-all" data-testid="product-card">
-                <div className="relative aspect-square cursor-pointer overflow-hidden" onClick={() => setLightboxImage(product)}>
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                {/* ISSUE 2 FIX: Use object-contain to show full outfit without cropping */}
+                <div className="relative aspect-square cursor-pointer overflow-hidden bg-white flex items-center justify-center" onClick={() => setLightboxImage(product)}>
+                  <img src={getImageUrl(product.image_url)} alt={product.name} className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-110" onError={(e) => { e.target.src = getPlaceholderImage(product.name); }} />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                     <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={40} />
                   </div>
