@@ -556,11 +556,25 @@ async def sanitize_filename(filename: str) -> str:
         filename = name[:95] + ext
     return filename
 
-async def save_upload_file(file: UploadFile, allowed_extensions: set = None) -> Dict[str, str]:
-    """Save uploaded file with security validation"""
+async def save_upload_file(file: UploadFile, allowed_extensions: set = None, module: str = "general") -> Dict[str, str]:
+    """
+    Unified file upload service with comprehensive logging.
+    Used by all modules: bulk, pod, fabric, boutique, souvenir
+    
+    Args:
+        file: The uploaded file
+        allowed_extensions: Set of allowed file extensions
+        module: Module name for logging (bulk, pod, fabric, boutique, souvenir)
+    
+    Returns:
+        Dict with file_name, file_path, original_name, file_size
+    """
+    logger.info(f"[UPLOAD][{module}] File received: {file.filename}")
+    
     # Validate file
     is_valid, message = await validate_file_upload(file, allowed_extensions)
     if not is_valid:
+        logger.error(f"[UPLOAD][{module}] Validation failed: {message}")
         raise HTTPException(status_code=400, detail=message)
     
     # Generate secure filename
@@ -570,6 +584,9 @@ async def save_upload_file(file: UploadFile, allowed_extensions: set = None) -> 
     filename = f"{file_id}{file_ext}"
     file_path = UPLOAD_DIR / filename
     
+    logger.info(f"[UPLOAD][{module}] Generated filename: {filename}")
+    logger.info(f"[UPLOAD][{module}] Save path: {file_path}")
+    
     # Ensure upload directory exists and is writable
     UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
     
@@ -578,13 +595,26 @@ async def save_upload_file(file: UploadFile, allowed_extensions: set = None) -> 
         contents = await file.read()
         with open(file_path, 'wb') as f:
             f.write(contents)
+        
+        # Verify file was saved
+        if not file_path.exists():
+            logger.error(f"[UPLOAD][{module}] File not found after save: {file_path}")
+            raise HTTPException(status_code=500, detail="File save verification failed")
+        
+        saved_size = file_path.stat().st_size
+        logger.info(f"[UPLOAD][{module}] File saved successfully: {filename} ({saved_size} bytes)")
+        
     except Exception as e:
-        logging.error(f"File upload error: {str(e)}")
+        logger.error(f"[UPLOAD][{module}] File save error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save file")
+    
+    # Generate public URL
+    public_url = f"/api/uploads/{filename}"
+    logger.info(f"[UPLOAD][{module}] Generated URL: {public_url}")
     
     return {
         'file_name': filename,
-        'file_path': f"/api/uploads/{filename}",
+        'file_path': public_url,
         'original_name': safe_original_name,
         'file_size': len(contents)
     }
