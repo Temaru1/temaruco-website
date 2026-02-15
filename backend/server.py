@@ -1515,6 +1515,279 @@ async def create_pod_order(
     del pod_order['_id']
     return pod_order
 
+# ==================== POD DESIGN UPLOAD (Dual File Storage) ====================
+@api_router.get("/pod/print-sizes")
+async def get_print_sizes():
+    """Get available print sizes for POD designs"""
+    return PRINT_SIZES
+
+@api_router.post("/pod/guest-contact")
+async def create_or_get_guest_contact(data: Dict[str, Any]):
+    """Create or retrieve guest contact record for POD design linking"""
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    phone = data.get('phone', '').strip()
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    # Check if guest contact exists
+    existing = await db.pod_guest_contacts.find_one({'email': email})
+    
+    if existing:
+        # Update contact info if provided
+        update_data = {'updated_at': datetime.now(timezone.utc).isoformat()}
+        if name:
+            update_data['name'] = name
+        if phone:
+            update_data['phone'] = phone
+        
+        await db.pod_guest_contacts.update_one(
+            {'email': email},
+            {'$set': update_data}
+        )
+        
+        existing.pop('_id', None)
+        existing.update(update_data)
+        logger.info(f"[POD] Updated guest contact: {email}")
+        return existing
+    
+    # Create new guest contact
+    guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+    guest_contact = {
+        'id': guest_id,
+        'guest_id': guest_id,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'designs': [],
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.pod_guest_contacts.insert_one(guest_contact)
+    guest_contact.pop('_id', None)
+    
+    logger.info(f"[POD] Created guest contact: {email} -> {guest_id}")
+    return guest_contact
+
+@api_router.post("/pod/upload-design")
+async def upload_pod_design(
+    design_file: UploadFile = File(...),
+    product_id: str = Form(...),
+    guest_email: str = Form(...),
+    guest_name: str = Form(""),
+    guest_phone: str = Form("")
+):
+    """
+    Upload POD design - stores original file and links to guest contact.
+    Mockup is generated client-side and uploaded separately.
+    
+    Returns: design_id, original_file_url, guest_id
+    """
+    logger.info(f"[POD DESIGN] Upload started: product={product_id}, email={guest_email}")
+    
+    # Validate file
+    is_valid, message = await validate_file_upload(design_file, ALLOWED_IMAGE_EXTENSIONS)
+    if not is_valid:
+        logger.error(f"[POD DESIGN] Validation failed: {message}")
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Get or create guest contact
+    guest_contact = await db.pod_guest_contacts.find_one({'email': guest_email.lower()})
+    if not guest_contact:
+        guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+        guest_contact = {
+            'id': guest_id,
+            'guest_id': guest_id,
+            'name': guest_name,
+            'email': guest_email.lower(),
+            'phone': guest_phone,
+            'designs': [],
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }
+        await db.pod_guest_contacts.insert_one(guest_contact)
+        logger.info(f"[POD DESIGN] Created guest contact: {guest_email}")
+    else:
+        guest_id = guest_contact['id']
+    
+    # Generate unique design ID
+    design_id = f"design_{uuid.uuid4().hex[:12]}"
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Save original design file
+    file_ext = os.path.splitext(design_file.filename)[1].lower()
+    original_filename = f"{product_id}_{timestamp}_{design_id}{file_ext}"
+    original_path = POD_ORIGINALS_DIR / original_filename
+    
+    try:
+        contents = await design_file.read()
+        with open(original_path, 'wb') as f:
+            f.write(contents)
+        
+        if not original_path.exists():
+            raise Exception("File save verification failed")
+        
+        logger.info(f"[POD DESIGN] Original saved: {original_filename} ({len(contents)} bytes)")
+    except Exception as e:
+        logger.error(f"[POD DESIGN] Save failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save design file")
+    
+    original_url = f"/api/uploads/designs/original/{original_filename}"
+    
+    # Create design record
+    design_record = {
+        'id': design_id,
+        'design_id': design_id,
+        'guest_id': guest_id,
+        'guest_email': guest_email.lower(),
+        'product_id': product_id,
+        'original_file_url': original_url,
+        'mockup_file_url': None,
+        'print_size': 'a4',
+        'scale': 1.0,
+        'position_x': 0,
+        'position_y': 0,
+        'rotation': 0,
+        'file_size': len(contents),
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.pod_designs.insert_one(design_record)
+    
+    # Link design to guest contact
+    await db.pod_guest_contacts.update_one(
+        {'id': guest_id},
+        {
+            '$push': {'designs': design_id},
+            '$set': {'updated_at': datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    logger.info(f"[POD DESIGN] Design linked to guest: {design_id} -> {guest_id}")
+    
+    design_record.pop('_id', None)
+    return {
+        'design_id': design_id,
+        'guest_id': guest_id,
+        'original_file_url': original_url,
+        'message': 'Design uploaded successfully'
+    }
+
+@api_router.post("/pod/upload-mockup/{design_id}")
+async def upload_pod_mockup(
+    design_id: str,
+    mockup_file: UploadFile = File(...)
+):
+    """
+    Upload generated mockup for a POD design.
+    Called after client-side mockup generation.
+    """
+    logger.info(f"[POD MOCKUP] Upload started: design_id={design_id}")
+    
+    # Verify design exists
+    design = await db.pod_designs.find_one({'id': design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    # Validate file
+    is_valid, message = await validate_file_upload(mockup_file, ALLOWED_IMAGE_EXTENSIONS)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Save mockup file
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    mockup_filename = f"{design['product_id']}_{timestamp}_{design_id}_mockup.png"
+    mockup_path = POD_MOCKUPS_DIR / mockup_filename
+    
+    try:
+        contents = await mockup_file.read()
+        with open(mockup_path, 'wb') as f:
+            f.write(contents)
+        
+        logger.info(f"[POD MOCKUP] Saved: {mockup_filename} ({len(contents)} bytes)")
+    except Exception as e:
+        logger.error(f"[POD MOCKUP] Save failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save mockup file")
+    
+    mockup_url = f"/api/uploads/designs/mockups/{mockup_filename}"
+    
+    # Update design record
+    await db.pod_designs.update_one(
+        {'id': design_id},
+        {
+            '$set': {
+                'mockup_file_url': mockup_url,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    logger.info(f"[POD MOCKUP] Linked to design: {design_id}")
+    
+    return {
+        'design_id': design_id,
+        'mockup_file_url': mockup_url,
+        'message': 'Mockup uploaded successfully'
+    }
+
+@api_router.put("/pod/design/{design_id}/transform")
+async def update_pod_design_transform(design_id: str, data: Dict[str, Any]):
+    """
+    Update design transform properties (scale, position, rotation, print size).
+    Used for dynamic resizing without re-upload.
+    """
+    design = await db.pod_designs.find_one({'id': design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    update_data = {'updated_at': datetime.now(timezone.utc).isoformat()}
+    
+    if 'print_size' in data:
+        if data['print_size'] not in PRINT_SIZES:
+            raise HTTPException(status_code=400, detail=f"Invalid print size. Valid: {list(PRINT_SIZES.keys())}")
+        update_data['print_size'] = data['print_size']
+    
+    if 'scale' in data:
+        update_data['scale'] = float(data['scale'])
+    
+    if 'position_x' in data:
+        update_data['position_x'] = float(data['position_x'])
+    
+    if 'position_y' in data:
+        update_data['position_y'] = float(data['position_y'])
+    
+    if 'rotation' in data:
+        update_data['rotation'] = float(data['rotation'])
+    
+    await db.pod_designs.update_one(
+        {'id': design_id},
+        {'$set': update_data}
+    )
+    
+    logger.info(f"[POD DESIGN] Transform updated: {design_id} -> {update_data}")
+    
+    return {'message': 'Design transform updated', 'design_id': design_id}
+
+@api_router.get("/pod/design/{design_id}")
+async def get_pod_design(design_id: str):
+    """Get POD design details"""
+    design = await db.pod_designs.find_one({'id': design_id}, {'_id': 0})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    return design
+
+@api_router.get("/pod/guest/{guest_id}/designs")
+async def get_guest_designs(guest_id: str):
+    """Get all designs for a guest"""
+    designs = await db.pod_designs.find(
+        {'guest_id': guest_id},
+        {'_id': 0}
+    ).sort('created_at', -1).to_list(100)
+    return designs
+
 @api_router.get("/orders/my-orders")
 async def get_my_orders(request: Request):
     current_user = await get_current_user_from_cookie_or_header(request)
