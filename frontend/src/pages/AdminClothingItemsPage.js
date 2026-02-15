@@ -311,7 +311,7 @@ const AdminClothingItemsPage = () => {
           >
             <div className="aspect-square bg-zinc-100 relative">
               <img
-                src={item.image_url}
+                src={getImageUrl(item.image_url)}
                 alt={item.name}
                 className="w-full h-full object-cover"
                 onError={(e) => { e.target.src = `https://placehold.co/400x400/e2e8f0/64748b?text=${item.name}`; }}
