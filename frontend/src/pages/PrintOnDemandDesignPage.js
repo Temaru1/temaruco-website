@@ -92,12 +92,21 @@ const PrintOnDemandDesignPage = () => {
         const items = response.data || [];
         // Find matching product by name or id
         const normalizedId = productId?.toLowerCase().replace(/[-_]/g, '');
-        const matchingProduct = items.find(item => {
+        
+        // First try exact match
+        let matchingProduct = items.find(item => {
           const normalizedName = item.name?.toLowerCase().replace(/[-_\s]/g, '');
-          return normalizedName === normalizedId ||
-                 normalizedName.includes(normalizedId) ||
-                 item.id === productId;
+          return normalizedName === normalizedId || item.id === productId;
         });
+        
+        // If no exact match, try partial match
+        if (!matchingProduct) {
+          matchingProduct = items.find(item => {
+            const normalizedName = item.name?.toLowerCase().replace(/[-_\s]/g, '');
+            return normalizedName.includes(normalizedId);
+          });
+        }
+        
         if (matchingProduct) {
           setDbProduct(matchingProduct);
         }
