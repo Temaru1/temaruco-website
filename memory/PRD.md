@@ -1,7 +1,7 @@
 # Temaruco Website - Product Requirements Document
 
 ## Overview
-A comprehensive e-commerce platform for Temaruco Clothing Factory featuring bulk orders, print-on-demand, boutique, fabrics, and souvenirs sales, with integrated Paystack payment processing and a full admin dashboard.
+A comprehensive e-commerce platform for Temaruco Clothing Factory featuring bulk orders, print-on-demand, boutique, fabrics, and souvenirs sales, with integrated Flutterwave payment processing and a full admin dashboard.
 
 ## Original Problem Statement
 Clone and enhance the Temaruco website with:
@@ -9,14 +9,14 @@ Clone and enhance the Temaruco website with:
 - New service pages: Fabrics, Souvenirs, Design Lab
 - Interactive price calculator
 - Full admin dashboard for managing products, orders, and operations
-- Paystack payment integration for online orders
+- Flutterwave payment integration for online orders
 - Image upload and management for clothing items
 
 ## Tech Stack
 - **Frontend:** React, Tailwind CSS, Axios, react-helmet-async (SEO), Shadcn/UI components
 - **Backend:** FastAPI, Motor (async MongoDB driver), JWT authentication
 - **Database:** MongoDB
-- **Payments:** Paystack (Live integration)
+- **Payments:** Flutterwave (Live integration)
 - **Services:** Supervisor for process management
 - **Fonts:** Syne (headings), Manrope (body)
 - **Brand Color:** #D90429
@@ -47,7 +47,7 @@ Clone and enhance the Temaruco website with:
 - Revenue analytics dashboard
 
 ### Payments (COMPLETED)
-- Paystack integration (Live keys configured)
+- Flutterwave integration (Live keys configured)
 - Payment initialization and verification
 - Supports all order types: fabric, souvenir, bulk, pod, boutique
 - Dual payment options on Order Summary: Paystack (online) or Bank Transfer
