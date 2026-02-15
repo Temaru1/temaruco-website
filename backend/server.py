@@ -1946,6 +1946,171 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
     }
 
 # ==================== DESIGN LAB ====================
+@api_router.post("/design-inquiries")
+async def create_design_inquiry(
+    full_name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(None),
+    design_type: str = Form(...),
+    description: str = Form(...),
+    deadline: Optional[str] = Form(None),
+    budget_range: Optional[str] = Form(None),
+    reference_0: Optional[UploadFile] = File(None),
+    reference_1: Optional[UploadFile] = File(None),
+    reference_2: Optional[UploadFile] = File(None),
+    reference_3: Optional[UploadFile] = File(None),
+    reference_4: Optional[UploadFile] = File(None)
+):
+    """Submit a design services inquiry"""
+    inquiry_code = f"DSN-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+    
+    # Collect reference files
+    reference_files = [reference_0, reference_1, reference_2, reference_3, reference_4]
+    reference_files = [f for f in reference_files if f and f.filename]
+    
+    # Handle file uploads
+    uploaded_files = []
+    if reference_files:
+        UPLOAD_DIR = ROOT_DIR / 'uploads' / 'design_references'
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        
+        for file in reference_files:
+            if file and file.filename:
+                file_ext = file.filename.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{file_ext}"
+                file_path = UPLOAD_DIR / filename
+                
+                with open(file_path, 'wb') as f:
+                    shutil.copyfileobj(file.file, f)
+                
+                uploaded_files.append(f"/uploads/design_references/{filename}")
+    
+    # Create inquiry record
+    inquiry = {
+        'id': inquiry_code,
+        'inquiry_code': inquiry_code,
+        'type': 'design_inquiry',
+        'design_type': design_type,
+        'full_name': full_name,
+        'email': email,
+        'phone': phone,
+        'description': description,
+        'deadline': deadline,
+        'budget_range': budget_range,
+        'reference_files': uploaded_files,
+        'status': 'pending_review',
+        'quote_amount': None,
+        'admin_notes': None,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.design_inquiries.insert_one(inquiry)
+    
+    # Create admin notification
+    await create_notification(
+        'design_inquiry',
+        'New Design Inquiry',
+        f"{full_name} submitted a {design_type.replace('_', ' ')} design request",
+        inquiry_code
+    )
+    
+    # Send acknowledgment email
+    try:
+        email_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #D90429; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background: #f9f9f9; padding: 30px; }}
+                .inquiry-box {{ background: white; padding: 20px; border-left: 4px solid #D90429; margin: 20px 0; border-radius: 4px; }}
+                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Design Inquiry Received</h1>
+                </div>
+                <div class="content">
+                    <p>Dear {full_name},</p>
+                    <p>Thank you for your design inquiry! We've received your request and our team will review it shortly.</p>
+                    
+                    <div class="inquiry-box">
+                        <h3>Inquiry Details</h3>
+                        <p><strong>Reference Code:</strong> {inquiry_code}</p>
+                        <p><strong>Service Type:</strong> {design_type.replace('_', ' ').title()}</p>
+                        <p><strong>Budget Range:</strong> {budget_range or 'To be discussed'}</p>
+                        <p><strong>Deadline:</strong> {deadline or 'Flexible'}</p>
+                    </div>
+                    
+                    <p><strong>What happens next:</strong></p>
+                    <ol>
+                        <li>Our design team will review your request within 24 hours</li>
+                        <li>You'll receive a custom quote via email or WhatsApp</li>
+                        <li>Once approved, we'll start working on your design</li>
+                        <li>You'll receive drafts for review and feedback</li>
+                    </ol>
+                    
+                    <p>If you have any questions, feel free to reach out!</p>
+                </div>
+                <div class="footer">
+                    <p>Temaruco Limited | Design Services</p>
+                    <p>Reference Code: {inquiry_code}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        await send_email_notification(
+            to_email=email,
+            subject=f'Design Inquiry Received - {inquiry_code}',
+            html_content=email_html
+        )
+    except Exception as e:
+        logger.error(f"Failed to send design inquiry email: {str(e)}")
+    
+    return {
+        'message': 'Design inquiry submitted successfully',
+        'inquiry_code': inquiry_code
+    }
+
+@api_router.get("/admin/design-inquiries")
+async def get_design_inquiries(admin_user: Dict = Depends(get_admin_user)):
+    """Get all design inquiries for admin"""
+    inquiries = await db.design_inquiries.find({}, {'_id': 0}).sort('created_at', -1).to_list(500)
+    return inquiries
+
+@api_router.patch("/admin/design-inquiries/{inquiry_code}")
+async def update_design_inquiry(
+    inquiry_code: str,
+    status: Optional[str] = None,
+    quote_amount: Optional[float] = None,
+    admin_notes: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Update design inquiry status"""
+    update_data = {'updated_at': datetime.now(timezone.utc).isoformat()}
+    if status:
+        update_data['status'] = status
+    if quote_amount is not None:
+        update_data['quote_amount'] = quote_amount
+    if admin_notes:
+        update_data['admin_notes'] = admin_notes
+    
+    result = await db.design_inquiries.update_one(
+        {'inquiry_code': inquiry_code},
+        {'$set': update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    
+    return {'message': 'Inquiry updated successfully'}
+
 @api_router.post("/design-lab/request")
 async def create_design_request(
     customer_name: str = Form(...),
