@@ -301,6 +301,38 @@ Clone and enhance the Temaruco website with:
 - **Products available:** T-Shirt, Hoodie, Polo, Joggers, Varsity Jacket, Tank Top, Sweatshirt, Cap
 - Legacy `/pod` route redirects to `/print-on-demand`
 
+### Feature 12: Design Services Page ✅
+- **Purpose:** For customers who need professional design help
+- **Added to Navbar:** "Design Services" link
+- **Route:** `/design-services`
+- **Services offered:**
+  - Logo Design
+  - T-Shirt Artwork
+  - Brand Identity
+  - Social Media Graphics
+  - Event Flyers
+  - Custom Illustrations
+- **Inquiry Form (NOT a cart/checkout):**
+  - Full Name
+  - Email
+  - Phone / WhatsApp
+  - Type of Design (dropdown)
+  - Description of Idea
+  - Upload Reference Images (up to 5)
+  - Deadline Needed
+  - Budget Range (Optional)
+  - "Submit Inquiry" button
+- **Backend:**
+  - `/api/design-inquiries` (POST) - Submit inquiry
+  - `/api/admin/design-inquiries` (GET) - Admin view all
+  - `/api/admin/design-inquiries/{code}` (PATCH) - Update status
+  - Creates notification for admin
+  - Sends acknowledgment email to customer
+- **What happens after submission:**
+  - Admin receives notification in dashboard
+  - No automatic pricing or payment
+  - Admin reviews → Sends manual quote via email/WhatsApp
+
 ## Future Tasks (Backlog)
 - Backend refactoring (server.py is 7500+ lines - needs to be split into modules)
 - Shipping integration
