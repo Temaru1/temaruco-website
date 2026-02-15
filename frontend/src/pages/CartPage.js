@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, CreditCard, Building } from 'lucide-react';
 import { toast } from 'sonner';
 import { createBoutiqueOrder } from '../utils/api';
+import PaymentSelector from '../components/PaymentSelector';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const CartPage = () => {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [previousPage, setPreviousPage] = useState('/boutique');
+  const [orderId, setOrderId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card');
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -23,7 +26,6 @@ const CartPage = () => {
   });
 
   useEffect(() => {
-    // Get previous page from state or localStorage
     const referrer = location.state?.from || localStorage.getItem('cartReferrer') || '/boutique';
     setPreviousPage(referrer);
   }, [location]);
@@ -96,21 +98,30 @@ const CartPage = () => {
       formData.append('delivery_notes', customerInfo.delivery_notes || '');
 
       const response = await createBoutiqueOrder(formData);
-      toast.success('Order created successfully! Redirecting to payment instructions...');
+      const newOrderId = response.data.order_id || response.data.id;
+      setOrderId(newOrderId);
+      toast.success('Order created! Please complete payment.');
       
-      // Clear cart
-      localStorage.removeItem('cart');
-      setCart([]);
-      setShowCheckoutModal(false);
-      
-      // Redirect to order summary page
-      const orderId = response.data.order_id || response.data.id;
-      navigate(`/order-summary/${orderId}`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Checkout failed');
-    } finally {
       setCheckoutLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success('Payment successful! Your order is being processed.');
+    localStorage.removeItem('cart');
+    setCart([]);
+    setShowCheckoutModal(false);
+    navigate(`/order-summary/${orderId}`);
+  };
+
+  const handlePayLater = () => {
+    toast.info('Order saved. You can pay later from your order summary.');
+    localStorage.removeItem('cart');
+    setCart([]);
+    setShowCheckoutModal(false);
+    navigate(`/order-summary/${orderId}`);
   };
 
   return (
@@ -240,120 +251,192 @@ const CartPage = () => {
       {showCheckoutModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
-            <h2 className="font-oswald text-3xl font-bold mb-6">Delivery & Contact Information</h2>
-            
-            <form onSubmit={handleSubmitOrder} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Full Name *</label>
-                  <input
-                    type="text"
-                    value={customerInfo.name}
-                    onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-customer-name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Email Address *</label>
-                  <input
-                    type="email"
-                    value={customerInfo.email}
-                    onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
-                    placeholder="john@example.com"
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-customer-email"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">Phone Number *</label>
-                  <input
-                    type="tel"
-                    value={customerInfo.phone}
-                    onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                    placeholder="+234 800 000 0000"
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-customer-phone"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">Delivery Address *</label>
-                  <textarea
-                    value={customerInfo.delivery_address}
-                    onChange={(e) => setCustomerInfo({...customerInfo, delivery_address: e.target.value})}
-                    placeholder="Enter your full delivery address"
-                    rows={3}
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-delivery-address"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">City</label>
-                  <input
-                    type="text"
-                    value={customerInfo.delivery_city}
-                    onChange={(e) => setCustomerInfo({...customerInfo, delivery_city: e.target.value})}
-                    placeholder="Lagos"
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-delivery-city"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">State</label>
-                  <input
-                    type="text"
-                    value={customerInfo.delivery_state}
-                    onChange={(e) => setCustomerInfo({...customerInfo, delivery_state: e.target.value})}
-                    placeholder="Lagos State"
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-delivery-state"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">Delivery Notes (Optional)</label>
-                  <textarea
-                    value={customerInfo.delivery_notes}
-                    onChange={(e) => setCustomerInfo({...customerInfo, delivery_notes: e.target.value})}
-                    placeholder="Any special instructions for delivery"
-                    rows={2}
-                    className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="cart-delivery-notes"
-                  />
-                </div>
-              </div>
+            {!orderId ? (
+              <>
+                <h2 className="font-oswald text-3xl font-bold mb-6">Delivery & Contact Information</h2>
+                
+                <form onSubmit={handleSubmitOrder} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Full Name *</label>
+                      <input
+                        type="text"
+                        value={customerInfo.name}
+                        onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                        placeholder="John Doe"
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-customer-name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Email Address *</label>
+                      <input
+                        type="email"
+                        value={customerInfo.email}
+                        onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                        placeholder="john@example.com"
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-customer-email"
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-2">Phone Number *</label>
+                      <input
+                        type="tel"
+                        value={customerInfo.phone}
+                        onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                        placeholder="+234 800 000 0000"
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-customer-phone"
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-2">Delivery Address *</label>
+                      <textarea
+                        value={customerInfo.delivery_address}
+                        onChange={(e) => setCustomerInfo({...customerInfo, delivery_address: e.target.value})}
+                        placeholder="Enter your full delivery address"
+                        rows={3}
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-delivery-address"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">City</label>
+                      <input
+                        type="text"
+                        value={customerInfo.delivery_city}
+                        onChange={(e) => setCustomerInfo({...customerInfo, delivery_city: e.target.value})}
+                        placeholder="Lagos"
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-delivery-city"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">State</label>
+                      <input
+                        type="text"
+                        value={customerInfo.delivery_state}
+                        onChange={(e) => setCustomerInfo({...customerInfo, delivery_state: e.target.value})}
+                        placeholder="Lagos State"
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-delivery-state"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-2">Delivery Notes (Optional)</label>
+                      <textarea
+                        value={customerInfo.delivery_notes}
+                        onChange={(e) => setCustomerInfo({...customerInfo, delivery_notes: e.target.value})}
+                        placeholder="Any special instructions for delivery"
+                        rows={2}
+                        className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="cart-delivery-notes"
+                      />
+                    </div>
+                  </div>
 
-              <div className="bg-zinc-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold">Total Amount:</span>
-                  <span className="text-2xl font-bold text-primary">₦{getTotalPrice().toLocaleString()}</span>
-                </div>
-                <p className="text-sm text-zinc-600">You will be redirected to payment instructions after submitting your order.</p>
-              </div>
+                  <div className="bg-zinc-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">Total Amount:</span>
+                      <span className="text-2xl font-bold text-primary">₦{getTotalPrice().toLocaleString()}</span>
+                    </div>
+                  </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCheckoutModal(false)}
-                  className="btn-outline flex-1"
-                  data-testid="cancel-checkout-btn"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={checkoutLoading}
-                  className="btn-primary flex-1"
-                  data-testid="submit-order-btn"
-                >
-                  {checkoutLoading ? 'Submitting...' : 'Submit Order'}
-                </button>
-              </div>
-            </form>
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCheckoutModal(false)}
+                      className="btn-outline flex-1"
+                      data-testid="cancel-checkout-btn"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={checkoutLoading}
+                      className="btn-primary flex-1"
+                      data-testid="submit-order-btn"
+                    >
+                      {checkoutLoading ? 'Creating Order...' : 'Continue to Payment'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 className="font-oswald text-3xl font-bold mb-2">Complete Payment</h2>
+                <p className="text-zinc-600 mb-6">Order ID: <span className="font-mono font-semibold">{orderId}</span></p>
+                
+                {/* Payment Method Selection */}
+                <div className="flex gap-4 mb-6">
+                  <button
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex-1 py-4 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-colors ${
+                      paymentMethod === 'card' 
+                        ? 'border-primary bg-primary/5 text-primary' 
+                        : 'border-zinc-200 hover:border-zinc-300'
+                    }`}
+                    data-testid="card-payment-method"
+                  >
+                    <CreditCard size={20} />
+                    Pay Online
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('bank')}
+                    className={`flex-1 py-4 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-colors ${
+                      paymentMethod === 'bank' 
+                        ? 'border-primary bg-primary/5 text-primary' 
+                        : 'border-zinc-200 hover:border-zinc-300'
+                    }`}
+                    data-testid="bank-payment-method"
+                  >
+                    <Building size={20} />
+                    Bank Transfer
+                  </button>
+                </div>
+
+                {paymentMethod === 'card' ? (
+                  <PaymentSelector
+                    orderId={orderId}
+                    orderType="boutique"
+                    amount={getTotalPrice()}
+                    email={customerInfo.email}
+                    customerName={customerInfo.name}
+                    phone={customerInfo.phone}
+                    onSuccess={handlePaymentSuccess}
+                    onClose={() => {}}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-zinc-50 p-4 rounded-lg text-center">
+                      <p className="text-zinc-600 mb-2">You will be redirected to view bank details and upload payment proof.</p>
+                      <p className="text-sm text-zinc-500">Order ID: {orderId}</p>
+                    </div>
+                    <button
+                      onClick={handlePayLater}
+                      className="btn-primary w-full"
+                      data-testid="view-bank-details-btn"
+                    >
+                      View Bank Details
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-6 pt-4 border-t">
+                  <button
+                    onClick={() => { setOrderId(null); setCheckoutLoading(false); }}
+                    className="text-sm text-zinc-500 hover:text-zinc-700"
+                  >
+                    ← Back to delivery info
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
