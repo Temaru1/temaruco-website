@@ -117,6 +117,21 @@ EMAIL_MOCK = os.environ.get('EMAIL_MOCK', 'true').lower() == 'true'
 UPLOAD_DIR = Path('/app/backend/uploads')
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+# POD Design directories
+POD_DESIGNS_DIR = UPLOAD_DIR / 'designs'
+POD_ORIGINALS_DIR = POD_DESIGNS_DIR / 'original'
+POD_MOCKUPS_DIR = POD_DESIGNS_DIR / 'mockups'
+POD_ORIGINALS_DIR.mkdir(exist_ok=True, parents=True)
+POD_MOCKUPS_DIR.mkdir(exist_ok=True, parents=True)
+
+# Print size configurations (in pixels for digital, actual dimensions for print)
+PRINT_SIZES = {
+    'badge': {'width': 120, 'height': 120, 'label': 'Badge (80-120px)', 'scale_factor': 0.15},
+    'a4': {'width': 2480, 'height': 3508, 'label': 'A4 (2480×3508px)', 'scale_factor': 0.5},
+    'a3': {'width': 3508, 'height': 4961, 'label': 'A3 (3508×4961px)', 'scale_factor': 0.7},
+    'a2': {'width': 4961, 'height': 7016, 'label': 'A2 (4961×7016px)', 'scale_factor': 1.0}
+}
+
 # File upload security settings
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
