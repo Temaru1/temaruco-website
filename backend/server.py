@@ -1776,8 +1776,8 @@ async def upload_product_image(file: UploadFile = File(...), request: Request = 
     with open(file_path, 'wb') as f:
         f.write(contents)
     
-    # Return URL
-    image_url = f"/uploads/{filename}"
+    # Return URL - use /api/uploads to match the static files mount
+    image_url = f"/api/uploads/{filename}"
     
     return {
         'message': 'Image uploaded successfully',
