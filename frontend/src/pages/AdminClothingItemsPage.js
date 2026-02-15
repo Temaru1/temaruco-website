@@ -348,20 +348,6 @@ const AdminClothingItemsPage = () => {
                   <span className="font-semibold text-amber-600">₦{(item.luxury_price || Math.round((item.standard_price || item.base_price) * 2))?.toLocaleString()}</span>
                 </div>
               </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Crown className="w-4 h-4 text-blue-500" />
-                    <span className="text-zinc-500">Premium:</span>
-                    <span className="font-semibold text-blue-600">₦{item.premium_price?.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Gem className="w-4 h-4 text-amber-500" />
-                    <span className="text-zinc-500">Luxury:</span>
-                    <span className="font-semibold text-amber-600">₦{item.luxury_price?.toLocaleString()}</span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[#D90429] font-bold mt-1">₦{item.base_price?.toLocaleString()}</p>
-              )}
               
               {item.description && (
                 <p className="text-sm text-zinc-500 mt-2 line-clamp-2">{item.description}</p>
