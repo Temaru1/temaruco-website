@@ -298,12 +298,13 @@ const AdminClothingItemsPage = () => {
               !item.is_active ? 'opacity-60' : ''
             }`}
           >
-            <div className="aspect-square bg-zinc-100 relative">
+            {/* ISSUE 2 FIX: Use object-contain to show full outfit without cropping */}
+            <div className="aspect-square bg-white relative flex items-center justify-center">
               <img
                 src={getImageUrl(item.image_url)}
                 alt={item.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.target.src = `https://placehold.co/400x400/e2e8f0/64748b?text=${item.name}`; }}
+                className="w-full h-full object-contain object-center"
+                onError={(e) => { e.target.src = getPlaceholderImage(item.name); }}
               />
               {!item.is_active && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
