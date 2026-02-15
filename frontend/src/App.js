@@ -51,6 +51,7 @@ import AccountPage from './pages/AccountPage';
 import PrintOnDemandPage from './pages/PrintOnDemandPage';
 import PrintOnDemandDesignPage from './pages/PrintOnDemandDesignPage';
 import DesignServicesPage from './pages/DesignServicesPage';
+import AdminDesignInquiriesPage from './pages/AdminDesignInquiriesPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // Components
