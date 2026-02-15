@@ -6614,16 +6614,19 @@ async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_
 # ==================== BULK ORDER CLOTHING ITEMS MANAGEMENT ====================
 @api_router.get("/bulk/clothing-items")
 async def get_bulk_clothing_items():
-    """Public: Get all active bulk order clothing items"""
+    """Public: Get all active bulk order clothing items with variant pricing"""
     items = await db.bulk_clothing_items.find({'is_active': True}, {'_id': 0}).sort('name', 1).to_list(100)
     
-    # If no items exist, return default items
+    # If no items exist, return default items with variant pricing
     if not items:
         default_items = [
             {
                 'id': str(uuid.uuid4()),
                 'name': 'T-Shirt',
-                'base_price': 1500,
+                'standard_price': 1500,
+                'premium_price': 2200,
+                'luxury_price': 3000,
+                'base_price': 1500,  # Legacy compatibility
                 'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80',
                 'description': 'Classic short sleeve t-shirt',
                 'is_active': True
@@ -6631,6 +6634,9 @@ async def get_bulk_clothing_items():
             {
                 'id': str(uuid.uuid4()),
                 'name': 'Polo Shirt',
+                'standard_price': 2000,
+                'premium_price': 3000,
+                'luxury_price': 4500,
                 'base_price': 2000,
                 'image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400&q=80',
                 'description': 'Collared polo shirt',
@@ -6639,13 +6645,46 @@ async def get_bulk_clothing_items():
             {
                 'id': str(uuid.uuid4()),
                 'name': 'Hoodie',
+                'standard_price': 4000,
+                'premium_price': 5500,
+                'luxury_price': 7500,
                 'base_price': 4000,
                 'image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&q=80',
                 'description': 'Hooded sweatshirt',
                 'is_active': True
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Joggers',
+                'standard_price': 3500,
+                'premium_price': 5000,
+                'luxury_price': 7000,
+                'base_price': 3500,
+                'image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&q=80',
+                'description': 'Comfortable track pants',
+                'is_active': True
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Varsity Jacket',
+                'standard_price': 8000,
+                'premium_price': 12000,
+                'luxury_price': 18000,
+                'base_price': 8000,
+                'image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80',
+                'description': 'Classic sporty jacket',
+                'is_active': True
             }
         ]
         return default_items
+    
+    # Ensure all items have variant pricing (migrate legacy items)
+    for item in items:
+        if 'standard_price' not in item:
+            base = item.get('base_price', 2000)
+            item['standard_price'] = base
+            item['premium_price'] = int(base * 1.5)
+            item['luxury_price'] = int(base * 2)
     
     return items
 
