@@ -7899,9 +7899,9 @@ app.add_middleware(
 # Include router AFTER CORS
 app.include_router(api_router)
 
-# Mount static files for uploads
+# Mount static files for uploads - use /api/uploads for ingress routing
 from fastapi.staticfiles import StaticFiles
-app.mount("/uploads", StaticFiles(directory="/app/backend/uploads"), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory="/app/backend/uploads"), name="uploads")
 
 # Initialize scheduler for automated tasks
 scheduler = AsyncIOScheduler()
