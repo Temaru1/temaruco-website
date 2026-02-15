@@ -2465,458 +2465,262 @@ def get_order_status_email(order_id: str, customer_name: str, new_status: str):
 
     return enquiry
 
-# ==================== PAYMENTS ====================
-@api_router.post("/payments/initialize")
-async def initialize_payment(payment_request: PaymentInitializeRequest):
+# ==================== PAYMENTS (FLUTTERWAVE) ====================
+# Flutterwave payment endpoints
+FLUTTERWAVE_BASE_URL = "https://api.flutterwave.com/v3"
+
+@api_router.post("/payments/flutterwave/initialize")
+async def initialize_flutterwave_payment(payment_request: dict):
+    """Initialize Flutterwave payment"""
     try:
-        # Save customer email
-        existing_email = await db.customer_emails.find_one({'email': payment_request.email})
+        email = payment_request.get('email')
+        amount = payment_request.get('amount')
+        currency = payment_request.get('currency', 'NGN')
+        order_id = payment_request.get('order_id')
+        order_type = payment_request.get('order_type')
+        customer_name = payment_request.get('customer_name', '')
+        phone = payment_request.get('phone', '')
         
+        # Save customer email
+        existing_email = await db.customer_emails.find_one({'email': email})
         if existing_email:
-            # Update existing
             await db.customer_emails.update_one(
-                {'email': payment_request.email},
-                {
-                    '$set': {'last_seen': datetime.now(timezone.utc).isoformat()},
-                    '$inc': {'interaction_count': 1}
-                }
+                {'email': email},
+                {'$set': {'last_seen': datetime.now(timezone.utc).isoformat()}, '$inc': {'interaction_count': 1}}
             )
-            # Add source if not already present
-            if 'payment' not in existing_email.get('sources', []):
-                await db.customer_emails.update_one(
-                    {'email': payment_request.email},
-                    {'$push': {'sources': 'payment'}}
-                )
         else:
-            # Create new
             await db.customer_emails.insert_one({
-                'email': payment_request.email,
-                'sources': ['payment'],
-                'interaction_count': 1,
+                'email': email, 'sources': ['payment'], 'interaction_count': 1,
                 'first_seen': datetime.now(timezone.utc).isoformat(),
                 'last_seen': datetime.now(timezone.utc).isoformat()
             })
         
-        amount_in_kobo = int(payment_request.amount * 100)
-        
-        # Check if we should use mock payment or real Paystack
-        if PAYMENT_MOCK:
-            # Mock payment for testing
-            reference = f"mock_ref_{uuid.uuid4().hex[:16]}"
-            
-            # Get frontend URL from environment (required)
-            frontend_url = os.environ['FRONTEND_URL']
-            
-            payment_data = {
-                'id': str(uuid.uuid4()),
-                'reference': reference,
-                'access_code': f"mock_access_{uuid.uuid4().hex[:10]}",
-                'authorization_url': f"{frontend_url}/payment/callback?reference={reference}&status=success",
-                'email': payment_request.email,
-                'amount': payment_request.amount,
-                'order_type': payment_request.order_type,
-                'order_id': payment_request.order_id,
-                'status': 'success',
-                'is_mock': True,
-                'created_at': datetime.now(timezone.utc).isoformat()
-            }
-            
-            await db.payments.insert_one(payment_data)
-            
-            # Auto-complete the order since it's mock
-            await db.orders.update_one(
-                {'id': payment_request.order_id},
-                {'$set': {'payment_status': 'paid', 'payment_reference': reference}}
-            )
-            
-            logger.info(f"[MOCK PAYMENT] Initialized mock payment for {payment_request.email}")
-            
-            return {
-                'status': True,
-                'message': 'Payment initialized successfully (MOCK MODE)',
-                'data': {
-                    'reference': reference,
-                    'access_code': payment_data['access_code'],
-                    'authorization_url': payment_data['authorization_url']
-                }
-            }
-        
-        # Real Paystack integration
-        frontend_url = os.environ['FRONTEND_URL']
-        
-        paystack_payload = {
-            'email': payment_request.email,
-            'amount': amount_in_kobo,
-            'metadata': {
-                'order_type': payment_request.order_type,
-                'order_id': payment_request.order_id,
-                **(payment_request.metadata or {})
-            },
-            'callback_url': f"{frontend_url}/payment/callback"
-        }
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                'https://api.paystack.co/transaction/initialize',
-                json=paystack_payload,
-                headers={
-                    'Authorization': f'Bearer {PAYSTACK_SECRET_KEY}',
-                    'Content-Type': 'application/json'
-                },
-                timeout=30.0
-            )
-        
-        if response.status_code != 200:
-            logger.error(f"Paystack initialization failed: {response.text}")
-            # Fallback to mock mode if Paystack fails
-            logger.warning("Falling back to mock payment mode")
-            return await initialize_payment(payment_request)  # This will use mock mode
-        
-        paystack_response = response.json()
-        
-        if not paystack_response.get('status'):
-            logger.error(f"Paystack error: {paystack_response.get('message')}")
-            raise HTTPException(status_code=400, detail=paystack_response.get('message', 'Payment initialization failed'))
+        # Generate unique transaction reference
+        tx_ref = f"TM-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
         
         # Store payment record
         payment_data = {
             'id': str(uuid.uuid4()),
-            'reference': paystack_response['data']['reference'],
-            'access_code': paystack_response['data']['access_code'],
-            'authorization_url': paystack_response['data']['authorization_url'],
-            'email': payment_request.email,
-            'amount': payment_request.amount,
-            'order_type': payment_request.order_type,
-            'order_id': payment_request.order_id,
+            'tx_ref': tx_ref,
+            'email': email,
+            'amount': amount,
+            'currency': currency,
+            'order_type': order_type,
+            'order_id': order_id,
+            'customer_name': customer_name,
+            'phone': phone,
             'status': 'pending',
-            'is_mock': False,
+            'provider': 'flutterwave',
             'created_at': datetime.now(timezone.utc).isoformat()
         }
         
-        await db.payments.insert_one(payment_data)
-        
-        return {
-            'status': True,
-            'message': 'Payment initialized successfully',
-            'data': paystack_response['data']
-        }
-    
-    except httpx.RequestError as e:
-        logger.error(f"HTTP request error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Payment service unavailable")
-    except Exception as e:
-        logger.error(f"Payment initialization error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/payments/verify/{reference}")
-async def verify_payment(reference: str):
-    try:
-        # Check if this is a mock payment
-        payment_record = await db.payments.find_one({'reference': reference}, {'_id': 0})
-        
-        if payment_record and payment_record.get('is_mock'):
-            # Mock payment - auto verify
-            transaction_data = {
-                'reference': reference,
-                'amount': int(payment_record['amount'] * 100),
-                'status': 'success',
-                'customer': {'email': payment_record['email']},
-                'paid_at': datetime.now(timezone.utc).isoformat(),
-                'channel': 'mock',
-                'currency': 'NGN'
-            }
-            
-            logger.info(f"[MOCK PAYMENT] Verified mock payment {reference}")
-            
+        if PAYMENT_MOCK or not FLUTTERWAVE_SECRET_KEY:
+            # Mock mode
+            payment_data['is_mock'] = True
+            await db.payments.insert_one(payment_data)
+            logger.info(f"[MOCK PAYMENT] Initialized Flutterwave payment for {email}")
             return {
                 'status': True,
-                'message': 'Payment verified successfully (MOCK MODE)',
-                'data': transaction_data
+                'message': 'Payment initialized (MOCK MODE)',
+                'data': {'tx_ref': tx_ref, 'amount': amount, 'currency': currency}
             }
         
-        # Real Paystack verification
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f'https://api.paystack.co/transaction/verify/{reference}',
-                headers={'Authorization': f'Bearer {PAYSTACK_SECRET_KEY}'},
+        # Real Flutterwave integration
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://fashionx.preview.emergentagent.com')
+        
+        payload = {
+            'tx_ref': tx_ref,
+            'amount': amount,
+            'currency': currency,
+            'payment_options': 'card,mobilemoney,ussd,banktransfer',
+            'redirect_url': f"{frontend_url}/payment/callback",
+            'customer': {'email': email, 'phonenumber': phone, 'name': customer_name},
+            'customizations': {
+                'title': 'Temaruco Payment',
+                'description': f'Payment for order {order_id}',
+                'logo': f"{frontend_url}/logo.png"
+            },
+            'meta': {'order_id': order_id, 'order_type': order_type}
+        }
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.post(
+                f'{FLUTTERWAVE_BASE_URL}/payments',
+                json=payload,
+                headers={'Authorization': f'Bearer {FLUTTERWAVE_SECRET_KEY}', 'Content-Type': 'application/json'},
                 timeout=30.0
             )
         
         if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Verification failed")
+            logger.error(f"Flutterwave initialization failed: {response.text}")
+            # Fallback to mock
+            payment_data['is_mock'] = True
+            await db.payments.insert_one(payment_data)
+            return {'status': True, 'message': 'Payment initialized (fallback)', 'data': {'tx_ref': tx_ref, 'amount': amount, 'currency': currency}}
         
-        paystack_response = response.json()
+        flw_response = response.json()
+        payment_data['flutterwave_response'] = flw_response.get('data', {})
+        payment_data['is_mock'] = False
+        await db.payments.insert_one(payment_data)
         
-        if not paystack_response.get('status'):
-            raise HTTPException(status_code=400, detail="Payment verification failed")
+        return {
+            'status': True,
+            'message': 'Payment initialized',
+            'data': {'tx_ref': tx_ref, 'amount': amount, 'currency': currency, 'link': flw_response.get('data', {}).get('link')}
+        }
+    except Exception as e:
+        logger.error(f"Flutterwave payment initialization error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/payments/flutterwave/verify")
+async def verify_flutterwave_payment(verify_request: dict):
+    """Verify Flutterwave payment"""
+    try:
+        transaction_id = verify_request.get('transaction_id')
+        tx_ref = verify_request.get('tx_ref')
+        order_id = verify_request.get('order_id')
         
-        transaction_data = paystack_response.get('data', {})
-        transaction_status = transaction_data.get('status')
+        payment_record = await db.payments.find_one({'tx_ref': tx_ref}, {'_id': 0})
         
-        # Update payment record
+        if payment_record and payment_record.get('is_mock'):
+            await db.payments.update_one({'tx_ref': tx_ref}, {'$set': {'status': 'successful', 'verified_at': datetime.now(timezone.utc).isoformat()}})
+            await db.orders.update_one({'id': order_id}, {'$set': {'payment_status': 'paid', 'payment_reference': tx_ref, 'payment_provider': 'flutterwave', 'status': OrderStatus.PAYMENT_VERIFIED}})
+            return {'status': True, 'message': 'Payment verified (MOCK)', 'data': {'status': 'successful'}}
+        
+        if not FLUTTERWAVE_SECRET_KEY:
+            raise HTTPException(status_code=500, detail="Payment not configured")
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.get(
+                f'{FLUTTERWAVE_BASE_URL}/transactions/{transaction_id}/verify',
+                headers={'Authorization': f'Bearer {FLUTTERWAVE_SECRET_KEY}'},
+                timeout=30.0
+            )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=400, detail="Verification failed")
+        
+        flw_response = response.json()
+        if flw_response.get('status') != 'success':
+            raise HTTPException(status_code=400, detail="Verification failed")
+        
+        transaction_data = flw_response.get('data', {})
+        transaction_status = transaction_data.get('status', 'failed')
+        
         await db.payments.update_one(
-            {'reference': reference},
-            {
-                '$set': {
-                    'status': transaction_status,
-                    'verified_at': datetime.now(timezone.utc).isoformat(),
-                    'paystack_response': transaction_data
-                }
-            }
+            {'tx_ref': tx_ref},
+            {'$set': {'status': transaction_status, 'transaction_id': transaction_id, 'flutterwave_response': transaction_data, 'verified_at': datetime.now(timezone.utc).isoformat()}}
         )
         
-        # If successful, update order payment status
-        if transaction_status == 'success':
-            if payment_record:
-                await db.orders.update_one(
-                    {'id': payment_record['order_id']},
-                    {'$set': {'payment_status': 'paid', 'payment_reference': reference}}
-                )
-                
-                # Send confirmation email (mocked)
-                order = await db.orders.find_one({'id': payment_record['order_id']}, {'_id': 0})
-                if order:
-                    await send_email_mock(
-                        payment_record['email'],
-                        "Payment Confirmed - Temaruco",
-                        f"Your payment of ₦{payment_record['amount']:,.2f} has been confirmed. Order ID: {payment_record['order_id']}"
-                    )
-        
-        return {
-            'status': True,
-            'message': 'Payment verified successfully',
-            'data': transaction_data
-        }
-    
-    except httpx.RequestError as e:
-        logger.error(f"HTTP request error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Verification service unavailable")
-    except Exception as e:
-        logger.error(f"Payment verification error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ==================== STRIPE PAYMENTS (INTERNATIONAL) ====================
-class StripePaymentRequest(BaseModel):
-    order_id: str
-    order_type: str
-    amount: float  # Amount in NGN - will be converted to USD
-    email: str
-    origin_url: str
-    metadata: Optional[Dict[str, Any]] = None
-
-@api_router.post("/payments/stripe/initialize")
-async def initialize_stripe_payment(payment_request: StripePaymentRequest, request: Request):
-    """Initialize Stripe payment for international customers (USD)"""
-    try:
-        if not STRIPE_API_KEY:
-            raise HTTPException(status_code=500, detail="Stripe not configured")
-        
-        # Convert NGN to USD using current exchange rate
-        # Fetch live rate or use fallback
-        ngn_to_usd_rate = 0.00063  # Fallback rate
-        try:
-            cached_rates = await db.currency_cache.find_one(
-                {'date': datetime.now(timezone.utc).strftime('%Y-%m-%d')},
-                {'_id': 0}
-            )
-            if cached_rates and cached_rates.get('rates', {}).get('USD', {}).get('rate'):
-                ngn_to_usd_rate = cached_rates['rates']['USD']['rate']
-        except:
-            pass
-        
-        # Convert amount to USD (keep as float)
-        amount_usd = round(payment_request.amount * ngn_to_usd_rate, 2)
-        if amount_usd < 0.50:  # Stripe minimum
-            amount_usd = 0.50
-        
-        # Initialize Stripe checkout
-        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
-        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-        
-        # Build success/cancel URLs from frontend origin
-        success_url = f"{payment_request.origin_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
-        cancel_url = f"{payment_request.origin_url}/payment/callback?cancelled=true"
-        
-        # Create checkout session
-        checkout_request = CheckoutSessionRequest(
-            amount=amount_usd,
-            currency="usd",
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata={
-                "order_id": payment_request.order_id,
-                "order_type": payment_request.order_type,
-                "email": payment_request.email,
-                "original_amount_ngn": str(payment_request.amount),
-                **(payment_request.metadata or {})
-            }
-        )
-        
-        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
-        
-        # Store payment transaction record
-        payment_record = {
-            'id': str(uuid.uuid4()),
-            'session_id': session.session_id,
-            'provider': 'stripe',
-            'email': payment_request.email,
-            'amount_ngn': payment_request.amount,
-            'amount_usd': amount_usd,
-            'currency': 'USD',
-            'order_id': payment_request.order_id,
-            'order_type': payment_request.order_type,
-            'payment_status': 'pending',
-            'checkout_url': session.url,
-            'created_at': datetime.now(timezone.utc).isoformat()
-        }
-        
-        await db.payment_transactions.insert_one(payment_record)
-        
-        logger.info(f"Stripe checkout created for order {payment_request.order_id}: ${amount_usd}")
-        
-        return {
-            'status': True,
-            'message': 'Stripe checkout session created',
-            'data': {
-                'checkout_url': session.url,
-                'session_id': session.session_id,
-                'amount_usd': amount_usd,
-                'amount_ngn': payment_request.amount
-            }
-        }
-    
-    except Exception as e:
-        logger.error(f"Stripe initialization error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.get("/payments/stripe/status/{session_id}")
-async def get_stripe_payment_status(session_id: str, request: Request):
-    """Check Stripe payment status and update order if paid"""
-    try:
-        if not STRIPE_API_KEY:
-            raise HTTPException(status_code=500, detail="Stripe not configured")
-        
-        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
-        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-        
-        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
-        
-        # Get payment record
-        payment_record = await db.payment_transactions.find_one(
-            {'session_id': session_id},
-            {'_id': 0}
-        )
-        
-        # Update payment status in database
-        new_status = 'paid' if status.payment_status == 'paid' else status.payment_status
-        
-        await db.payment_transactions.update_one(
-            {'session_id': session_id},
-            {'$set': {
-                'payment_status': new_status,
-                'stripe_status': status.status,
-                'verified_at': datetime.now(timezone.utc).isoformat()
-            }}
-        )
-        
-        # If paid, update order status
-        if status.payment_status == 'paid' and payment_record:
-            # Check if already processed
-            existing_order = await db.orders.find_one({'id': payment_record['order_id']}, {'_id': 0})
-            if existing_order and existing_order.get('payment_status') != 'paid':
-                await db.orders.update_one(
-                    {'id': payment_record['order_id']},
-                    {'$set': {
-                        'payment_status': 'paid',
-                        'payment_provider': 'stripe',
-                        'payment_reference': session_id,
-                        'status': OrderStatus.PAYMENT_VERIFIED
-                    }}
-                )
-                
-                # Create notification for admin
-                await create_notification(
-                    'payment_received',
-                    'International Payment Received',
-                    f"Stripe payment of ${status.amount_total / 100:.2f} received for order {payment_record['order_id']}",
-                    payment_record['order_id']
-                )
-                
-                logger.info(f"Order {payment_record['order_id']} payment verified via Stripe")
-        
-        return {
-            'status': True,
-            'payment_status': status.payment_status,
-            'session_status': status.status,
-            'amount': status.amount_total / 100,  # Convert from cents
-            'currency': status.currency.upper()
-        }
-    
-    except Exception as e:
-        logger.error(f"Stripe status check error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.post("/webhook/stripe")
-async def stripe_webhook(request: Request):
-    """Handle Stripe webhook events"""
-    try:
-        if not STRIPE_API_KEY:
-            raise HTTPException(status_code=500, detail="Stripe not configured")
-        
-        body = await request.body()
-        signature = request.headers.get("Stripe-Signature")
-        
-        webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
-        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-        
-        webhook_response = await stripe_checkout.handle_webhook(body, signature)
-        
-        if webhook_response.payment_status == 'paid':
-            # Update payment transaction
-            await db.payment_transactions.update_one(
-                {'session_id': webhook_response.session_id},
-                {'$set': {
-                    'payment_status': 'paid',
-                    'webhook_processed': True,
-                    'webhook_event_id': webhook_response.event_id,
-                    'processed_at': datetime.now(timezone.utc).isoformat()
-                }}
+        if transaction_status == 'successful':
+            await db.orders.update_one(
+                {'id': order_id},
+                {'$set': {'payment_status': 'paid', 'payment_reference': tx_ref, 'payment_provider': 'flutterwave', 'status': OrderStatus.PAYMENT_VERIFIED}}
             )
             
-            # Get payment record and update order
-            payment_record = await db.payment_transactions.find_one(
-                {'session_id': webhook_response.session_id},
-                {'_id': 0}
-            )
+            # Create notification
+            await create_notification('payment_received', 'Payment Received', f"Flutterwave payment received for order {order_id}", order_id)
             
+            # Send confirmation email
             if payment_record:
-                order_id = webhook_response.metadata.get('order_id') or payment_record.get('order_id')
+                await send_email_mock(payment_record['email'], "Payment Confirmed - Temaruco", f"Your payment of {payment_record.get('currency', 'NGN')} {payment_record['amount']:,.2f} has been confirmed. Order ID: {order_id}")
+            
+            logger.info(f"Order {order_id} payment verified via Flutterwave")
+        
+        return {'status': True, 'message': 'Payment verified', 'data': transaction_data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Flutterwave payment verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/payments/flutterwave/status/{tx_ref}")
+async def get_flutterwave_payment_status(tx_ref: str):
+    """Get Flutterwave payment status"""
+    try:
+        payment_record = await db.payments.find_one({'tx_ref': tx_ref}, {'_id': 0})
+        if not payment_record:
+            raise HTTPException(status_code=404, detail="Payment not found")
+        
+        if payment_record.get('is_mock') or not FLUTTERWAVE_SECRET_KEY:
+            return {'status': True, 'data': {'status': payment_record.get('status', 'pending'), 'amount': payment_record.get('amount'), 'currency': payment_record.get('currency', 'NGN')}}
+        
+        async with httpx.AsyncClient() as http_client:
+            response = await http_client.get(
+                f'{FLUTTERWAVE_BASE_URL}/transactions/verify_by_reference',
+                params={'tx_ref': tx_ref},
+                headers={'Authorization': f'Bearer {FLUTTERWAVE_SECRET_KEY}'},
+                timeout=30.0
+            )
+        
+        if response.status_code == 200:
+            flw_response = response.json()
+            if flw_response.get('status') == 'success':
+                return {'status': True, 'data': flw_response.get('data', {})}
+        
+        return {'status': True, 'data': {'status': payment_record.get('status', 'pending'), 'amount': payment_record.get('amount'), 'currency': payment_record.get('currency', 'NGN')}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Flutterwave status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/payments/provider")
+async def get_payment_provider(request: Request):
+    """Get recommended currency based on user location"""
+    country = request.headers.get('CF-IPCountry', '').upper()
+    accept_lang = request.headers.get('Accept-Language', '')
+    is_nigerian = country == 'NG' or 'ng' in accept_lang.lower()
+    return {
+        'provider': 'flutterwave',
+        'currency': 'NGN' if is_nigerian else 'USD',
+        'country_detected': country or 'unknown',
+        'is_nigerian': is_nigerian
+    }
+
+@api_router.post("/webhook/flutterwave")
+async def flutterwave_webhook(request: Request):
+    """Handle Flutterwave webhook events"""
+    try:
+        webhook_secret = os.environ.get('FLUTTERWAVE_WEBHOOK_SECRET', '')
+        signature = request.headers.get('verif-hash', '')
+        
+        if webhook_secret and signature != webhook_secret:
+            logger.warning("Invalid Flutterwave webhook signature")
+            raise HTTPException(status_code=401, detail="Invalid signature")
+        
+        payload = await request.json()
+        event = payload.get('event')
+        data = payload.get('data', {})
+        
+        logger.info(f"Flutterwave webhook received: {event}")
+        
+        if event == 'charge.completed' and data.get('status') == 'successful':
+            tx_ref = data.get('tx_ref')
+            if tx_ref:
+                await db.payments.update_one(
+                    {'tx_ref': tx_ref},
+                    {'$set': {'status': 'successful', 'transaction_id': data.get('id'), 'flutterwave_response': data, 'webhook_verified_at': datetime.now(timezone.utc).isoformat()}}
+                )
+                
+                order_id = data.get('meta', {}).get('order_id')
+                if not order_id:
+                    payment = await db.payments.find_one({'tx_ref': tx_ref}, {'_id': 0})
+                    order_id = payment.get('order_id') if payment else None
+                
                 if order_id:
                     await db.orders.update_one(
                         {'id': order_id},
-                        {'$set': {
-                            'payment_status': 'paid',
-                            'payment_provider': 'stripe',
-                            'payment_reference': webhook_response.session_id,
-                            'status': OrderStatus.PAYMENT_VERIFIED
-                        }}
+                        {'$set': {'payment_status': 'paid', 'payment_reference': tx_ref, 'payment_provider': 'flutterwave', 'status': OrderStatus.PAYMENT_VERIFIED}}
                     )
-                    
-                    logger.info(f"Order {order_id} payment confirmed via Stripe webhook")
+                    logger.info(f"Order {order_id} payment verified via Flutterwave webhook")
         
-        return {"status": "success"}
-    
+        return {'status': 'success'}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Stripe webhook error: {str(e)}")
-        return {"status": "error", "message": str(e)}
-
-# Endpoint to get payment provider based on location
-@api_router.get("/payments/provider")
-async def get_payment_provider(request: Request):
-    """Get recommended payment provider based on user location"""
-    # Check location from headers (set by frontend or Cloudflare)
-    country = request.headers.get('CF-IPCountry', '').upper()
-    accept_lang = request.headers.get('Accept-Language', '')
+        logger.error(f"Flutterwave webhook error: {str(e)}")
+        return {'status': 'received'}
     
     is_nigerian = country == 'NG' or 'ng' in accept_lang.lower()
     
