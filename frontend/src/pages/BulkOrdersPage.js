@@ -264,28 +264,57 @@ const BulkOrdersPage = () => {
                 {/* Colors */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 mb-2">
-                    Select Colors
+                    Select Colors (click to toggle)
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {COLORS.map((color) => (
                       <button
                         key={color}
-                        onClick={() => {
-                          const newColors = orderData.colors.includes(color)
-                            ? orderData.colors.filter(c => c !== color)
-                            : [...orderData.colors, color];
-                          setOrderData({...orderData, colors: newColors});
-                        }}
+                        onClick={() => toggleColor(color)}
                         className={`px-4 py-2 rounded-full text-sm border transition-all ${
                           orderData.colors.includes(color)
                             ? 'bg-zinc-900 text-white border-zinc-900'
                             : 'bg-white text-zinc-700 border-zinc-300 hover:border-zinc-400'
                         }`}
+                        data-testid={`color-${color}`}
                       >
-                        {color}
+                        {orderData.colors.includes(color) && '✓ '}{color}
                       </button>
                     ))}
                   </div>
+                  {orderData.colors.length > 0 && (
+                    <p className="text-sm text-zinc-500 mt-2">
+                      Selected: {orderData.colors.join(', ')}
+                    </p>
+                  )}
+                </div>
+
+                {/* Size Breakdown */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-2">
+                    Size Distribution (Total: {getTotalFromSizes()} pieces)
+                  </label>
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
+                    {SIZES.map((size) => (
+                      <div key={size} className="text-center">
+                        <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={orderData.sizes[size] || ''}
+                          onChange={(e) => updateSizeQty(size, parseInt(e.target.value) || 0)}
+                          placeholder="0"
+                          className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                          data-testid={`size-${size}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {getTotalFromSizes() > 0 && getTotalFromSizes() < 50 && (
+                    <p className="text-sm text-amber-600 mt-2">
+                      ⚠️ Minimum order is 50 pieces. Add {50 - getTotalFromSizes()} more.
+                    </p>
+                  )}
                 </div>
 
                 {/* Notes */}
