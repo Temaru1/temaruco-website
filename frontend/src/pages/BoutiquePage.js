@@ -189,10 +189,83 @@ const BoutiquePage = () => {
           </Link>
         </div>
 
+        {/* Filter Bar */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-8">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Category Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-zinc-600">Style:</span>
+              <div className="flex gap-1">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setSelectedCategory(cat.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      selectedCategory === cat.value
+                        ? 'bg-[#D90429] text-white'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                    }`}
+                    data-testid={`filter-${cat.value}`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Audience Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-zinc-600">For:</span>
+              <div className="flex gap-1">
+                {AUDIENCES.map(aud => (
+                  <button
+                    key={aud.value}
+                    onClick={() => setSelectedAudience(aud.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      selectedAudience === aud.value
+                        ? 'bg-[#D90429] text-white'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                    }`}
+                    data-testid={`filter-aud-${aud.value}`}
+                  >
+                    {aud.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Gender Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-zinc-600">Gender:</span>
+              <div className="flex gap-1">
+                {GENDERS.map(gen => (
+                  <button
+                    key={gen.value}
+                    onClick={() => setSelectedGender(gen.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      selectedGender === gen.value
+                        ? 'bg-[#D90429] text-white'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                    }`}
+                    data-testid={`filter-gen-${gen.value}`}
+                  >
+                    {gen.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Results count */}
+            <div className="ml-auto text-sm text-zinc-500">
+              {filteredProducts.length} products
+            </div>
+          </div>
+        </div>
+
         {/* Products Grid */}
-        {products.length > 0 && (
+        {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {products.map(product => (
+            {filteredProducts.map(product => (
               <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-all" data-testid="product-card">
                 <div className="relative aspect-square cursor-pointer overflow-hidden" onClick={() => setLightboxImage(product)}>
                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
