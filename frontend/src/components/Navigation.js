@@ -54,7 +54,7 @@ const Navigation = ({ user, onLogout }) => {
             <img 
               src={logoURL}
               alt="Temaruco Logo" 
-              className="h-12 w-auto object-contain"
+              className="h-14 w-auto object-contain"
               onError={(e) => {
                 console.error('Logo failed to load from:', logoURL);
                 // Fallback to text if image fails
