@@ -1996,7 +1996,7 @@ async def create_design_inquiry(
                 with open(file_path, 'wb') as f:
                     shutil.copyfileobj(file.file, f)
                 
-                uploaded_files.append(f"/uploads/design_references/{filename}")
+                uploaded_files.append(f"/api/uploads/design_references/{filename}")
     
     # Create inquiry record
     inquiry = {
@@ -2153,7 +2153,7 @@ async def create_design_request(
                 with open(file_path, 'wb') as f:
                     shutil.copyfileobj(file.file, f)
                 
-                uploaded_files.append(f"/uploads/design_references/{filename}")
+                uploaded_files.append(f"/api/uploads/design_references/{filename}")
     
     # Create enquiry
     enquiry = {
@@ -4140,7 +4140,7 @@ async def create_custom_order_request(
         with open(file_path, 'wb') as f:
             shutil.copyfileobj(reference_image.file, f)
         
-        reference_url = f"/uploads/{filename}"
+        reference_url = f"/api/uploads/{filename}"
     
     # Generate enquiry code
     enquiry_code = await generate_enquiry_code()
