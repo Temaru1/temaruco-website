@@ -330,14 +330,24 @@ const AdminClothingItemsPage = () => {
             <div className="p-4">
               <h3 className="font-semibold text-zinc-900">{item.name}</h3>
               
-              {activeTab === 'bulk' ? (
-                // Variant pricing display for bulk items
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Star className="w-4 h-4 text-zinc-400" />
-                    <span className="text-zinc-500">Standard:</span>
-                    <span className="font-semibold">₦{(item.standard_price || item.base_price)?.toLocaleString()}</span>
-                  </div>
+              {/* Variant pricing display for all items */}
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <Star className="w-4 h-4 text-zinc-400" />
+                  <span className="text-zinc-500">Standard:</span>
+                  <span className="font-semibold">₦{(item.standard_price || item.base_price)?.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Crown className="w-4 h-4 text-blue-500" />
+                  <span className="text-zinc-500">Premium:</span>
+                  <span className="font-semibold text-blue-600">₦{(item.premium_price || Math.round((item.standard_price || item.base_price) * 1.5))?.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Gem className="w-4 h-4 text-amber-500" />
+                  <span className="text-zinc-500">Luxury:</span>
+                  <span className="font-semibold text-amber-600">₦{(item.luxury_price || Math.round((item.standard_price || item.base_price) * 2))?.toLocaleString()}</span>
+                </div>
+              </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Crown className="w-4 h-4 text-blue-500" />
                     <span className="text-zinc-500">Premium:</span>
