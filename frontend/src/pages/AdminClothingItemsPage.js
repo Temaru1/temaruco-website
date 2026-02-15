@@ -462,11 +462,13 @@ const AdminClothingItemsPage = () => {
                 </label>
                 <div className="space-y-2">
                   {(imagePreview || formData.image_url) && (
-                    <img
-                      src={imagePreview || formData.image_url}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg border"
-                    />
+                    <div className="w-40 h-40 bg-white border rounded-lg flex items-center justify-center">
+                      <img
+                        src={imagePreview || getImageUrl(formData.image_url)}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
                   )}
                   <div className="flex gap-2">
                     <label className="flex-1 cursor-pointer">
