@@ -6645,14 +6645,17 @@ async def create_pod_clothing_item(item: BulkClothingItem, admin_user: Dict = De
 @api_router.put("/admin/pod/clothing-items/{item_id}")
 async def update_pod_clothing_item(
     item_id: str,
-    item: PODClothingItem,
+    item: BulkClothingItem,
     admin_user: Dict = Depends(get_admin_user)
 ):
-    """Admin: Update POD clothing item"""
+    """Admin: Update POD clothing item with variant pricing"""
     
     update_data = {
         'name': item.name,
-        'base_price': item.base_price,
+        'standard_price': item.standard_price,
+        'premium_price': item.premium_price,
+        'luxury_price': item.luxury_price,
+        'base_price': item.standard_price,  # Keep base_price for backward compatibility
         'image_url': item.image_url,
         'description': item.description,
         'is_active': item.is_active if item.is_active is not None else True,
