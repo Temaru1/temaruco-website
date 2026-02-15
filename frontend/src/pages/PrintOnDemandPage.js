@@ -5,17 +5,9 @@ import axios from 'axios';
 import SEO from '../components/SEO';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Helper to get full image URL
-const getImageUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/api/uploads')) return `${API_URL}${url}`;
-  if (url.startsWith('/uploads')) return `${API_URL}/api${url}`;
-  return url;
-};
 
 // Quality Variants Configuration
 const QUALITY_VARIANTS = [
