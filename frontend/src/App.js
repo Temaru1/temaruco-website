@@ -50,6 +50,7 @@ import MockupBuilderPage from './pages/MockupBuilderPage';
 import AccountPage from './pages/AccountPage';
 import PrintOnDemandPage from './pages/PrintOnDemandPage';
 import PrintOnDemandDesignPage from './pages/PrintOnDemandDesignPage';
+import DesignServicesPage from './pages/DesignServicesPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // Components
