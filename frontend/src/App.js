@@ -138,6 +138,7 @@ function AppRouter() {
         
         {/* Public pages - no auth required */}
         <Route path="/bulk-orders" element={<BulkOrdersPage />} />
+        <Route path="/bulk-orders/details" element={<BulkOrderDetailsPage />} />
         
         {/* Print on Demand - New Structure */}
         <Route path="/print-on-demand" element={<PrintOnDemandPage />} />
