@@ -2721,15 +2721,6 @@ async def flutterwave_webhook(request: Request):
     except Exception as e:
         logger.error(f"Flutterwave webhook error: {str(e)}")
         return {'status': 'received'}
-    
-    is_nigerian = country == 'NG' or 'ng' in accept_lang.lower()
-    
-    return {
-        'provider': 'paystack' if is_nigerian else 'stripe',
-        'currency': 'NGN' if is_nigerian else 'USD',
-        'country_detected': country or 'unknown',
-        'is_nigerian': is_nigerian
-    }
 
 # ==================== ADMIN ROUTES ====================
 @api_router.get("/admin/dashboard")
