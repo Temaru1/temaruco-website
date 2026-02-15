@@ -48,6 +48,8 @@ import DesignLabPage from './pages/DesignLabPage';
 import PriceCalculatorPage from './pages/PriceCalculatorPage';
 import MockupBuilderPage from './pages/MockupBuilderPage';
 import AccountPage from './pages/AccountPage';
+import PrintOnDemandPage from './pages/PrintOnDemandPage';
+import PrintOnDemandDesignPage from './pages/PrintOnDemandDesignPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // Components
