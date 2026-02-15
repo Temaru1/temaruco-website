@@ -1706,7 +1706,10 @@ async def create_boutique_product(product: NewBoutiqueProduct, request: Request)
         'image_url': product.image_url,
         'colors': product.colors or [],
         'sizes': product.sizes or [],
-        'inventory': {},  # Empty inventory - will be filled via restock
+        'style': product.style or 'modern',
+        'audience': product.audience or 'adults',
+        'gender': product.gender or 'unisex',
+        'inventory': {},
         'total_stock': 0,
         'created_at': datetime.now(timezone.utc).isoformat(),
         'created_by': user['email'],
