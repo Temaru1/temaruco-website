@@ -29,6 +29,18 @@ const AdminClothingItemsPage = () => {
 
   const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
 
+  // Helper to get full image URL
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    // If it starts with http, it's already a full URL
+    if (url.startsWith('http')) return url;
+    // If it starts with /api/uploads, prepend the API URL
+    if (url.startsWith('/api/uploads')) return `${API_URL}${url}`;
+    // If it starts with /uploads (legacy), convert to /api/uploads
+    if (url.startsWith('/uploads')) return `${API_URL}/api${url}`;
+    return url;
+  };
+
   useEffect(() => {
     loadItems();
   }, []);
