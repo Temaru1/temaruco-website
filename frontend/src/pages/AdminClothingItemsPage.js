@@ -56,17 +56,10 @@ const AdminClothingItemsPage = () => {
     
     const imageUrl = formData.image_url || `https://placehold.co/400x500/e2e8f0/64748b?text=${encodeURIComponent(formData.name || 'Product')}`;
     
-    if (activeTab === 'bulk') {
-      // Bulk items require variant pricing
-      if (!formData.name || !formData.standard_price || !formData.premium_price || !formData.luxury_price) {
-        toast.error('Please fill in name and all variant prices');
-        return;
-      }
-    } else {
-      if (!formData.name || !formData.base_price) {
-        toast.error('Please fill in name and price');
-        return;
-      }
+    // Both tabs require variant pricing
+    if (!formData.name || !formData.standard_price || !formData.premium_price || !formData.luxury_price) {
+      toast.error('Please fill in name and all variant prices');
+      return;
     }
 
     try {
