@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const CurrencyContext = createContext();
 
@@ -13,75 +13,118 @@ export const useCurrency = () => {
   return context;
 };
 
-// Exchange rate: 1 USD = ~1,580 NGN (adjust as needed)
-const USD_TO_NGN_RATE = 1580;
-
 export const CurrencyProvider = ({ children }) => {
   const [currency, setCurrency] = useState({
     code: 'NGN',
     symbol: '₦',
-    isNigeria: true
+    name: 'Nigerian Naira',
+    rate: 1
   });
   const [loading, setLoading] = useState(true);
+  const [countryCode, setCountryCode] = useState('NG');
 
-  useEffect(() => {
-    detectLocation();
-  }, []);
+  // Currency data for common countries
+  const CURRENCIES = {
+    'NG': { code: 'NGN', symbol: '₦', name: 'Nigerian Naira', rate: 1 },
+    'US': { code: 'USD', symbol: '$', name: 'US Dollar', rate: 0.00063 },
+    'GB': { code: 'GBP', symbol: '£', name: 'British Pound', rate: 0.00050 },
+    'EU': { code: 'EUR', symbol: '€', name: 'Euro', rate: 0.00058 },
+    'CA': { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 0.00085 },
+    'AU': { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rate: 0.00096 },
+    'GH': { code: 'GHS', symbol: '₵', name: 'Ghana Cedi', rate: 0.0078 },
+    'KE': { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling', rate: 0.082 },
+    'ZA': { code: 'ZAR', symbol: 'R', name: 'South African Rand', rate: 0.012 },
+    'IN': { code: 'INR', symbol: '₹', name: 'Indian Rupee', rate: 0.053 },
+    'AE': { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', rate: 0.0023 },
+    'DEFAULT': { code: 'USD', symbol: '$', name: 'US Dollar', rate: 0.00063 }
+  };
 
-  const detectLocation = async () => {
+  const detectLocation = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/currency/detect`);
-      const isNigeria = response.data.country_code === 'NG';
+      // Try backend detection first (uses CF headers)
+      const backendResponse = await axios.get(`${API_URL}/api/currency/detect`, {
+        timeout: 5000
+      });
       
-      setCurrency({
-        code: isNigeria ? 'NGN' : 'USD',
-        symbol: isNigeria ? '₦' : '$',
-        isNigeria: isNigeria
-      });
-    } catch (error) {
-      console.error('Failed to detect location:', error);
-      // Default to NGN if detection fails
-      setCurrency({
-        code: 'NGN',
-        symbol: '₦',
-        isNigeria: true
-      });
+      if (backendResponse.data?.currency_code) {
+        const code = backendResponse.data.country_code || 'US';
+        setCountryCode(code);
+        setCurrency({
+          code: backendResponse.data.currency_code,
+          symbol: backendResponse.data.currency_symbol,
+          name: backendResponse.data.currency_name,
+          rate: backendResponse.data.exchange_rate
+        });
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.log('Backend currency detection failed, trying IP service...');
+    }
+
+    try {
+      // Fallback to free IP geolocation service
+      const ipResponse = await axios.get('https://ipapi.co/json/', { timeout: 5000 });
+      const country = ipResponse.data?.country_code || 'US';
+      setCountryCode(country);
+      
+      // Map country to currency
+      const currencyData = CURRENCIES[country] || CURRENCIES['DEFAULT'];
+      setCurrency(currencyData);
+    } catch (e) {
+      console.log('IP detection failed, using default currency');
+      setCurrency(CURRENCIES['DEFAULT']);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Convert NGN amount to USD (for non-Nigerian visitors)
-  const convertPrice = (amountNGN) => {
-    if (!amountNGN || isNaN(amountNGN)) return 0;
-    if (currency.isNigeria) return amountNGN;
-    // Convert NGN to USD
-    return Math.round((amountNGN / USD_TO_NGN_RATE) * 100) / 100;
-  };
+  useEffect(() => {
+    detectLocation();
+  }, [detectLocation]);
 
-  // Format price with currency symbol
-  const formatPrice = (amountNGN) => {
-    const converted = convertPrice(amountNGN);
+  // Format price based on detected currency
+  const formatPrice = useCallback((priceNGN) => {
+    if (loading || !priceNGN) return `${currency.symbol}...`;
     
-    if (currency.isNigeria) {
-      // Nigerian format: ₦2,500
-      return `₦${converted.toLocaleString()}`;
-    } else {
-      // USD format: $1.58
-      return `$${converted.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })}`;
+    // If Nigerian, show NGN price directly
+    if (currency.code === 'NGN') {
+      return `₦${priceNGN.toLocaleString()}`;
     }
-  };
+    
+    // Convert from NGN to local currency
+    const convertedPrice = priceNGN * currency.rate;
+    
+    // Format based on currency
+    if (currency.code === 'USD' || currency.code === 'CAD' || currency.code === 'AUD') {
+      return `${currency.symbol}${convertedPrice.toFixed(2)}`;
+    }
+    
+    return `${currency.symbol}${convertedPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }, [currency, loading]);
+
+  // Get both prices (for display purposes)
+  const getPrices = useCallback((priceNGN) => {
+    const converted = priceNGN * currency.rate;
+    return {
+      ngn: `₦${priceNGN.toLocaleString()}`,
+      local: currency.code === 'NGN' 
+        ? null 
+        : `${currency.symbol}${converted.toFixed(2)}`,
+      localValue: converted
+    };
+  }, [currency]);
 
   return (
-    <CurrencyContext.Provider value={{
-      currency,
+    <CurrencyContext.Provider value={{ 
+      currency, 
+      setCurrency, 
+      formatPrice, 
+      getPrices,
       loading,
-      convertPrice,
-      formatPrice,
-      isNigeria: currency.isNigeria
+      countryCode,
+      isNigeria: countryCode === 'NG'
     }}>
       {children}
     </CurrencyContext.Provider>
