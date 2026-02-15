@@ -4,6 +4,7 @@ import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, CreditCard, Building } fr
 import { toast } from 'sonner';
 import { createBoutiqueOrder } from '../utils/api';
 import PaymentSelector from '../components/PaymentSelector';
+import { getImageUrl } from '../utils/imageUtils';
 
 const CartPage = () => {
   const navigate = useNavigate();
