@@ -391,7 +391,7 @@ const OrderSummaryPage = () => {
                       <Alert className="bg-green-50 border-green-200">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-900">
-                          Pay instantly with your card. Nigerian cards use Paystack, international cards use Stripe.
+                          Pay instantly with your card via Flutterwave. Supports Nigerian and international cards.
                         </AlertDescription>
                       </Alert>
                       <PaymentSelector
