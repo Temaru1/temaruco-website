@@ -1,93 +1,109 @@
-<analysis>**original_problem_statement**: The initial request was to clone a repository and perform a major enhancement project, including fixing a critical Paystack payment bug, addressing UI/UX issues, and implementing a full UI/UX redesign.
+<analysis>**original_problem_statement**: The project began as a major enhancement of an existing application, focused on fixing payment bugs and a complete UI/UX redesign. It has since expanded to include a wide array of features, turning it into a comprehensive e-commerce and service platform for an apparel business.
 
-This evolved with several new user requests:
-- Add a Create button on the Quotes page for manual generation of quotes, receipts, or invoices.
-- Implement a real email notification system using provided Gmail SMTP credentials.
-- Add automated, configurable email reminders for unpaid quotes.
-- Implement email open/delivery tracking.
-- Admins should be able to create new customers and receipts manually.
-- The UI should be responsive and pixel-perfect on all screen sizes.
-- Implement a multi-currency system: users in Nigeria see prices in Naira (NGN), while all other users see prices in US Dollars (USD).
-- Replace all placeholder product images with real, high-quality images.
-- Implement a drag-and-drop mockup builder.
-- Implement a customer measurements database.
-- Implement staff management with role permissions.
-- Implement customer accounts with saved designs and order history.
-- Implement live exchange rates.
-- Add advanced analytics.
-- Implement inventory management with low-stock alerts.
+Key features added throughout the project:
+- **Core Commerce:** Multi-currency support (NGN/USD based on location), Stripe and Paystack payment integrations, and a complete UI/UX redesign.
+- **Product Customization:** A drag-and-drop mockup builder (now integrated into the Print-on-Demand flow), a bulk order system, and a print-on-demand service.
+- **Admin & Operations:** Manual creation of quotes/invoices, staff management, customer measurements database, and an inventory management backend.
+- **Customer Engagement:** A live email notification system (Gmail SMTP), automated quote reminders with open-tracking, customer accounts (order history, saved designs), and a Design Services inquiry page.
+- **Analytics & Notifications:** An advanced analytics dashboard with revenue and customer insights, and real-time admin notifications via WebSockets.
+- **Backend Architecture:** A significant, ongoing effort to refactor the monolithic  into a modular structure.
+
+Most recent user requests include UI fixes for the boutique and bulk order pages, restructuring the Print-on-Demand workflow, adding a Design Services page, and making several specific changes to the landing page (hero image, price calculator, track order button). The user has now requested a full, critical test of the entire application.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack React/FastAPI/MongoDB application. A major UI/UX redesign has been completed across all major pages. The application features a fully functional drag-and-drop mockup builder with 14 templates, a live email system with Gmail SMTP, automated and configurable quote reminders, and email open tracking. A simplified multi-currency system (NGN/USD based on location) is in place.
+A full-stack React/FastAPI/MongoDB application with a substantially redesigned UI. Key functionalities like the mockup builder, live email system, automated reminders, multi-currency pricing, and real-time admin notifications are implemented. Stripe has been added for international payments alongside the existing Paystack integration. Backend logic for customer accounts, inventory, and analytics is in place, with most of the corresponding frontend UIs now built.
 
-Backend logic and API endpoints have been created for several advanced features, including customer accounts (profiles, addresses, order history, saved mockups), inventory management, and live exchange rate fetching. However, the frontend for these features is largely incomplete.
+The backend is in a transitional state. A modular structure (, , ) has been created as part of a major refactoring effort, but the original monolithic  is still the primary entry point and contains the bulk of the application logic.
 
 **Last working item**:
--   **Last item agent was working:** The agent was executing a large batch of six feature requests simultaneously. It had just finished adding the backend API endpoints for the Customer Accounts feature () in , which includes functionality for managing profiles, addresses, order history, and saved mockups. The agent was about to start building the corresponding frontend pages.
--   **Status:** IN PROGRESS
+-   **Last item agent was working:** The user requested a comprehensive, critical test of the entire site to find and fix any bugs. The agent was about to begin this task when the user interrupted with a new request to replace the landing page hero image. The agent acknowledged the image replacement before the session ended. The core pending task is the site-wide test.
+-   **Status:** NOT STARTED
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Both. The new backend endpoints need to be tested via curl, and then a full frontend testing cycle is required once the UI pages are built.
+-   **Which testing method agent to use?** Frontend testing agent. This is a large, site-wide test that requires comprehensive user flow validation, which is the perfect use case for the testing agent.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** The frontend UI for several new backend features is missing. (P0)
+-   **Issue 1:** Implement pending landing page and admin UI changes. (P0)
+-   **Issue 2:** Execute the user-requested full, critical site test. (P1)
+-   **Issue 3:** Complete the backend refactoring. (P2)
 
 **Issues Detail:**
 -   **Issue 1:**
-    -   **Description:** The backend has been updated with endpoints for advanced features like Customer Accounts (profile, orders, mockups), Inventory Management, and Advanced Analytics. However, there are no corresponding frontend pages or components for users or admins to interact with this new functionality.
-    -   **Attempted fixes:** None. The backend implementation was just completed.
+    -   **Description:** The user made several specific requests that have not been implemented yet.
+        1.  Replace the landing page hero image with the one provided in the last message.
+        2.  Add a Quick Price Calculator section to the landing page.
+        3.  Position the Track Order button on the landing page and make the input on the tracking page auto-format the Order ID (e.g., ).
+        4.  The newly created  needs to be linked in the admin sidebar and have its route added to .
+    -   **Attempted fixes:** None. These were the user's latest requests.
     -   **Next debug checklist:**
-        1.  Create a new Customer Account/Profile page in the frontend.
-        2.  Create new admin pages for Inventory Management and Advanced Analytics.
-        3.  Integrate the Save Mockup functionality in  with the new customer account endpoint.
-        4.  Ensure all new pages are linked correctly in  and the navigation components.
-    -   **Why fix this issue and what will be achieved with the fix?** To expose the newly implemented backend functionality to users and complete the user-requested features.
+        1.  Edit  to replace the image URL and add the new  component.
+        2.  Find the  and implement a formatting handler for the order ID input field.
+        3.  Edit  to add the  route.
+        4.  Edit the admin sidebar component () to add the link to the new page.
+    -   **Why fix this issue and what will be achieved with the fix?** To complete the user's most recent and explicit requests for the landing page and admin panel.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** No
+
+-   **Issue 2:**
+    -   **Description:** The user wants a full, critical test of the entire site to identify and fix any remaining bugs before proceeding.
+    -   **Attempted fixes:** None. The task was interrupted.
+    -   **Next debug checklist:** Call the  with a comprehensive test plan covering all major user flows (auth, boutique, POD, bulk order, design services, payments, admin panel).
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure application-wide stability and catch any regressions or bugs before adding more features.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on other issue:** Should ideally be done after fixing **Issue 1**.
+
+-   **Issue 3:**
+    -   **Description:** The backend  file is still a monolith of over 7,000 lines. While a modular structure has been created, the migration of endpoints and logic is incomplete, and the new  is not yet used by the process manager.
+    -   **Attempted fixes:** A new directory structure was created, and some auth/payment routes were moved as a proof-of-concept.
+    -   **Next debug checklist:**
+        1.  Systematically move endpoints from  into the appropriate files in .
+        2.  Extract business logic into a new  directory.
+        3.  Update the supervisor configuration to run  instead of .
+        4.  Once verified, delete the monolithic .
+    -   **Why fix this issue and what will be achieved with the fix?** To drastically improve backend maintainability, reduce complexity, and enable faster, safer future development.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on other issue:** No
 
 **In progress Task List**:
--   **Task 1:** Complete implementation of 6 new features (P0)
-    -   **Where to resume:** The backend logic for most features is in place in . The immediate next step is to build the frontend interfaces for each feature.
-        1.  **Customer Accounts ():** Build the frontend pages for user profiles, order history, saved addresses, and saved mockups.
-        2.  **Inventory Management ():** Build an admin page to view and manage stock levels for products, fabrics, and souvenirs. Display low-stock alerts.
-        3.  **Advanced Analytics:** Enhance the existing  with more charts and data as requested.
-        4.  **Save Mockups:** Connect the  to the  endpoint to allow logged-in users to save their designs.
-        5.  **Live Exchange Rates:** The backend now fetches live rates. This needs to be thoroughly tested and potentially integrated into more pages.
-        6.  **Real Email Templates:** The backend templates in  have been enhanced. This should be verified by triggering different order confirmation emails.
-    -   **What will be achieved with this?** Completion of all user-requested features, making the application feature-complete and ready for production.
+-   **Task 1:** Complete backend refactoring.
+    -   **Where to resume:** Continue migrating routes and logic from  to the new modular structure in  and .
+    -   **What will be achieved with this?** A maintainable, scalable, and organized backend codebase.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on something:** No
 
 **Upcoming and Future Tasks**
+**Upcoming Tasks:**
+-   **Admin Inventory Page:** Build the frontend UI for admins to manage product stock levels, connecting to the existing backend APIs. (P1)
+-   **Shipping Integration:** Integrate with a shipping provider for delivery options and tracking. (P2)
+
 **Future Tasks:**
--   **Shipping Integration:** Integrate with a shipping provider for delivery tracking.
--   **Real-time Admin Notifications:** Implement websockets to provide real-time notifications to the admin dashboard for new orders or low stock alerts.
+-   **Multiple Print Areas:** Enhance the design tool to support designing on the front, back, and sleeves of garments.
+-   **Browser Push Notifications:** Implement browser-level notifications for admins (e.g., for new orders).
 
 **Completed work in this session**
-- **Full UI/UX Redesign:** Completed the redesign for , , , and , unifying the site's aesthetic.
-- **Create Quote Feature:** Restored the Create button on the  to open the modal for creating manual quotes, invoices, and receipts.
-- **Live Email System:**
-    - Configured the backend to use user-provided Gmail SMTP credentials.
-    - Implemented a Send Email feature for quotes on the .
-    - Enhanced the order confirmation email templates with better styling and more details.
-- **Automated Quote Reminders:**
-    - Implemented a background scheduler () to send reminder emails for unpaid quotes.
-    - Created an  allowing admins to enable/disable reminders, configure the send days (e.g., 3, 7, 14), and set the send time.
-- **Email Open Tracking:** Implemented a tracking pixel system to monitor when quote emails are opened. The open status is displayed with a badge on the .
-- **Multi-Currency System:**
-    - Implemented a simplified currency logic: users from Nigeria see prices in NGN, and all other international users see prices in USD.
-    - Backend detects user location via  or  headers.
-- **Mockup Builder Enhancement:** Added 7 new templates (Cap, Tote Bag, Backpack, etc.), bringing the total to 14 templates organized into Apparel and Accessories categories.
-- **Product Images:** Replaced all placeholder images in the boutique with real product photos.
-- **Verified Existing Features:** Confirmed that manual customer creation, staff role management, and the customer measurements database were already implemented and functional.
+-   **Customer Account & Save Mockup:** Implemented the frontend account page and integrated the Save Mockup feature into the .
+-   **Real-time Admin Notifications:** Added WebSocket support to the backend and frontend for live admin notifications.
+-   **Advanced Analytics:** Enhanced the admin analytics page with new customer insight and conversion metric charts.
+-   **Stripe Integration:** Added Stripe as a payment option for international users, including a  component.
+-   **Backend Refactoring (Initiated):** Created the new modular directory structure and migrated a few initial routes.
+-   **Major UI/UX Fixes:**
+    -   **Boutique:** Implemented a new category and filtering system (Type, Audience, Gender).
+    -   **Bulk/POD Pages:** Added size selectors and improved the UX with auto-navigation on item selection.
+    -   **Currency:** Fixed the currency detection logic to be more reliable.
+-   **Print-on-Demand (POD) Workflow Restructure:** Removed the standalone Design Tool page and embedded it directly into the POD product selection flow for a more intuitive user experience.
+-   **Design Services Page:** Created a new page for users to request professional design services, complete with an inquiry form and a new backend endpoint.
 
 **Earlier issues found/mentioned but not fixed**
--   None. The agent has been actively working on all user requests.
+-   None.
 
 **Known issue recurrence from previous fork**
 -   None.
@@ -96,102 +112,96 @@ Backend logic and API endpoints have been created for several advanced features,
 
 
 **Key Technical Concepts**
--   **Frontend:** React, Tailwind CSS, Axios, Konva.js ().
--   **Backend:** FastAPI, Motor (async MongoDB driver), JWT authentication,  for background tasks,  for external API calls.
+-   **Frontend:** React, Tailwind CSS, Axios, Konva.js (), .
+-   **Backend:** FastAPI, Motor (async MongoDB), JWT,  (for reminders), WebSockets (for live notifications).
 -   **Database:** MongoDB.
--   **Key Features:** Drag-and-drop mockup builder, automated background email scheduling, email open tracking (pixel), dynamic currency conversion based on user location.
+-   **Architecture:** Hybrid monolithic/modular. The application is in the process of being refactored from a single  file to a more organized structure with routers, services, and models.
 
 **key DB schema**
 -   **users:** 
--   **clients:** 
--   **manual_quotes:** 
--   **email_tracking_events:** 
--   **settings:** 
--   **products (fabrics, souvenirs, boutique_items):** 
+-   **design_inquiries:** 
+-   **boutique_items:** 
 
 **changes in tech stack**
--   ****: Added to the backend to run scheduled tasks (quote reminders).
--   ****: Added to the backend for making asynchronous requests to the live exchange rate API.
+-   **WebSockets:** Added to FastAPI for real-time communication.
+-   **emergentintegrations:** Added to facilitate the Stripe integration.
+-   **ip-api.com:** A new external service is being used for more reliable IP-based geolocation for currency detection.
 
 **All files of reference**
 -   **Created:**
-    -   : UI for managing quote reminder settings.
-    -   : Context for managing currency state.
-    -   : A full-featured drag-and-drop design tool.
-    -   : (Created but now unused).
+    -   
+    -   
+    -   
+    -    & 
+    -    & 
+    -    and the , ,  directories for the refactor.
 -   **Updated:**
-    -   : Heavily modified to add endpoints for SMTP email, quote reminders, email tracking, currency conversion, live exchange rates, customer accounts (profile, orders, mockups), and inventory management.
-    -   : Added Send Email button and email open status indicators.
-    -   : Added routes and sidebar links for new admin pages.
-    -   : Wrapped the application in  and added new routes.
-    -   : Added new functions to call the backend APIs for reminders, email, and customer accounts.
-    -   : Added and then removed the currency selector. Updated Design Lab link.
-    -   , , : Updated to use the new  function from .
+    -   : Heavily modified to add WebSockets, Stripe, advanced analytics, and design inquiry endpoints.
+    -   : Links updated for new/restructured pages.
+    -   : Routes added for new pages.
+    -   : Added new category structure and filtering UI.
+    -    & : UI/UX improvements (size selectors, auto-navigation).
+    -   : Switched to a more reliable geolocation API.
+    -   : Added new data visualizations.
+-   **Deleted:**
+    -    (made obsolete by automatic detection).
 
 **Areas that need refactoring**:
--   ** is critically monolithic.** At over 6,500 lines, it handles authentication, database models, business logic, and API routing for more than 10 different domains (products, orders, quotes, users, analytics, email, etc.). This file MUST be broken down into a proper project structure (e.g., , , ) to ensure maintainability.
+-   ** is critically monolithic.** The ongoing refactoring to a modular structure ( and subdirectories) is the highest priority technical debt and must be completed to ensure the project's long-term health and maintainability.
 
 **key api endpoints**
--    (POST)
--    (GET, POST)
--    (GET)
--    (GET)
--    (GET)
--    (GET, PUT)
--    (GET, POST, PUT, DELETE)
--    (GET)
--    (GET, POST, DELETE)
--    (GET)
--    (PUT)
+-   : WebSocket for real-time admin notifications.
+-   : (POST) Creates a Stripe payment session.
+-   : (GET) Callback for successful Stripe payments.
+-   : (POST) Submits the form from the Design Services page.
+-   : (GET) Provides data for the enhanced analytics dashboard.
 
 **Critical Info for New Agent**
--   **PRIORITY 1: Build the Frontend for New Features.** A significant amount of backend work has been done for Customer Accounts, Inventory Management, and Advanced Analytics, but there is no UI to access these features. You must create the corresponding pages and components in the React frontend.
--   **PRIORITY 2: Refactor the Backend.** The  file is unmanageably large. Before adding more features, plan and execute a refactoring to split the code into a modular structure. This will prevent future development from slowing down.
--   The currency system is now automatic (NGN vs. USD). The manual  component is no longer needed and can be removed to avoid confusion.
--   The background scheduler for email reminders is configured to run automatically on application startup.
+-   **PRIORITY 1: Implement Pending UI Changes.** The user's last set of requests for the landing page (hero image, price calculator) and admin panel (linking the design inquiries page) must be completed first.
+-   **PRIORITY 2: Execute Full Site Test.** Immediately after implementing the UI changes, you MUST honor the user's request for a full, critical test of the application using the .
+-   **PRIORITY 3: Continue Backend Refactoring.** The  monolith is a significant risk. The next major backend task should be to continue migrating all remaining endpoints and logic into the new modular structure and eventually switch the supervisor process to run .
 
 **documents and test reports created in this job**
 -   
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request for 6 new features:** User requested customer accounts, live exchange rates, real email templates, advanced analytics, inventory management, and saved designs. (IN PROGRESS)
-2.  **What is left?:** User asked for a status update. (ADDRESSED)
-3.  **Add more templates:** User requested more templates for the mockup builder. (COMPLETED)
-4.  **No, thank you:** User declined the suggestion for an analytics dashboard for quote tracking. (ADDRESSED)
-5.  **Yes:** User approved adding email tracking for quotes. (COMPLETED)
-6.  **Yes:** User approved adding a configurable settings page for reminders. (COMPLETED)
-7.  **Yes:** User approved implementing automated quote reminders. (COMPLETED)
-8.  **Provide Gmail credentials:** User provided the SMTP credentials needed for the email system. (COMPLETED)
-9.  **Confirm Gmail SMTP config:** User stated that SMTP was already configured. (Agent investigated and corrected).
-10. **Continue with all tasks:** User approved the plan to complete the UI redesign and add the Create Quote button. (COMPLETED)
+1.  **Replace image:** User provided a new hero image for the landing page. (PENDING)
+2.  **Run full test:** User requested a critical and detailed test of the entire site, with bug fixes. (PENDING)
+3.  **Landing page changes:** User requested to replace the track order section with a price calculator and to auto-format the order ID input. (PENDING)
+4.  **Inquiry:** What is left? (ADDRESSED)
+5.  **New Feature:** User specified requirements for the Design Services page. (COMPLETED)
+6.  **Workflow Change:** User mandated the restructuring of the Print-on-Demand flow. (COMPLETED)
+7.  **Bug Fixes:** User reported multiple issues with the boutique, currency, and bulk order UI. (COMPLETED)
+8.  **Approval:** User approved the backend refactoring plan. (IN PROGRESS)
+9.  **New Feature:** User requested Stripe integration for international payments. (COMPLETED)
+10. **Approval:** User approved working on backend refactor, analytics, and real-time notifications. (COMPLETED)
 
 **Project Health Check:**
--   **Broken:** The Customer Accounts, Inventory Management, and Advanced Analytics features are non-functional from a user perspective as their frontend UIs have not been created.
--   **Mocked:** None. The email system is now live.
--   **At Risk:** The monolithic  file poses a significant risk to future development speed and stability.
+-   **Broken:** The landing page is missing user-requested features (new image, price calculator). The admin panel is missing the link to the design inquiries page. The track order page is missing the input auto-formatting.
+-   **Mocked:** None.
+-   **At Risk:** The monolithic  file poses a significant risk to future development speed and stability. The backend refactoring is incomplete.
 
 **3rd Party Integrations**
--   **Paystack (Payments):** Integrated via inline JavaScript.
+-   **Stripe (Payments):** Integrated via  for international payments. A test key is present.
+-   **Paystack (Payments):** Existing integration for Nigerian payments.
+-   **ip-api.com:** Used for IP-based geolocation for currency detection.
 -   **MongoDB (Database):** Connected via .
 -   **Recharts:** Used for charts in the analytics dashboard.
--   **react-helmet-async:** Used for SEO meta tags.
 -   **Konva.js:** Used for the mockup builder canvas.
 -   **APScheduler:** Used for background jobs (email reminders) in the backend.
--   **exchangerate-api.com:** A free API is being used for live currency exchange rates (with caching).
+-   **exchangerate-api.com:** Used for fetching live currency exchange rates.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, after the major UI redesign.
+-   **Testing agent used after significant changes:** NO, not in the most recent session. The user has explicitly requested this.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** None.
+-   **Known regressions:** Unknown. A full site test is required.
 
 **Credentials to test flow:**
--   **Admin Login:**
-    -   Super Admin:  / 
-    -   Admin:  / 
+-   **Admin Login:**  / 
 
 **What agent forgot to execute**
--   The agent implemented the backend for six major features but did not build the corresponding frontend UIs, leaving the features incomplete.
--   The agent did not refactor the massive  file, which was identified as a critical need for maintainability.
--   The  component was created but is now unused and should be cleaned up.</analysis>
+-   The agent did not implement the user's most recent requests: replacing the landing page hero image, adding the price calculator, and implementing the auto-formatting for the track order ID.
+-   The agent did not add the necessary route and sidebar link for the  after creating it.
+-   The agent did not perform the critical, full-site test that the user requested.
+-   The backend refactoring remains unfinished.</analysis>
