@@ -259,6 +259,25 @@ Clone and enhance the Temaruco website with:
 - Created `/app/backend/main.py` - New modular entry point
 - Original `server.py` kept for backward compatibility
 
+### Feature 8: Boutique Improvements ✅
+- Added category filters: Traditional Wear vs Modern Wear
+- Added audience filters: Adults vs Kids
+- Added gender filters: Male, Female, Unisex
+- Seeded 22 products with proper categorization
+- Added "Clear Filters" button when no products match
+
+### Feature 9: Bulk Order & POD Improvements ✅
+- Auto-navigate to next step when clicking clothing item (no need to click Continue)
+- Added size distribution selector (XS to 3XL) with quantity per size
+- Color toggle now works properly (click to select, click again to deselect)
+- Improved UX with "Change Item" button
+
+### Feature 10: Enhanced Multi-Currency ✅
+- Updated CurrencyContext with IP geolocation detection
+- Uses ipapi.co for location detection
+- Supports 12 currencies (NGN, USD, GBP, EUR, CAD, AUD, GHS, KES, ZAR, INR, AED)
+- Shows prices in user's local currency automatically
+
 ## Future Tasks (Backlog)
 - Backend refactoring (server.py is 7500+ lines - needs to be split into modules)
 - Shipping integration
