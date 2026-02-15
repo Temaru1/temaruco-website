@@ -222,20 +222,32 @@ const BulkOrdersPage = () => {
                     <p className="font-semibold">{selectedItem?.name}</p>
                     <p className="text-sm text-zinc-500">₦{selectedItem?.base_price?.toLocaleString()} per piece</p>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setStep(1)}
+                    className="ml-auto"
+                  >
+                    Change Item
+                  </Button>
                 </div>
 
-                {/* Quantity */}
+                {/* Quick Quantity or use Size Breakdown below */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 mb-2">
-                    Quantity (minimum 50)
+                    Total Quantity (minimum 50) - Or use size breakdown below
                   </label>
                   <input
                     type="number"
                     min="50"
-                    value={orderData.quantity}
+                    value={getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity}
                     onChange={(e) => setOrderData({...orderData, quantity: Math.max(50, parseInt(e.target.value) || 50)})}
                     className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                    disabled={getTotalFromSizes() > 0}
                   />
+                  {getTotalFromSizes() > 0 && (
+                    <p className="text-xs text-zinc-500 mt-1">Quantity calculated from size breakdown</p>
+                  )}
                 </div>
 
                 {/* Print Type */}
