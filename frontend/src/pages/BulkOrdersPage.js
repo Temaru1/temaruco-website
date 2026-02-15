@@ -64,7 +64,8 @@ const BulkOrdersPage = () => {
     if (!selectedItem) return 0;
     const basePrice = selectedItem.base_price || 0;
     const printPrice = PRINT_OPTIONS.find(p => p.value === orderData.print_type)?.price || 0;
-    return (basePrice + printPrice) * orderData.quantity;
+    const qty = getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity;
+    return (basePrice + printPrice) * qty;
   };
 
   // Toggle color selection
