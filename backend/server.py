@@ -105,10 +105,9 @@ JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24
 
-# Paystack Configuration
-PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
-PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY')
-STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+# Flutterwave Configuration
+FLUTTERWAVE_SECRET_KEY = os.environ.get('FLUTTERWAVE_SECRET_KEY')
+FLUTTERWAVE_PUBLIC_KEY = os.environ.get('FLUTTERWAVE_PUBLIC_KEY')
 PAYMENT_MOCK = os.environ.get('PAYMENT_MOCK', 'false').lower() == 'true'
 
 # Email Mock Configuration
