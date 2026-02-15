@@ -6618,7 +6618,10 @@ async def create_pod_clothing_item(item: BulkClothingItem, admin_user: Dict = De
     item_doc = {
         'id': str(uuid.uuid4()),
         'name': item.name,
-        'base_price': item.base_price,
+        'standard_price': item.standard_price,
+        'premium_price': item.premium_price,
+        'luxury_price': item.luxury_price,
+        'base_price': item.standard_price,  # Keep base_price for backward compatibility
         'image_url': item.image_url,
         'description': item.description or '',
         'is_active': item.is_active if item.is_active is not None else True,
