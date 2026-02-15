@@ -186,14 +186,16 @@ const PODPage = () => {
         {step === 1 && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-zinc-900">Select Clothing Item</h2>
+            <p className="text-zinc-500">Click on an item to continue</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {clothingItems.map((item) => (
                 <Card 
                   key={item.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
+                  className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
                     selectedItem?.id === item.id ? 'ring-2 ring-[#D90429]' : ''
                   }`}
-                  onClick={() => setSelectedItem(item)}
+                  onClick={() => handleItemSelect(item)}
+                  data-testid={`pod-item-${item.id}`}
                 >
                   <div className="aspect-square bg-zinc-100 rounded-t-lg overflow-hidden">
                     <img 
@@ -210,17 +212,6 @@ const PODPage = () => {
                 </Card>
               ))}
             </div>
-            
-            {selectedItem && (
-              <div className="flex justify-end pt-4">
-                <Button 
-                  onClick={() => setStep(2)}
-                  className="bg-[#D90429] hover:bg-[#B90322]"
-                >
-                  Continue <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
