@@ -442,10 +442,9 @@ const BulkOrdersPage = () => {
               </Button>
               <Button 
                 onClick={handleSubmit}
-                disabled={loading}
                 className="bg-[#D90429] hover:bg-[#B90322]"
               >
-                {loading ? 'Placing Order...' : 'Place Order'}
+                Review Order <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
