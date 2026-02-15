@@ -135,9 +135,9 @@ const PrintOnDemandDesignPage = () => {
   const getVariantPrice = () => {
     const p = activeProduct;
     switch (selectedVariant) {
-      case 'premium': return product.premium_price || (product.standard_price || product.base_price || 2000) * 1.5;
-      case 'luxury': return product.luxury_price || (product.standard_price || product.base_price || 2000) * 2;
-      default: return product.standard_price || product.base_price || 2000;
+      case 'premium': return p.premium_price || (p.standard_price || p.base_price || 2000) * 1.5;
+      case 'luxury': return p.luxury_price || (p.standard_price || p.base_price || 2000) * 2;
+      default: return p.standard_price || p.base_price || 2000;
     }
   };
 
