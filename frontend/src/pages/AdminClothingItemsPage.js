@@ -399,15 +399,14 @@ const AdminClothingItemsPage = () => {
                 />
               </div>
 
-              {activeTab === 'bulk' ? (
-                // Variant pricing inputs for bulk items
-                <div className="space-y-4 p-4 bg-zinc-50 rounded-lg">
-                  <h3 className="font-semibold text-zinc-700 flex items-center gap-2">
-                    <span>Quality Variant Pricing</span>
-                    <span className="text-xs font-normal text-zinc-500">(per piece)</span>
-                  </h3>
-                  
-                  <div>
+              {/* Variant pricing inputs for all items */}
+              <div className="space-y-4 p-4 bg-zinc-50 rounded-lg">
+                <h3 className="font-semibold text-zinc-700 flex items-center gap-2">
+                  <span>Quality Variant Pricing</span>
+                  <span className="text-xs font-normal text-zinc-500">(per piece)</span>
+                </h3>
+                
+                <div>
                     <label className="text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
                       <Star className="w-4 h-4 text-zinc-400" />
                       Standard Price *
