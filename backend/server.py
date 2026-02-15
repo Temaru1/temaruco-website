@@ -773,8 +773,9 @@ async def calculate_bulk_price(clothing_item: str, quantity: int, print_type: Pr
     }, {'_id': 0}).to_list(100)
     
     # Find matching fabric quality
+    fabric_quality_str = fabric_quality or 'standard'
     for fq in fabric_qualities:
-        if fq['name'].lower() == fabric_quality.lower():
+        if fq['name'].lower() == fabric_quality_str.lower():
             fabric_cost = fq['price']
             break
     
