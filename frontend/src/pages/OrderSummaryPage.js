@@ -24,8 +24,9 @@ const OrderSummaryPage = () => {
   const [uploading, setUploading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'bank'
   
-  // Check if returning from Stripe payment
-  const stripeSessionId = searchParams.get('session_id');
+  // Check if returning from Flutterwave payment
+  const txRef = searchParams.get('tx_ref');
+  const transactionId = searchParams.get('transaction_id');
 
   useEffect(() => {
     fetchOrderAndBankDetails();
