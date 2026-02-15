@@ -318,7 +318,9 @@ const BoutiquePage = () => {
                   {cart.map(item => (
                     <div key={item.id} className="flex justify-between items-center border-b pb-4" data-testid="cart-item">
                       <div className="flex items-center gap-4">
-                        <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
+                        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
+                          <img src={getImageUrl(item.image_url)} alt={item.name} className="max-w-full max-h-full object-contain" />
+                        </div>
                         <div>
                           <p className="font-semibold text-zinc-900">{item.name}</p>
                           <p className="text-sm text-zinc-500">Qty: {item.quantity}</p>
