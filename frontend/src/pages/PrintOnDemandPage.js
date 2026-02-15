@@ -204,7 +204,7 @@ const PrintOnDemandPage = () => {
               >
                 <div className="relative aspect-square bg-zinc-100 overflow-hidden">
                   <img
-                    src={product.image_url || product.image}
+                    src={getImageUrl(product.image_url || product.image)}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     onError={(e) => { e.target.src = `https://placehold.co/400x400/e2e8f0/64748b?text=${product.name}`; }}
