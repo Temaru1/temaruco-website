@@ -632,6 +632,39 @@ Clone and enhance the Temaruco website with:
 
 ## Backend Refactoring Progress (Feb 16, 2026)
 
+### POD Image Reuse System (Feb 16, 2026) ✅
+**Goal**: When a guest clicks a POD product, the EXACT same image from the card must appear on the design page.
+
+**Implementation:**
+1. **Database Schema Updated:**
+   - `base_image_url`: The exact image used on product card AND design canvas
+   - `print_area`: JSON object with `{x, y, width, height, rotation}` defining printable region
+
+2. **Backend Changes:**
+   - Added `base_image_url` and `print_area` fields to all POD clothing items
+   - Added `PATCH /api/admin/pod/clothing-items/{id}/print-area` endpoint for admin mockup editor
+   - Added `GET /api/image-proxy?url=` endpoint to proxy external images with CORS headers
+
+3. **Frontend Changes:**
+   - Removed hardcoded `POD_PRODUCTS` dictionary from design page
+   - Design page now fetches product from database (single source of truth)
+   - Uses `getProxiedImageUrl()` helper to route external images through backend proxy
+   - `getPrintArea()` function retrieves print area from database product
+
+4. **Flow:**
+   - Guest clicks product card → Navigates to `/print-on-demand/{productId}`
+   - Design page loads product from `/api/pod/clothing-items`
+   - Base image loaded via proxy: `/api/image-proxy?url={external_url}`
+   - Canvas renders: Background layer = base image, Foreground = guest design
+   - Print area from database defines the overlay position
+
+5. **Admin Mockup Editor (Ready for Implementation):**
+   - Endpoint exists: `PATCH /api/admin/pod/clothing-items/{id}/print-area`
+   - Accepts: `{print_area: {x, y, width, height, rotation}}`
+   - Admin can upload base image + draw printable rectangle
+
+**No AI generation, no dynamic rendering - only image layering/canvas overlay.**
+
 ### Current Structure
 The backend has been partially refactored with a modular architecture:
 
