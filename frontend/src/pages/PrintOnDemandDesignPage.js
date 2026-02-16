@@ -106,27 +106,44 @@ const PrintOnDemandDesignPage = () => {
         
         if (matchingProduct) {
           setDbProduct(matchingProduct);
+          // Set default color from product
+          if (matchingProduct.colors && matchingProduct.colors.length > 0) {
+            setSelectedColor(matchingProduct.colors[0]);
+          }
+        } else {
+          // If no product found, redirect back
+          navigate('/print-on-demand');
         }
       } catch (error) {
         console.error('Failed to fetch product:', error);
+        navigate('/print-on-demand');
+      } finally {
+        setLoading(false);
       }
     };
     fetchProduct();
-  }, [productId]);
+  }, [productId, navigate]);
 
-  // Use database product if available, otherwise fallback
-  const activeProduct = dbProduct || product;
+  // Use database product - this is now the ONLY source of truth
+  // productFromState is only used as initial data while DB loads
+  const activeProduct = dbProduct || productFromState;
 
+  // Get print area from product (database) or use default
+  const getPrintArea = () => {
+    return activeProduct?.print_area || DEFAULT_PRINT_AREA;
+  };
+
+  // Load the BASE image from the product - SAME image as shown on product card
   useEffect(() => {
-    if (!activeProduct) {
-      navigate('/print-on-demand');
-      return;
-    }
+    if (!activeProduct) return;
+    
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    img.src = getImageUrl(activeProduct.image_url || activeProduct.image);
+    // Use base_image_url first, then image_url - SAME image as product card
+    const imageUrl = activeProduct.base_image_url || activeProduct.image_url || activeProduct.image;
+    img.src = getImageUrl(imageUrl);
     img.onload = () => setProductImage(img);
-  }, [activeProduct, navigate]);
+  }, [activeProduct]);
 
   useEffect(() => {
     if (selectedId && transformerRef.current) {
@@ -138,6 +155,15 @@ const PrintOnDemandDesignPage = () => {
       }
     }
   }, [selectedId]);
+
+  // Show loading state while fetching product
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D90429]"></div>
+      </div>
+    );
+  }
 
   if (!activeProduct) return null;
 
