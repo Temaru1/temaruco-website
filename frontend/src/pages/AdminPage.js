@@ -730,6 +730,7 @@ const AdminPage = () => {
       label: 'Inventory',
       icon: Package,
       items: [
+        { label: 'All Products', path: '/admin/all-products', icon: Package },
         { label: 'Clothing Items', path: '/admin/clothing-items', icon: Shirt },
         { label: 'Fabrics & Souvenirs', path: '/admin/products', icon: Package },
         { label: 'Boutique', path: '/admin/inventory', icon: ShoppingBag },
