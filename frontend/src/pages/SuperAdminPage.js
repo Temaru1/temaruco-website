@@ -1,88 +1,129 @@
-import React, { useState, useEffect } from 'react';
-import { UserPlus, Shield, Trash2, Clock, Mail } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { UserPlus, Shield, Trash2, Clock, Mail, Eye, EyeOff, ChevronDown, ChevronUp, Check, X, Crown, Filter } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-console.log('SuperAdminPage API_URL:', API_URL);
 
 const SuperAdminPage = () => {
   const [admins, setAdmins] = useState([]);
   const [actions, setActions] = useState([]);
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('admins'); // admins, emails, roles
+  const [activeTab, setActiveTab] = useState('admins');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showNewAdminCredentials, setShowNewAdminCredentials] = useState(false);
   const [newAdminCredentials, setNewAdminCredentials] = useState(null);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [availablePermissions, setAvailablePermissions] = useState({});
+  const [expandedModules, setExpandedModules] = useState({});
+  const [filterRole, setFilterRole] = useState('all'); // 'all', 'super_admin', 'admin'
+  
   const [passwordChange, setPasswordChange] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+  
+  // Default permissions structure
+  const defaultPermissions = {
+    can_view_site_texts: false,
+    can_edit_site_texts: false,
+    can_reset_site_texts: false,
+    can_view_materials: true,
+    can_add_materials: true,
+    can_edit_materials: true,
+    can_delete_materials: false,
+    can_add_material_types: true,
+    can_view_material_history: true,
+    can_view_products: true,
+    can_add_products: true,
+    can_edit_products: true,
+    can_delete_products: false,
+    can_view_designs: true,
+    can_download_designs: true,
+    can_view_orders: true,
+    can_manage_orders: true,
+    can_update_order_status: true,
+    can_delete_orders: false,
+    can_view_production: true,
+    can_manage_production: true,
+    can_assign_tailors: true,
+    can_view_quotes: true,
+    can_manage_quotes: true,
+    can_view_custom_requests: true,
+    can_manage_custom_requests: true,
+    can_view_clients: true,
+    can_edit_clients: true,
+    can_delete_clients: false,
+    can_view_financials: false,
+    can_manage_financials: false,
+    can_delete_payments: false,
+    can_view_pricing: true,
+    can_manage_pricing: false,
+    can_view_inventory: true,
+    can_manage_inventory: true,
+    can_view_procurement: true,
+    can_manage_procurement: true,
+    can_view_suppliers: true,
+    can_manage_suppliers: true,
+    can_manage_cms: false,
+    can_manage_images: false,
+    can_manage_pod_items: false,
+    can_view_analytics: false,
+    can_view_website_analytics: false,
+    can_export_reports: true,
+    can_view_emails: false,
+    can_send_notifications: true,
+    can_view_admins: false,
+    can_create_admins: false,
+    can_edit_admins: false,
+    can_delete_admins: false,
+    can_assign_permissions: false,
+    can_view_settings: false,
+    can_manage_settings: false,
+    can_manage_payment_settings: false,
+    can_manage_inventory_settings: true,
+  };
+  
   const [newAdmin, setNewAdmin] = useState({
     username: '',
     email: '',
     name: '',
     password: '',
-    role: {
-      can_view_orders: true,
-      can_manage_orders: true,
-      can_view_quotes: true,
-      can_manage_quotes: true,
-      can_view_products: true,
-      can_manage_products: true,
-      can_view_emails: false,
-      can_view_analytics: true,
-      can_manage_cms: false,
-      can_manage_production: true,
-      can_view_clients: true,
-      can_manage_clients: true,
-      can_view_procurement: false,
-      can_manage_procurement: false,
-      can_view_financials: false,
-      can_manage_financials: false
-    }
+    is_super_admin: false,
+    role: { ...defaultPermissions }
   });
+
+  const loadPermissions = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/super-admin/permissions`, {
+        withCredentials: true
+      });
+      setAvailablePermissions(response.data.modules || {});
+    } catch (error) {
+      console.error('Failed to load permissions:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+    loadPermissions();
+  }, [loadPermissions]);
 
   const loadData = async () => {
     try {
-      console.log('Loading super admin data from:', API_URL);
       const [adminsRes, actionsRes, emailsRes] = await Promise.all([
         axios.get(`${API_URL}/api/super-admin/admins`, { withCredentials: true }),
         axios.get(`${API_URL}/api/super-admin/actions`, { withCredentials: true }),
         axios.get(`${API_URL}/api/super-admin/emails`, { withCredentials: true })
       ]);
-      console.log('Admins loaded:', adminsRes.data.length);
       
-      // Ensure all admins have a role object (for backward compatibility)
       const adminsWithRoles = adminsRes.data.map(admin => ({
         ...admin,
-        role: admin.role || {
-          can_view_orders: true,
-          can_manage_orders: true,
-          can_view_quotes: true,
-          can_manage_quotes: true,
-          can_view_products: true,
-          can_manage_products: true,
-          can_view_emails: false,
-          can_view_analytics: true,
-          can_manage_cms: false,
-          can_manage_production: true,
-          can_view_clients: true,
-          can_manage_clients: true,
-          can_view_procurement: false,
-          can_manage_procurement: false,
-          can_view_financials: false,
-          can_manage_financials: false
-        }
+        role: admin.role || { ...defaultPermissions }
       }));
       
       setAdmins(adminsWithRoles);
@@ -90,15 +131,11 @@ const SuperAdminPage = () => {
       setEmails(emailsRes.data.emails || []);
     } catch (error) {
       console.error('Failed to load super admin data:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to load data';
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.detail || 'Failed to load data');
       
-      // If unauthorized, redirect to login
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error('Session expired. Please login again.');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
+        setTimeout(() => window.location.href = '/login', 2000);
       }
     } finally {
       setLoading(false);
@@ -113,26 +150,29 @@ const SuperAdminPage = () => {
       return;
     }
     
+    if (newAdmin.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    
     try {
-      console.log('Creating admin:', newAdmin.username);
       const response = await axios.post(
         `${API_URL}/api/super-admin/create-admin`,
         newAdmin,
         { withCredentials: true }
       );
-      console.log('Admin created:', response.data);
       
-      // Save credentials for display
       setNewAdminCredentials({
         username: newAdmin.username,
         email: newAdmin.email,
         name: newAdmin.name,
-        password: newAdmin.password
+        password: newAdmin.password,
+        is_super_admin: newAdmin.is_super_admin
       });
       
-      toast.success('Admin created successfully!');
+      toast.success(`${newAdmin.is_super_admin ? 'Super Admin' : 'Admin'} created successfully!`);
       setShowCreateModal(false);
-      setShowNewAdminCredentials(true); // Show credentials modal
+      setShowNewAdminCredentials(true);
       
       // Reset form
       setNewAdmin({ 
@@ -140,31 +180,14 @@ const SuperAdminPage = () => {
         email: '', 
         name: '', 
         password: '',
-        role: {
-          can_view_orders: true,
-          can_manage_orders: true,
-          can_view_quotes: true,
-          can_manage_quotes: true,
-          can_view_products: true,
-          can_manage_products: true,
-          can_view_emails: false,
-          can_view_analytics: true,
-          can_manage_cms: false,
-          can_manage_production: true,
-          can_view_clients: true,
-          can_manage_clients: true,
-          can_view_procurement: false,
-          can_manage_procurement: false,
-          can_view_financials: false,
-          can_manage_financials: false
-        }
+        is_super_admin: false,
+        role: { ...defaultPermissions }
       });
       loadData();
     } catch (error) {
       console.error('Failed to create admin:', error);
       const detail = error.response?.data?.detail;
-      const errorMessage = typeof detail === 'string' ? detail : 'Failed to create admin';
-      toast.error(errorMessage);
+      toast.error(typeof detail === 'string' ? detail : 'Failed to create admin');
     }
   };
 
@@ -173,21 +196,57 @@ const SuperAdminPage = () => {
     
     try {
       await axios.patch(
-        `${API_URL}/api/super-admin/admin/${selectedAdmin.id}/role`,
+        `${API_URL}/api/super-admin/admin/${selectedAdmin.id || selectedAdmin.user_id}/role`,
         newAdmin.role,
         { withCredentials: true }
       );
-      toast.success('Admin role updated successfully!');
+      toast.success('Permissions updated successfully!');
       setShowRoleModal(false);
       setSelectedAdmin(null);
       loadData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to update role');
+      toast.error(error.response?.data?.detail || 'Failed to update permissions');
     }
   };
 
-  const handleRemoveAdmin = async (userId) => {
-    if (!window.confirm('Are you sure you want to remove admin privileges from this user?')) {
+  const handlePromoteToSuperAdmin = async (admin) => {
+    if (!window.confirm(`Are you sure you want to promote ${admin.name} to Super Admin? They will have full system access.`)) {
+      return;
+    }
+    
+    try {
+      await axios.patch(
+        `${API_URL}/api/super-admin/admin/${admin.id || admin.user_id}/role`,
+        { ...admin.role, promote_to_super_admin: true },
+        { withCredentials: true }
+      );
+      toast.success(`${admin.name} promoted to Super Admin!`);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to promote admin');
+    }
+  };
+
+  const handleDemoteSuperAdmin = async (admin) => {
+    if (!window.confirm(`Are you sure you want to demote ${admin.name} to regular Admin?`)) {
+      return;
+    }
+    
+    try {
+      await axios.patch(
+        `${API_URL}/api/super-admin/admin/${admin.id || admin.user_id}/demote`,
+        {},
+        { withCredentials: true }
+      );
+      toast.success(`${admin.name} demoted to regular Admin`);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to demote admin');
+    }
+  };
+
+  const handleRemoveAdmin = async (userId, adminName) => {
+    if (!window.confirm(`Are you sure you want to remove admin privileges from ${adminName}?`)) {
       return;
     }
 
@@ -229,18 +288,12 @@ const SuperAdminPage = () => {
       
       toast.success('Password changed successfully!');
       setShowChangePasswordModal(false);
-      setPasswordChange({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
+      setPasswordChange({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       const detail = error.response?.data?.detail;
-      const errorMessage = typeof detail === 'string' ? detail : 'Failed to change password';
-      toast.error(errorMessage);
+      toast.error(typeof detail === 'string' ? detail : 'Failed to change password');
     }
   };
-
 
   const handleChangeAdminPassword = async (admin) => {
     const newPassword = prompt(`Enter new password for ${admin.name}:\n(Minimum 8 characters)`);
@@ -256,23 +309,47 @@ const SuperAdminPage = () => {
       formData.append('new_password', newPassword);
       
       await axios.post(
-        `${API_URL}/api/super-admin/admin/${admin.id}/change-password`,
+        `${API_URL}/api/super-admin/admin/${admin.id || admin.user_id}/change-password`,
         formData,
         { withCredentials: true }
       );
       
-      // Show password once in success message
       toast.success(`Password changed! New password: ${newPassword}`, { duration: 10000 });
-      
-      // Also show in alert so user can copy
-      alert(`Password for ${admin.name} has been changed.\n\nNew Password: ${newPassword}\n\n⚠️ IMPORTANT: Save this password now! It won't be shown again.`);
-      
+      alert(`Password for ${admin.name} has been changed.\n\nNew Password: ${newPassword}\n\n⚠️ IMPORTANT: Save this password now!`);
     } catch (error) {
       toast.error('Failed to change password');
     }
   };
 
+  const toggleModule = (moduleKey) => {
+    setExpandedModules(prev => ({ ...prev, [moduleKey]: !prev[moduleKey] }));
+  };
 
+  const toggleModulePermissions = (moduleKey, permissions, enabled) => {
+    const updates = {};
+    permissions.forEach(p => { updates[p.key] = enabled; });
+    setNewAdmin(prev => ({
+      ...prev,
+      role: { ...prev.role, ...updates }
+    }));
+  };
+
+  const isModuleFullyEnabled = (permissions) => {
+    return permissions.every(p => newAdmin.role[p.key]);
+  };
+
+  const isModulePartiallyEnabled = (permissions) => {
+    const enabled = permissions.filter(p => newAdmin.role[p.key]).length;
+    return enabled > 0 && enabled < permissions.length;
+  };
+
+  // Filter admins based on role
+  const filteredAdmins = admins.filter(admin => {
+    if (filterRole === 'all') return true;
+    if (filterRole === 'super_admin') return admin.is_super_admin;
+    if (filterRole === 'admin') return !admin.is_super_admin;
+    return true;
+  });
 
   if (loading) {
     return <div className="loading-spinner"></div>;
@@ -281,7 +358,8 @@ const SuperAdminPage = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="font-oswald text-4xl font-bold" data-testid="super-admin-title">
+        <h1 className="font-oswald text-4xl font-bold flex items-center gap-3" data-testid="super-admin-title">
+          <Shield className="text-purple-600" size={36} />
           Super Admin Panel
         </h1>
         <div className="flex gap-3">
@@ -343,11 +421,24 @@ const SuperAdminPage = () => {
       {/* Admins List */}
       {activeTab === 'admins' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-          <div className="p-6 border-b">
+          <div className="p-6 border-b flex justify-between items-center">
             <h2 className="font-oswald text-2xl font-semibold flex items-center gap-2">
               <Shield className="text-primary" size={24} />
               Admin Users
             </h2>
+            <div className="flex items-center gap-2">
+              <Filter size={18} className="text-zinc-400" />
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="px-3 py-1.5 border rounded-lg text-sm"
+                data-testid="filter-role"
+              >
+                <option value="all">All Roles</option>
+                <option value="super_admin">Super Admins Only</option>
+                <option value="admin">Regular Admins Only</option>
+              </select>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -363,9 +454,14 @@ const SuperAdminPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y" data-testid="admins-table">
-                {admins.map(admin => (
+                {filteredAdmins.map(admin => (
                   <tr key={admin.user_id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-medium">{admin.name}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {admin.is_super_admin && <Crown size={16} className="text-yellow-500" />}
+                        <span className="font-medium">{admin.name}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <span className="font-mono text-sm bg-blue-50 px-2 py-1 rounded">
                         {admin.username || admin.email}
@@ -385,55 +481,68 @@ const SuperAdminPage = () => {
                       {new Date(admin.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      {!admin.is_super_admin && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedAdmin(admin);
-                              // Properly merge role with defaults to avoid undefined issues
-                              const adminRole = admin.role || {};
-                              setNewAdmin({
-                                ...newAdmin, 
-                                role: {
-                                  can_view_orders: adminRole.can_view_orders ?? true,
-                                  can_manage_orders: adminRole.can_manage_orders ?? true,
-                                  can_view_quotes: adminRole.can_view_quotes ?? true,
-                                  can_manage_quotes: adminRole.can_manage_quotes ?? true,
-                                  can_view_products: adminRole.can_view_products ?? true,
-                                  can_manage_products: adminRole.can_manage_products ?? true,
-                                  can_view_emails: adminRole.can_view_emails ?? false,
-                                  can_view_analytics: adminRole.can_view_analytics ?? true,
-                                  can_manage_cms: adminRole.can_manage_cms ?? false,
-                                  can_manage_production: adminRole.can_manage_production ?? true,
-                                  can_view_clients: adminRole.can_view_clients ?? true,
-                                  can_manage_clients: adminRole.can_manage_clients ?? true,
-                                  can_view_procurement: adminRole.can_view_procurement ?? false,
-                                  can_manage_procurement: adminRole.can_manage_procurement ?? false,
-                                  can_view_financials: adminRole.can_view_financials ?? false,
-                                  can_manage_financials: adminRole.can_manage_financials ?? false
-                                }
-                              });
-                              setShowRoleModal(true);
-                            }}
-                            className="text-blue-600 hover:underline text-sm"
-                          >
-                            Manage Role
-                          </button>
-                          <button
-                            onClick={() => handleChangeAdminPassword(admin)}
-                            className="text-green-600 hover:underline text-sm"
-                          >
-                            Change Password
-                          </button>
-                          <button
-                            onClick={() => handleRemoveAdmin(admin.user_id)}
-                            className="text-red-600 hover:underline"
-                            data-testid={`remove-${admin.user_id}`}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 flex-wrap">
+                        {!admin.is_super_admin ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedAdmin(admin);
+                                setNewAdmin(prev => ({
+                                  ...prev,
+                                  role: { ...defaultPermissions, ...(admin.role || {}) }
+                                }));
+                                setShowRoleModal(true);
+                              }}
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Permissions
+                            </button>
+                            <button
+                              onClick={() => handlePromoteToSuperAdmin(admin)}
+                              className="text-purple-600 hover:underline text-sm"
+                              title="Promote to Super Admin"
+                            >
+                              Promote
+                            </button>
+                            <button
+                              onClick={() => handleChangeAdminPassword(admin)}
+                              className="text-green-600 hover:underline text-sm"
+                            >
+                              Password
+                            </button>
+                            <button
+                              onClick={() => handleRemoveAdmin(admin.user_id, admin.name)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Remove Admin"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleDemoteSuperAdmin(admin)}
+                              className="text-orange-600 hover:underline text-sm"
+                              title="Demote to Regular Admin"
+                            >
+                              Demote
+                            </button>
+                            <button
+                              onClick={() => handleChangeAdminPassword(admin)}
+                              className="text-green-600 hover:underline text-sm"
+                            >
+                              Password
+                            </button>
+                            <button
+                              onClick={() => handleRemoveAdmin(admin.user_id, admin.name)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Remove Admin"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -443,7 +552,7 @@ const SuperAdminPage = () => {
         </div>
       )}
 
-      {/* Customer Emails */}
+      {/* Customer Emails Tab */}
       {activeTab === 'emails' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b">
@@ -451,11 +560,7 @@ const SuperAdminPage = () => {
               <Mail size={24} className="text-primary" />
               Customer Emails
             </h2>
-            <p className="text-sm text-zinc-600 mt-2">
-              All customer emails collected from orders, payments, and checkouts
-            </p>
           </div>
-
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-zinc-50">
@@ -497,7 +602,7 @@ const SuperAdminPage = () => {
         </div>
       )}
 
-      {/* Action Logs */}
+      {/* Action Logs Tab */}
       {activeTab === 'actions' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b">
@@ -506,17 +611,21 @@ const SuperAdminPage = () => {
               Recent Actions
             </h2>
           </div>
-
           <div className="p-6">
             <div className="space-y-3">
               {actions.map((action, index) => (
                 <div key={index} className="flex items-start gap-3 py-3 border-b last:border-0">
                   <div className="flex-1">
                     <p className="font-medium">
-                      {action.action === 'create_admin' ? '✓ Created admin' : '✗ Removed admin'}
+                      {action.action === 'create_admin' && '✓ Created admin'}
+                      {action.action === 'create_super_admin' && '👑 Created super admin'}
+                      {action.action === 'remove_admin' && '✗ Removed admin'}
+                      {action.action === 'promote_to_super_admin' && '⬆️ Promoted to super admin'}
+                      {action.action === 'demote_super_admin' && '⬇️ Demoted from super admin'}
+                      {action.action === 'update_admin_role' && '🔧 Updated permissions'}
                     </p>
                     <p className="text-sm text-zinc-600">
-                      By: {action.performed_by} | Target: {action.target_user || action.target_user_id}
+                      By: {action.performed_by} | Target: {action.target_email || action.target_user || action.target_user_id}
                     </p>
                   </div>
                   <span className="text-xs text-zinc-500">
@@ -532,63 +641,147 @@ const SuperAdminPage = () => {
       {/* Create Admin Modal */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-oswald text-2xl font-bold mb-6">Create New Admin</h2>
 
             <form onSubmit={handleCreateAdmin} className="space-y-4">
-              <div>
-                <label className="block font-manrope font-semibold text-sm mb-2">Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newAdmin.name}
-                  onChange={(e) => setNewAdmin({...newAdmin, name: e.target.value})}
-                  className="w-full"
-                  placeholder="Admin's full name"
-                  data-testid="admin-name"
-                />
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-sm mb-2">Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAdmin.name}
+                    onChange={(e) => setNewAdmin({...newAdmin, name: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="Admin's full name"
+                    data-testid="admin-name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-sm mb-2">Username *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAdmin.username}
+                    onChange={(e) => setNewAdmin({...newAdmin, username: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="admin_username"
+                    data-testid="admin-username"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-sm mb-2">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="admin@temaruco.com"
+                    data-testid="admin-email"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-sm mb-2">Password *</label>
+                  <input
+                    type="password"
+                    required
+                    minLength="8"
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin({...newAdmin, password: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="Minimum 8 characters"
+                    data-testid="admin-password"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block font-manrope font-semibold text-sm mb-2">Username *</label>
-                <input
-                  type="text"
-                  required
-                  value={newAdmin.username}
-                  onChange={(e) => setNewAdmin({...newAdmin, username: e.target.value})}
-                  className="w-full"
-                  placeholder="admin_username"
-                  data-testid="admin-username"
-                />
-                <p className="text-xs text-zinc-500 mt-1">Admin will use this username to login</p>
+              {/* Role Selection */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newAdmin.is_super_admin}
+                    onChange={(e) => setNewAdmin({...newAdmin, is_super_admin: e.target.checked})}
+                    className="w-5 h-5 accent-purple-600"
+                    data-testid="is-super-admin"
+                  />
+                  <div>
+                    <span className="font-semibold text-purple-900 flex items-center gap-2">
+                      <Crown size={18} className="text-yellow-500" />
+                      Create as Super Admin
+                    </span>
+                    <p className="text-sm text-purple-700 mt-1">
+                      Super Admins have full access to all features and can manage other admins.
+                    </p>
+                  </div>
+                </label>
               </div>
 
-              <div>
-                <label className="block font-manrope font-semibold text-sm mb-2">Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={newAdmin.email}
-                  onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
-                  className="w-full"
-                  placeholder="admin@temaruco.com"
-                  data-testid="admin-email"
-                />
-              </div>
-
-              <div>
-                <label className="block font-manrope font-semibold text-sm mb-2">Password *</label>
-                <input
-                  type="password"
-                  required
-                  minLength="8"
-                  value={newAdmin.password}
-                  onChange={(e) => setNewAdmin({...newAdmin, password: e.target.value})}
-                  className="w-full"
-                  placeholder="Minimum 8 characters"
-                  data-testid="admin-password"
-                />
-              </div>
+              {/* Granular Permissions (only show if not super admin) */}
+              {!newAdmin.is_super_admin && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-semibold mb-3">Assign Permissions</h3>
+                  <p className="text-xs text-zinc-600 mb-4">Select which modules and actions this admin can access:</p>
+                  
+                  <div className="space-y-2">
+                    {Object.entries(availablePermissions).map(([moduleKey, moduleData]) => (
+                      <div key={moduleKey} className="border rounded-lg">
+                        <div 
+                          className="flex items-center justify-between p-3 cursor-pointer hover:bg-zinc-50"
+                          onClick={() => toggleModule(moduleKey)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isModuleFullyEnabled(moduleData.permissions)}
+                              ref={el => {
+                                if (el) el.indeterminate = isModulePartiallyEnabled(moduleData.permissions);
+                              }}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleModulePermissions(moduleKey, moduleData.permissions, e.target.checked);
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <span className="font-medium">{moduleData.label}</span>
+                          </div>
+                          {expandedModules[moduleKey] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </div>
+                        
+                        {expandedModules[moduleKey] && (
+                          <div className="border-t bg-zinc-50 p-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              {moduleData.permissions.map(perm => (
+                                <label key={perm.key} className="flex items-center gap-2 text-sm p-2 hover:bg-white rounded cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={newAdmin.role[perm.key] || false}
+                                    onChange={(e) => setNewAdmin({
+                                      ...newAdmin,
+                                      role: {...newAdmin.role, [perm.key]: e.target.checked}
+                                    })}
+                                    className="w-4 h-4"
+                                  />
+                                  <div>
+                                    <span>{perm.label}</span>
+                                    <p className="text-xs text-zinc-500">{perm.description}</p>
+                                  </div>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
                 <p className="font-semibold text-yellow-900 mb-1">⚠️ Important</p>
@@ -597,212 +790,11 @@ const SuperAdminPage = () => {
                 </p>
               </div>
 
-              {/* Granular Role Permissions */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
-                <h3 className="font-semibold mb-3">Assign Permissions</h3>
-                <p className="text-xs text-zinc-600 mb-4">Select which functions this admin can access:</p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_orders}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_orders: e.target.checked}
-                      })}
-                    />
-                    <span>View Orders</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_orders}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_orders: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Orders</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_quotes}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_quotes: e.target.checked}
-                      })}
-                    />
-                    <span>View Quotes</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_quotes}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_quotes: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Quotes</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_products}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_products: e.target.checked}
-                      })}
-                    />
-                    <span>View Products</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_products}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_products: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Products</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_analytics}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_analytics: e.target.checked}
-                      })}
-                    />
-                    <span>View Analytics</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_cms}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_cms: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Website</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_emails}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_emails: e.target.checked}
-                      })}
-                    />
-                    <span>View Customer Emails</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_production}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_production: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Production</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_clients}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_clients: e.target.checked}
-                      })}
-                    />
-                    <span>View Clients</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_clients}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_clients: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Clients</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_procurement}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_procurement: e.target.checked}
-                      })}
-                    />
-                    <span>View Procurement</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_procurement}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_procurement: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Procurement</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_view_financials}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_view_financials: e.target.checked}
-                      })}
-                    />
-                    <span>View Financials</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role.can_manage_financials}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, can_manage_financials: e.target.checked}
-                      })}
-                    />
-                    <span>Manage Financials</span>
-                  </label>
-                </div>
-              </div>
-
               <div className="flex gap-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
                   className="btn-outline flex-1"
-                  data-testid="cancel-btn"
                 >
                   Cancel
                 </button>
@@ -811,7 +803,7 @@ const SuperAdminPage = () => {
                   className="btn-primary flex-1"
                   data-testid="submit-create-admin"
                 >
-                  Create Admin
+                  Create {newAdmin.is_super_admin ? 'Super Admin' : 'Admin'}
                 </button>
               </div>
             </form>
@@ -822,34 +814,59 @@ const SuperAdminPage = () => {
       {/* Role Management Modal */}
       {showRoleModal && selectedAdmin && (
         <div className="modal-overlay" onClick={() => setShowRoleModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-oswald text-2xl font-bold mb-6">
               Manage Permissions: {selectedAdmin.name}
             </h2>
 
-            <div className="space-y-4">
-              {Object.keys(newAdmin.role).map(permission => (
-                <div key={permission} className="flex items-center justify-between p-4 bg-zinc-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">
-                      {permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </p>
-                    <p className="text-sm text-zinc-600">
-                      {permission.includes('view') ? 'Can view this section' : 'Can modify this section'}
-                    </p>
+            <div className="space-y-2">
+              {Object.entries(availablePermissions).map(([moduleKey, moduleData]) => (
+                <div key={moduleKey} className="border rounded-lg">
+                  <div 
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-zinc-50"
+                    onClick={() => toggleModule(moduleKey)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isModuleFullyEnabled(moduleData.permissions)}
+                        ref={el => {
+                          if (el) el.indeterminate = isModulePartiallyEnabled(moduleData.permissions);
+                        }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleModulePermissions(moduleKey, moduleData.permissions, e.target.checked);
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-medium">{moduleData.label}</span>
+                    </div>
+                    {expandedModules[moduleKey] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={newAdmin.role[permission]}
-                      onChange={(e) => setNewAdmin({
-                        ...newAdmin,
-                        role: {...newAdmin.role, [permission]: e.target.checked}
-                      })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
+                  
+                  {expandedModules[moduleKey] && (
+                    <div className="border-t bg-zinc-50 p-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        {moduleData.permissions.map(perm => (
+                          <label key={perm.key} className="flex items-center gap-2 text-sm p-2 hover:bg-white rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={newAdmin.role[perm.key] || false}
+                              onChange={(e) => setNewAdmin({
+                                ...newAdmin,
+                                role: {...newAdmin.role, [perm.key]: e.target.checked}
+                              })}
+                              className="w-4 h-4"
+                            />
+                            <div>
+                              <span>{perm.label}</span>
+                              <p className="text-xs text-zinc-500">{perm.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -904,7 +921,6 @@ const SuperAdminPage = () => {
                   minLength="8"
                   required
                 />
-                <p className="text-xs text-zinc-600 mt-1">Minimum 8 characters</p>
               </div>
               
               <div>
@@ -942,8 +958,9 @@ const SuperAdminPage = () => {
       {showNewAdminCredentials && newAdminCredentials && (
         <div className="modal-overlay" onClick={() => setShowNewAdminCredentials(false)}>
           <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-oswald text-2xl font-bold mb-4 text-green-600">
-              ✅ Admin Created Successfully!
+            <h2 className="font-oswald text-2xl font-bold mb-4 text-green-600 flex items-center gap-2">
+              {newAdminCredentials.is_super_admin && <Crown className="text-yellow-500" size={24} />}
+              ✅ {newAdminCredentials.is_super_admin ? 'Super Admin' : 'Admin'} Created!
             </h2>
             
             <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
@@ -951,7 +968,7 @@ const SuperAdminPage = () => {
                 ⚠️ IMPORTANT: Save these credentials now!
               </p>
               <p className="text-xs text-yellow-700">
-                For security reasons, the password cannot be retrieved later. Make sure to copy and save these credentials securely.
+                The password cannot be retrieved later.
               </p>
             </div>
             
@@ -959,6 +976,17 @@ const SuperAdminPage = () => {
               <div>
                 <p className="text-xs text-zinc-600 mb-1">Name</p>
                 <p className="font-semibold text-lg">{newAdminCredentials.name}</p>
+              </div>
+              
+              <div>
+                <p className="text-xs text-zinc-600 mb-1">Role</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  newAdminCredentials.is_super_admin 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {newAdminCredentials.is_super_admin ? 'Super Admin' : 'Admin'}
+                </span>
               </div>
               
               <div>
@@ -983,7 +1011,7 @@ const SuperAdminPage = () => {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    `Username: ${newAdminCredentials.username}\nEmail: ${newAdminCredentials.email}\nPassword: ${newAdminCredentials.password}`
+                    `Username: ${newAdminCredentials.username}\nEmail: ${newAdminCredentials.email}\nPassword: ${newAdminCredentials.password}\nRole: ${newAdminCredentials.is_super_admin ? 'Super Admin' : 'Admin'}`
                   );
                   toast.success('Credentials copied to clipboard!');
                 }}
