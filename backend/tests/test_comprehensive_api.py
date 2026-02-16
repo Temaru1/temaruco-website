@@ -196,7 +196,7 @@ class TestGuestDesigns:
     def test_admin_guest_designs(self, auth_token):
         """Test admin guest designs endpoint"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/admin/guest-designs", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/admin/pod/guest-designs", headers=headers)
         assert response.status_code == 200
         data = response.json()
         designs = data.get('designs', [])
@@ -207,7 +207,7 @@ class TestGuestDesigns:
     def test_admin_guest_designs_filter_assigned(self, auth_token):
         """Test guest designs filter by assigned status"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/admin/guest-designs?status=assigned", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/admin/pod/guest-designs?status=assigned", headers=headers)
         assert response.status_code == 200
         data = response.json()
         print(f"✓ Assigned designs filter works: {len(data.get('designs', []))} designs")
@@ -215,7 +215,7 @@ class TestGuestDesigns:
     def test_admin_guest_designs_filter_unassigned(self, auth_token):
         """Test guest designs filter by unassigned status"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/admin/guest-designs?status=unassigned", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/admin/pod/guest-designs?status=unassigned", headers=headers)
         assert response.status_code == 200
         data = response.json()
         print(f"✓ Unassigned designs filter works: {len(data.get('designs', []))} designs")
