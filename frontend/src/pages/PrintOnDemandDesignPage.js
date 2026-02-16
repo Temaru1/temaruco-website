@@ -137,12 +137,23 @@ const PrintOnDemandDesignPage = () => {
   useEffect(() => {
     if (!activeProduct) return;
     
+    const imageUrl = activeProduct.base_image_url || activeProduct.image_url || activeProduct.image;
+    const fullUrl = getImageUrl(imageUrl);
+    
+    // Try loading with crossOrigin first for canvas export capability
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    // Use base_image_url first, then image_url - SAME image as product card
-    const imageUrl = activeProduct.base_image_url || activeProduct.image_url || activeProduct.image;
-    img.src = getImageUrl(imageUrl);
+    img.src = fullUrl;
+    
     img.onload = () => setProductImage(img);
+    
+    // If CORS fails, load without crossOrigin (display-only, no export)
+    img.onerror = () => {
+      console.log('Loading image without CORS...');
+      const fallbackImg = new window.Image();
+      fallbackImg.src = fullUrl;
+      fallbackImg.onload = () => setProductImage(fallbackImg);
+    };
   }, [activeProduct]);
 
   useEffect(() => {
