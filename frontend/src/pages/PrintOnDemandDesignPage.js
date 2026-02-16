@@ -27,17 +27,8 @@ const PRINT_SIZES = {
   a2: { width: 4961, height: 7016, label: 'A2', description: '420×594mm', scaleFactor: 1.0 }
 };
 
-// Product catalog with print areas
-const POD_PRODUCTS = {
-  tshirt: { id: 'tshirt', name: 'T-Shirt', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', colors: ['White', 'Black', 'Navy', 'Grey', 'Red'], sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 150, y: 80, width: 200, height: 250 } },
-  hoodie: { id: 'hoodie', name: 'Hoodie', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600', colors: ['Black', 'Grey', 'Navy', 'White'], sizes: ['S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 140, y: 100, width: 220, height: 220 } },
-  polo: { id: 'polo', name: 'Polo Shirt', image: 'https://images.unsplash.com/photo-1625910513413-5fc4e5b6bc2b?w=600', colors: ['White', 'Black', 'Navy', 'Red', 'Blue'], sizes: ['S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 160, y: 90, width: 180, height: 200 } },
-  joggers: { id: 'joggers', name: 'Joggers', image: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600', colors: ['Black', 'Grey', 'Navy'], sizes: ['S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 80, y: 150, width: 100, height: 150 } },
-  varsity: { id: 'varsity', name: 'Varsity Jacket', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600', colors: ['Black/White', 'Navy/White', 'Red/White'], sizes: ['S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 130, y: 80, width: 240, height: 280 } },
-  tank: { id: 'tank', name: 'Tank Top', image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600', colors: ['White', 'Black', 'Grey'], sizes: ['XS', 'S', 'M', 'L', 'XL'], printArea: { x: 150, y: 60, width: 200, height: 220 } },
-  sweatshirt: { id: 'sweatshirt', name: 'Sweatshirt', image: 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=600', colors: ['Black', 'Grey', 'Navy', 'Cream'], sizes: ['S', 'M', 'L', 'XL', 'XXL'], printArea: { x: 140, y: 90, width: 220, height: 230 } },
-  cap: { id: 'cap', name: 'Baseball Cap', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600', colors: ['Black', 'White', 'Navy', 'Red'], sizes: ['One Size'], printArea: { x: 170, y: 100, width: 160, height: 100 } }
-};
+// Default print area fallback (used only if product doesn't have one)
+const DEFAULT_PRINT_AREA = { x: 150, y: 80, width: 200, height: 250 };
 
 const COLOR_HEX = {
   'White': '#FFFFFF', 'Black': '#1a1a1a', 'Navy': '#1e3a5f', 'Grey': '#6b7280',
