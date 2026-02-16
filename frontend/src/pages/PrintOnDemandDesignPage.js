@@ -184,7 +184,7 @@ const PrintOnDemandDesignPage = () => {
   // Calculate design dimensions based on print size
   const calculateDesignDimensions = (originalWidth, originalHeight, targetPrintSize) => {
     const printConfig = PRINT_SIZES[targetPrintSize];
-    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    const printArea = getPrintArea();
     
     // Scale factor based on print size
     const maxWidth = printArea.width * printConfig.scaleFactor;
@@ -214,7 +214,7 @@ const PrintOnDemandDesignPage = () => {
     
     // Update existing image elements with new size
     if (elements.length > 0 && originalImageRef.current) {
-      const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+      const printArea = getPrintArea();
       
       setElements(prevElements => 
         prevElements.map(el => {
@@ -286,7 +286,7 @@ const PrintOnDemandDesignPage = () => {
           src: event.target.result
         };
         
-        const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+        const printArea = getPrintArea();
         const { width, height } = calculateDesignDimensions(img.width, img.height, printSize);
         
         // Add to canvas elements
@@ -417,7 +417,7 @@ const PrintOnDemandDesignPage = () => {
   };
 
   const addText = () => {
-    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    const printArea = getPrintArea();
     setElements([...elements, {
       id: `text-${Date.now()}`, type: 'text', text: 'Your Text',
       x: printArea.x + printArea.width / 2, y: printArea.y + printArea.height / 2,
@@ -436,7 +436,7 @@ const PrintOnDemandDesignPage = () => {
   const centerDesign = () => {
     if (!selectedId) return;
     
-    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    const printArea = getPrintArea();
     
     setElements(prevElements =>
       prevElements.map(el => {
@@ -466,7 +466,7 @@ const PrintOnDemandDesignPage = () => {
   const resetDesign = () => {
     if (elements.length === 0 || !originalImageRef.current) return;
     
-    const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+    const printArea = getPrintArea();
     
     setElements(prevElements =>
       prevElements.map(el => {
@@ -567,7 +567,7 @@ const PrintOnDemandDesignPage = () => {
     }
   };
 
-  const printArea = fallbackProduct?.printArea || { x: 150, y: 80, width: 200, height: 250 };
+  const printArea = getPrintArea();
   const variantInfo = QUALITY_VARIANTS.find(v => v.id === selectedVariant);
 
   return (
