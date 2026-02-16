@@ -1641,23 +1641,19 @@ async def create_or_get_guest_contact(data: Dict[str, Any]):
 async def upload_pod_design(
     design_file: UploadFile = File(...),
     product_id: str = Form(...),
-    guest_email: str = Form(""),
-    guest_name: str = Form(""),
-    guest_phone: str = Form(""),
-    session_id: str = Form(""),
     item_type: str = Form("")
 ):
     """
-    Upload POD design - stores original file and links to guest contact.
-    Supports session-based uploads before guest provides contact info.
+    Upload POD design - STATELESS implementation.
+    Immediately saves design with status='unassigned'.
+    Returns temp_design_id for frontend to store in localStorage.
     
-    Returns: design_id, original_file_url, guest_id (if available), session_id
+    Does NOT require cookies, sessions, or contact info.
+    Contact linking happens separately via /pod/link-design endpoint.
+    
+    Returns: temp_design_id, original_file_url
     """
-    logger.info(f"[POD DESIGN] Upload started: product={product_id}, email={guest_email}, session={session_id}")
-    
-    # Generate session_id if not provided
-    if not session_id:
-        session_id = f"session_{uuid.uuid4().hex[:12]}"
+    logger.info(f"[POD DESIGN] Stateless upload started: product={product_id}")
     
     # Validate file
     is_valid, message = await validate_file_upload(design_file, ALLOWED_IMAGE_EXTENSIONS)
@@ -1665,53 +1661,13 @@ async def upload_pod_design(
         logger.error(f"[POD DESIGN] Validation failed: {message}")
         raise HTTPException(status_code=400, detail=message)
     
-    guest_id = None
-    
-    # Get or create guest contact if email provided
-    if guest_email:
-        guest_contact = await db.pod_guest_contacts.find_one({'email': guest_email.lower()})
-        if not guest_contact:
-            guest_id = f"guest_{uuid.uuid4().hex[:12]}"
-            guest_contact = {
-                'id': guest_id,
-                'guest_id': guest_id,
-                'session_id': session_id,
-                'name': guest_name,
-                'email': guest_email.lower(),
-                'phone': guest_phone,
-                'designs': [],
-                'created_at': datetime.now(timezone.utc).isoformat(),
-                'updated_at': datetime.now(timezone.utc).isoformat()
-            }
-            await db.pod_guest_contacts.insert_one(guest_contact)
-            
-            # Also create client record
-            client_id = f"client_{uuid.uuid4().hex[:12]}"
-            await db.clients.insert_one({
-                'id': client_id,
-                'client_id': client_id,
-                'name': guest_name or 'Guest',
-                'email': guest_email.lower(),
-                'phone': guest_phone,
-                'type': 'pod_guest',
-                'source': 'print_on_demand',
-                'pod_guest_id': guest_id,
-                'total_orders': 0,
-                'total_spent': 0,
-                'created_at': datetime.now(timezone.utc).isoformat(),
-                'updated_at': datetime.now(timezone.utc).isoformat()
-            })
-            logger.info(f"[POD DESIGN] Created guest contact + client: {guest_email}")
-        else:
-            guest_id = guest_contact['id']
-    
-    # Generate unique design ID
-    design_id = f"design_{uuid.uuid4().hex[:12]}"
+    # Generate unique temp_design_id (UUID-based, primary key)
+    temp_design_id = f"design_{uuid.uuid4().hex}"
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
     # Save original design file
     file_ext = os.path.splitext(design_file.filename)[1].lower()
-    original_filename = f"{product_id}_{timestamp}_{design_id}{file_ext}"
+    original_filename = f"{product_id}_{timestamp}_{temp_design_id}{file_ext}"
     original_path = POD_ORIGINALS_DIR / original_filename
     
     try:
@@ -1729,52 +1685,211 @@ async def upload_pod_design(
     
     original_url = f"/api/uploads/designs/original/{original_filename}"
     
-    # Create design record
+    # Create design record with status='unassigned' (STATELESS - no contact required)
     design_record = {
-        'id': design_id,
-        'design_id': design_id,
-        'session_id': session_id,
-        'guest_id': guest_id,
-        'guest_email': guest_email.lower() if guest_email else None,
+        'id': temp_design_id,
+        'temp_design_id': temp_design_id,
+        'design_id': temp_design_id,
+        'contact_id': None,
+        'guest_id': None,
+        'guest_email': None,
+        'guest_name': None,
+        'guest_phone': None,
         'product_id': product_id,
         'item_type': item_type or product_id,
         'original_file_url': original_url,
+        'original_filename': design_file.filename,
         'mockup_file_url': None,
+        'mockup_filename': None,
         'print_size': 'a4',
         'scale': 1.0,
         'position_x': 0,
         'position_y': 0,
         'rotation': 0,
         'file_size': len(contents),
-        'status': 'uploaded',
+        'status': 'unassigned',  # Key: starts as unassigned
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
     
     result = await db.pod_designs.insert_one(design_record)
     if not result.inserted_id:
-        logger.error(f"[POD DESIGN] DB insert failed for design {design_id}")
+        logger.error(f"[POD DESIGN] DB insert failed for design {temp_design_id}")
         raise HTTPException(status_code=500, detail="Failed to save design record")
     
-    # Link design to guest contact if we have one
-    if guest_id:
+    logger.info(f"[POD DESIGN] Stateless upload complete: {temp_design_id} (status=unassigned)")
+    
+    return {
+        'temp_design_id': temp_design_id,
+        'design_id': temp_design_id,
+        'original_file_url': original_url,
+        'status': 'unassigned',
+        'message': 'Design uploaded successfully. Store temp_design_id in localStorage.'
+    }
+
+@api_router.post("/pod/link-design")
+async def link_design_to_contact(data: Dict[str, Any]):
+    """
+    Link an unassigned design to a contact.
+    Called when guest submits their contact info.
+    
+    Required: temp_design_id, name, email, phone
+    
+    This is the STATELESS approach - design was uploaded first,
+    now we're linking it to a contact without relying on cookies/sessions.
+    """
+    temp_design_id = data.get('temp_design_id')
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    phone = data.get('phone', '').strip()
+    
+    if not temp_design_id:
+        raise HTTPException(status_code=400, detail="temp_design_id is required")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone is required")
+    
+    logger.info(f"[POD LINK] Linking design {temp_design_id} to {email}")
+    
+    # Find the design
+    design = await db.pod_designs.find_one({'id': temp_design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    # Check if already assigned
+    if design.get('status') == 'assigned' and design.get('contact_id'):
+        logger.info(f"[POD LINK] Design {temp_design_id} already assigned to {design.get('guest_email')}")
+        return {
+            'message': 'Design already assigned',
+            'design_id': temp_design_id,
+            'contact_id': design.get('contact_id'),
+            'status': 'assigned'
+        }
+    
+    try:
+        # Get or create guest contact
+        existing_contact = await db.pod_guest_contacts.find_one({'email': email})
+        
+        if existing_contact:
+            contact_id = existing_contact['id']
+            # Update contact info
+            await db.pod_guest_contacts.update_one(
+                {'id': contact_id},
+                {'$set': {
+                    'name': name,
+                    'phone': phone,
+                    'updated_at': datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            logger.info(f"[POD LINK] Updated existing contact: {contact_id}")
+        else:
+            # Create new contact
+            contact_id = f"contact_{uuid.uuid4().hex[:12]}"
+            contact_record = {
+                'id': contact_id,
+                'contact_id': contact_id,
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'designs': [],
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            await db.pod_guest_contacts.insert_one(contact_record)
+            
+            # Also create client record for admin visibility
+            client_id = f"client_{uuid.uuid4().hex[:12]}"
+            await db.clients.insert_one({
+                'id': client_id,
+                'client_id': client_id,
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'type': 'pod_guest',
+                'source': 'print_on_demand',
+                'pod_contact_id': contact_id,
+                'total_orders': 0,
+                'total_spent': 0,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            })
+            logger.info(f"[POD LINK] Created new contact + client: {contact_id}")
+        
+        # Update design record - link to contact
+        await db.pod_designs.update_one(
+            {'id': temp_design_id},
+            {'$set': {
+                'contact_id': contact_id,
+                'guest_id': contact_id,
+                'guest_email': email,
+                'guest_name': name,
+                'guest_phone': phone,
+                'status': 'assigned',
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Add design to contact's designs list
         await db.pod_guest_contacts.update_one(
-            {'id': guest_id},
+            {'id': contact_id},
             {
-                '$push': {'designs': design_id},
+                '$addToSet': {'designs': temp_design_id},
                 '$set': {'updated_at': datetime.now(timezone.utc).isoformat()}
             }
         )
+        
+        logger.info(f"[POD LINK] Successfully linked design {temp_design_id} to contact {contact_id}")
+        
+        return {
+            'message': 'Design linked to contact successfully',
+            'design_id': temp_design_id,
+            'contact_id': contact_id,
+            'status': 'assigned'
+        }
+        
+    except Exception as e:
+        logger.error(f"[POD LINK] Failed to link design: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to link design to contact")
+
+@api_router.post("/pod/link-multiple-designs")
+async def link_multiple_designs_to_contact(data: Dict[str, Any]):
+    """
+    Link multiple unassigned designs to a contact.
+    Used when guest has uploaded multiple designs before providing contact info.
     
-    logger.info(f"[POD DESIGN] Design linked to guest: {design_id} -> {guest_id}")
+    Required: design_ids (list), name, email, phone
+    """
+    design_ids = data.get('design_ids', [])
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip().lower()
+    phone = data.get('phone', '').strip()
     
-    design_record.pop('_id', None)
+    if not design_ids:
+        raise HTTPException(status_code=400, detail="design_ids list is required")
+    if not email or not name or not phone:
+        raise HTTPException(status_code=400, detail="Name, email, and phone are required")
+    
+    linked_count = 0
+    for design_id in design_ids:
+        try:
+            result = await link_design_to_contact({
+                'temp_design_id': design_id,
+                'name': name,
+                'email': email,
+                'phone': phone
+            })
+            if result.get('status') == 'assigned':
+                linked_count += 1
+        except Exception as e:
+            logger.error(f"[POD LINK] Failed to link design {design_id}: {str(e)}")
+    
     return {
-        'design_id': design_id,
-        'session_id': session_id,
-        'guest_id': guest_id,
-        'original_file_url': original_url,
-        'message': 'Design uploaded successfully'
+        'message': f'Linked {linked_count} of {len(design_ids)} designs',
+        'linked_count': linked_count,
+        'total_designs': len(design_ids)
     }
 
 @api_router.post("/pod/upload-mockup/{design_id}")
