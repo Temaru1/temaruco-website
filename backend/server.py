@@ -2638,6 +2638,239 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
         'order': {k: v for k, v in order.items() if k != '_id'}
     }
 
+# ==================== PRODUCT CATEGORIES MANAGEMENT ====================
+@api_router.get("/admin/categories")
+async def get_all_categories(
+    category_type: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get all product categories (boutique, fabric, souvenir)"""
+    query = {}
+    if category_type:
+        query['type'] = category_type
+    
+    categories = await db.product_categories.find(query, {'_id': 0}).sort('name', 1).to_list(100)
+    
+    # Count products per category
+    for cat in categories:
+        if cat['type'] == 'boutique':
+            count = await db.boutique_products.count_documents({'category': cat['name']})
+        elif cat['type'] == 'fabric':
+            count = await db.fabrics.count_documents({'category': cat['name']})
+        elif cat['type'] == 'souvenir':
+            count = await db.souvenirs.count_documents({'category': cat['name']})
+        else:
+            count = 0
+        cat['product_count'] = count
+    
+    return {'categories': categories}
+
+@api_router.post("/admin/categories")
+async def create_category(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Create a new product category"""
+    name = data.get('name', '').strip()
+    category_type = data.get('type', '').lower()
+    description = data.get('description', '').strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+    
+    if category_type not in ['boutique', 'fabric', 'souvenir']:
+        raise HTTPException(status_code=400, detail="Category type must be: boutique, fabric, or souvenir")
+    
+    # Check for duplicates
+    existing = await db.product_categories.find_one({
+        'name': {'$regex': f'^{name}$', '$options': 'i'},
+        'type': category_type
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already exists for this type")
+    
+    category = {
+        'id': str(uuid.uuid4()),
+        'name': name,
+        'type': category_type,
+        'description': description,
+        'is_active': True,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': admin_user.get('email')
+    }
+    
+    await db.product_categories.insert_one(category)
+    
+    return {
+        'message': 'Category created successfully',
+        'category': {k: v for k, v in category.items() if k != '_id'}
+    }
+
+@api_router.put("/admin/categories/{category_id}")
+async def update_category(category_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Update a product category"""
+    name = data.get('name', '').strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+    
+    # Get existing category
+    existing = await db.product_categories.find_one({'id': category_id}, {'_id': 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    old_name = existing['name']
+    
+    # Update category
+    await db.product_categories.update_one(
+        {'id': category_id},
+        {'$set': {
+            'name': name,
+            'description': data.get('description', existing.get('description', '')),
+            'is_active': data.get('is_active', True),
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'updated_by': admin_user.get('email')
+        }}
+    )
+    
+    # Update all products with this category (if name changed)
+    if name != old_name:
+        cat_type = existing['type']
+        if cat_type == 'boutique':
+            await db.boutique_products.update_many({'category': old_name}, {'$set': {'category': name}})
+        elif cat_type == 'fabric':
+            await db.fabrics.update_many({'category': old_name}, {'$set': {'category': name}})
+        elif cat_type == 'souvenir':
+            await db.souvenirs.update_many({'category': old_name}, {'$set': {'category': name}})
+    
+    return {'message': 'Category updated successfully'}
+
+@api_router.delete("/admin/categories/{category_id}")
+async def delete_category(category_id: str, request: Request):
+    """Super Admin: Delete a product category"""
+    admin_user = await get_super_admin_user(request)  # Only super admin can delete
+    
+    category = await db.product_categories.find_one({'id': category_id}, {'_id': 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Check if products are using this category
+    cat_type = category['type']
+    if cat_type == 'boutique':
+        count = await db.boutique_products.count_documents({'category': category['name']})
+    elif cat_type == 'fabric':
+        count = await db.fabrics.count_documents({'category': category['name']})
+    elif cat_type == 'souvenir':
+        count = await db.souvenirs.count_documents({'category': category['name']})
+    else:
+        count = 0
+    
+    if count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete category with {count} product(s). Move or delete products first."
+        )
+    
+    await db.product_categories.delete_one({'id': category_id})
+    
+    return {'message': 'Category deleted successfully'}
+
+# Get categories for public dropdown (without auth)
+@api_router.get("/categories/{category_type}")
+async def get_public_categories(category_type: str):
+    """Public: Get active categories for a type"""
+    if category_type not in ['boutique', 'fabric', 'souvenir']:
+        raise HTTPException(status_code=400, detail="Invalid category type")
+    
+    categories = await db.product_categories.find(
+        {'type': category_type, 'is_active': True},
+        {'_id': 0, 'id': 1, 'name': 1}
+    ).sort('name', 1).to_list(50)
+    
+    return categories
+
+# ==================== UNIFIED PRODUCTS ADMIN ====================
+@api_router.get("/admin/all-products")
+async def get_all_products_admin(
+    product_type: Optional[str] = None,
+    include_placeholders: bool = True,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get all products across all types (bulk, pod, boutique, fabric, souvenir)"""
+    products = []
+    
+    # Get Bulk clothing items
+    if not product_type or product_type == 'bulk':
+        bulk_items = await db.bulk_clothing_items.find({}, {'_id': 0}).to_list(100)
+        for item in bulk_items:
+            item['product_type'] = 'bulk'
+            products.append(item)
+    
+    # Get POD clothing items
+    if not product_type or product_type == 'pod':
+        pod_items = await db.pod_clothing_items.find({}, {'_id': 0}).to_list(100)
+        for item in pod_items:
+            item['product_type'] = 'pod'
+            products.append(item)
+    
+    # Get Boutique products
+    if not product_type or product_type == 'boutique':
+        boutique_items = await db.boutique_products.find({}, {'_id': 0}).to_list(100)
+        for item in boutique_items:
+            item['product_type'] = 'boutique'
+            products.append(item)
+    
+    # Get Fabric products
+    if not product_type or product_type == 'fabric':
+        fabric_items = await db.fabrics.find({}, {'_id': 0}).to_list(100)
+        for item in fabric_items:
+            item['product_type'] = 'fabric'
+            products.append(item)
+    
+    # Get Souvenir products
+    if not product_type or product_type == 'souvenir':
+        souvenir_items = await db.souvenirs.find({}, {'_id': 0}).to_list(100)
+        for item in souvenir_items:
+            item['product_type'] = 'souvenir'
+            products.append(item)
+    
+    # Filter placeholders if needed
+    if not include_placeholders:
+        products = [p for p in products if not p.get('is_placeholder', False)]
+    
+    return {
+        'products': products,
+        'total': len(products),
+        'counts': {
+            'bulk': len([p for p in products if p.get('product_type') == 'bulk']),
+            'pod': len([p for p in products if p.get('product_type') == 'pod']),
+            'boutique': len([p for p in products if p.get('product_type') == 'boutique']),
+            'fabric': len([p for p in products if p.get('product_type') == 'fabric']),
+            'souvenir': len([p for p in products if p.get('product_type') == 'souvenir']),
+        }
+    }
+
+@api_router.delete("/admin/products/{product_type}/{product_id}")
+async def delete_any_product(product_type: str, product_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Delete any product by type and ID (including placeholders)"""
+    collection_map = {
+        'bulk': 'bulk_clothing_items',
+        'pod': 'pod_clothing_items',
+        'boutique': 'boutique_products',
+        'fabric': 'fabrics',
+        'souvenir': 'souvenirs'
+    }
+    
+    if product_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid product type")
+    
+    collection = db[collection_map[product_type]]
+    result = await collection.delete_one({'id': product_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    logger.info(f"[ADMIN] Deleted {product_type} product {product_id} by {admin_user.get('email')}")
+    
+    return {'message': f'{product_type.capitalize()} product deleted successfully'}
+
 # ==================== DESIGN LAB ====================
 @api_router.post("/design-inquiries")
 async def create_design_inquiry(
