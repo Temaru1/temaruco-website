@@ -3173,60 +3173,992 @@ async def get_design_enquiry(enquiry_code: str):
         raise HTTPException(status_code=404, detail="Enquiry not found")
 
 # ==================== EMAIL NOTIFICATIONS ====================
-async def send_email_notification(to_email: str, subject: str, html_content: str, tracking_id: str = None):
-    """Send email notification with optional tracking pixel"""
-    email_mock = os.environ.get('EMAIL_MOCK', 'true').lower() == 'true'
+# Email encryption key for SMTP passwords
+from cryptography.fernet import Fernet
+import base64
+
+def get_encryption_key():
+    """Get or create encryption key for SMTP passwords"""
+    key = os.environ.get('EMAIL_ENCRYPTION_KEY')
+    if not key:
+        # Generate a key from a consistent secret
+        secret = os.environ.get('JWT_SECRET_KEY', 'temaruco-default-secret-key-2024')
+        # Create a 32-byte key from the secret
+        key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b'0'))
+    return key
+
+def encrypt_password(password: str) -> str:
+    """Encrypt SMTP password for storage"""
+    if not password:
+        return ""
+    f = Fernet(get_encryption_key())
+    return f.encrypt(password.encode()).decode()
+
+def decrypt_password(encrypted: str) -> str:
+    """Decrypt SMTP password for use"""
+    if not encrypted:
+        return ""
+    try:
+        f = Fernet(get_encryption_key())
+        return f.decrypt(encrypted.encode()).decode()
+    except Exception:
+        return encrypted  # Return as-is if not encrypted
+
+# Default email templates
+DEFAULT_EMAIL_TEMPLATES = {
+    'welcome': {
+        'name': 'Welcome Email',
+        'type': 'transactional',
+        'subject': 'Welcome to {{company_name}}!',
+        'variables': ['name', 'email', 'company_name'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 20px; text-align: center;">
+<h1 style="color: white; margin: 0;">Welcome to {{company_name}}!</h1>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Hi {{name}},</p>
+<p>Thank you for joining us! We're excited to have you as part of our community.</p>
+<p>You can now:</p>
+<ul>
+<li>Browse our products and place orders</li>
+<li>Track your orders in real-time</li>
+<li>Get exclusive deals and promotions</li>
+</ul>
+<p>If you have any questions, feel free to reach out to us.</p>
+<p>Best regards,<br>The {{company_name}} Team</p>
+</div>
+<div style="background: #18181b; color: #888; padding: 20px; text-align: center; font-size: 12px;">
+<p>© 2024 {{company_name}}. All rights reserved.</p>
+<p><a href="{{unsubscribe_url}}" style="color: #888;">Unsubscribe</a></p>
+</div>
+</body>
+</html>'''
+    },
+    'order_confirmation': {
+        'name': 'Order Confirmation',
+        'type': 'transactional',
+        'subject': 'Order Confirmed - #{{order_id}}',
+        'variables': ['name', 'order_id', 'total_amount', 'items', 'company_name'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 20px; text-align: center;">
+<h1 style="color: white; margin: 0;">Order Confirmed!</h1>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Hi {{name}},</p>
+<p>Thank you for your order! We've received your order and are processing it.</p>
+<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+<h3 style="margin-top: 0;">Order Details</h3>
+<p><strong>Order ID:</strong> {{order_id}}</p>
+<p><strong>Total Amount:</strong> ₦{{total_amount}}</p>
+{{items}}
+</div>
+<p>You can track your order status anytime by visiting our website.</p>
+<p>Best regards,<br>The {{company_name}} Team</p>
+</div>
+</body>
+</html>'''
+    },
+    'password_reset': {
+        'name': 'Password Reset',
+        'type': 'transactional',
+        'subject': 'Reset Your Password - {{company_name}}',
+        'variables': ['name', 'reset_link', 'company_name'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 20px; text-align: center;">
+<h1 style="color: white; margin: 0;">Password Reset</h1>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Hi {{name}},</p>
+<p>We received a request to reset your password. Click the button below to create a new password:</p>
+<div style="text-align: center; margin: 30px 0;">
+<a href="{{reset_link}}" style="background: #D90429; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+</div>
+<p>If you didn't request this, please ignore this email. This link expires in 1 hour.</p>
+<p>Best regards,<br>The {{company_name}} Team</p>
+</div>
+</body>
+</html>'''
+    },
+    'quote_reminder': {
+        'name': 'Quote Reminder',
+        'type': 'transactional',
+        'subject': 'Your Quote is Waiting - {{company_name}}',
+        'variables': ['name', 'quote_id', 'total_amount', 'company_name'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 20px; text-align: center;">
+<h1 style="color: white; margin: 0;">Your Quote is Ready!</h1>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Hi {{name}},</p>
+<p>Just a friendly reminder that you have a pending quote waiting for you.</p>
+<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+<p><strong>Quote ID:</strong> {{quote_id}}</p>
+<p><strong>Total Amount:</strong> ₦{{total_amount}}</p>
+</div>
+<p>Ready to proceed? Visit our website to complete your order.</p>
+<p>Best regards,<br>The {{company_name}} Team</p>
+</div>
+</body>
+</html>'''
+    },
+    'newsletter': {
+        'name': 'Newsletter Template',
+        'type': 'marketing',
+        'subject': '{{subject_line}}',
+        'variables': ['name', 'subject_line', 'content', 'company_name', 'unsubscribe_url'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 20px; text-align: center;">
+<h1 style="color: white; margin: 0;">{{company_name}}</h1>
+</div>
+<div style="padding: 30px; background: #f9f9f9;">
+<p>Hi {{name}},</p>
+{{content}}
+<p>Best regards,<br>The {{company_name}} Team</p>
+</div>
+<div style="background: #18181b; color: #888; padding: 20px; text-align: center; font-size: 12px;">
+<p>© 2024 {{company_name}}. All rights reserved.</p>
+<p><a href="{{unsubscribe_url}}" style="color: #888;">Unsubscribe</a></p>
+</div>
+</body>
+</html>'''
+    },
+    'promotional': {
+        'name': 'Promotional Email',
+        'type': 'marketing',
+        'subject': '{{promo_title}} - {{company_name}}',
+        'variables': ['name', 'promo_title', 'promo_description', 'promo_code', 'discount', 'company_name', 'unsubscribe_url'],
+        'html_content': '''
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="background: #D90429; padding: 30px; text-align: center;">
+<h1 style="color: white; margin: 0; font-size: 28px;">{{promo_title}}</h1>
+<p style="color: white; font-size: 48px; margin: 20px 0; font-weight: bold;">{{discount}}% OFF</p>
+</div>
+<div style="padding: 30px; background: #f9f9f9; text-align: center;">
+<p>Hi {{name}},</p>
+<p>{{promo_description}}</p>
+<div style="background: #18181b; color: white; padding: 15px 30px; display: inline-block; border-radius: 8px; margin: 20px 0;">
+<p style="margin: 0; font-size: 12px;">USE CODE</p>
+<p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">{{promo_code}}</p>
+</div>
+<p><a href="#" style="background: #D90429; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Shop Now</a></p>
+</div>
+<div style="background: #18181b; color: #888; padding: 20px; text-align: center; font-size: 12px;">
+<p>© 2024 {{company_name}}. All rights reserved.</p>
+<p><a href="{{unsubscribe_url}}" style="color: #888;">Unsubscribe</a></p>
+</div>
+</body>
+</html>'''
+    }
+}
+
+# Email queue for background processing
+email_queue = []
+
+async def get_email_settings():
+    """Get SMTP settings from database, fallback to env vars"""
+    settings = await db.email_settings.find_one({'is_active': True}, {'_id': 0})
     
-    # Add tracking pixel if tracking_id is provided
-    if tracking_id:
-        backend_url = os.environ.get('BACKEND_URL', 'https://picxpress-1.preview.emergentagent.com')
-        tracking_pixel = f'<img src="{backend_url}/api/email/track/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
-        # Insert tracking pixel before closing body tag
-        if '</body>' in html_content:
-            html_content = html_content.replace('</body>', f'{tracking_pixel}</body>')
-        else:
-            html_content += tracking_pixel
+    if settings:
+        # Decrypt password
+        if settings.get('smtp_password'):
+            settings['smtp_password'] = decrypt_password(settings['smtp_password'])
+        return settings
     
-    if email_mock:
-        # Mock mode - just log the email
+    # Fallback to environment variables
+    return {
+        'smtp_host': os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
+        'smtp_port': int(os.environ.get('SMTP_PORT', 587)),
+        'smtp_username': os.environ.get('SMTP_USER', ''),
+        'smtp_password': os.environ.get('SMTP_PASSWORD', ''),
+        'from_email': os.environ.get('FROM_EMAIL', 'noreply@temaruco.com'),
+        'from_name': os.environ.get('FROM_NAME', 'Temaruco'),
+        'reply_to': os.environ.get('REPLY_TO', ''),
+        'is_active': True
+    }
+
+async def get_email_template(template_key: str):
+    """Get email template from database, fallback to defaults"""
+    template = await db.email_templates.find_one({'key': template_key, 'is_active': True}, {'_id': 0})
+    
+    if template:
+        return template
+    
+    # Fallback to default templates
+    if template_key in DEFAULT_EMAIL_TEMPLATES:
+        return DEFAULT_EMAIL_TEMPLATES[template_key]
+    
+    return None
+
+async def render_email_template(template_key: str, variables: dict):
+    """Render email template with variables"""
+    template = await get_email_template(template_key)
+    if not template:
+        return None, None
+    
+    # Add default variables
+    backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://picxpress-1.preview.emergentagent.com')
+    variables['company_name'] = variables.get('company_name', 'Temaruco')
+    variables['unsubscribe_url'] = f"{backend_url}/unsubscribe?email={{email}}"
+    
+    subject = template['subject']
+    html_content = template['html_content']
+    
+    # Replace variables
+    for key, value in variables.items():
+        placeholder = '{{' + key + '}}'
+        subject = subject.replace(placeholder, str(value) if value else '')
+        html_content = html_content.replace(placeholder, str(value) if value else '')
+    
+    return subject, html_content
+
+async def send_email_with_logging(
+    to_email: str, 
+    subject: str, 
+    html_content: str, 
+    template_id: str = None,
+    campaign_id: str = None,
+    retry_count: int = 0,
+    max_retries: int = 3
+):
+    """Send email with full logging and retry mechanism"""
+    log_id = str(uuid.uuid4())
+    
+    # Create log entry
+    log_entry = {
+        'id': log_id,
+        'recipient_email': to_email,
+        'subject': subject,
+        'template_id': template_id,
+        'campaign_id': campaign_id,
+        'status': 'queued',
+        'retry_count': retry_count,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.email_logs.insert_one(log_entry)
+    
+    # Get SMTP settings
+    settings = await get_email_settings()
+    
+    # Check if email system is active
+    if not settings.get('is_active', True):
+        await db.email_logs.update_one(
+            {'id': log_id},
+            {'$set': {'status': 'skipped', 'error_message': 'Email system disabled'}}
+        )
+        logger.info(f"[EMAIL] Skipped - system disabled: {to_email}")
+        return False
+    
+    # Check if we have SMTP credentials
+    if not settings.get('smtp_username') or not settings.get('smtp_password'):
+        # Mock mode - log but don't send
+        await db.email_logs.update_one(
+            {'id': log_id},
+            {'$set': {'status': 'mocked', 'sent_at': datetime.now(timezone.utc).isoformat()}}
+        )
         logger.info(f"[MOCK EMAIL] To: {to_email}, Subject: {subject}")
-        logger.info(f"[MOCK EMAIL] Content: {html_content[:200]}...")
         return True
     
     try:
-        # Real SMTP sending (configure your SMTP settings)
         import aiosmtplib
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
         
-        smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-        smtp_port = int(os.environ.get('SMTP_PORT', 587))
-        smtp_user = os.environ.get('SMTP_USER', '')
-        smtp_password = os.environ.get('SMTP_PASSWORD', '')
-        from_email = os.environ.get('FROM_EMAIL', 'noreply@temaruco.com')
-        
         message = MIMEMultipart('alternative')
         message['Subject'] = subject
-        message['From'] = from_email
+        message['From'] = f"{settings.get('from_name', 'Temaruco')} <{settings['from_email']}>"
         message['To'] = to_email
+        if settings.get('reply_to'):
+            message['Reply-To'] = settings['reply_to']
+        
+        # Add tracking pixel
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://picxpress-1.preview.emergentagent.com')
+        tracking_pixel = f'<img src="{backend_url}/api/email/track/{log_id}" width="1" height="1" style="display:none;" alt="" />'
+        if '</body>' in html_content:
+            html_content = html_content.replace('</body>', f'{tracking_pixel}</body>')
+        else:
+            html_content += tracking_pixel
         
         html_part = MIMEText(html_content, 'html')
         message.attach(html_part)
         
         await aiosmtplib.send(
             message,
-            hostname=smtp_host,
-            port=smtp_port,
-            username=smtp_user,
-            password=smtp_password,
+            hostname=settings['smtp_host'],
+            port=settings['smtp_port'],
+            username=settings['smtp_username'],
+            password=settings['smtp_password'],
             start_tls=True
         )
         
-        logger.info(f"Email sent successfully to {to_email}")
+        # Update log as sent
+        await db.email_logs.update_one(
+            {'id': log_id},
+            {'$set': {'status': 'sent', 'sent_at': datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        logger.info(f"[EMAIL] Sent successfully to {to_email}")
         return True
+        
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"[EMAIL] Failed to send to {to_email}: {error_msg}")
+        
+        # Retry logic
+        if retry_count < max_retries:
+            await db.email_logs.update_one(
+                {'id': log_id},
+                {'$set': {'status': 'retrying', 'error_message': error_msg, 'retry_count': retry_count + 1}}
+            )
+            # Add to queue for retry
+            email_queue.append({
+                'to_email': to_email,
+                'subject': subject,
+                'html_content': html_content,
+                'template_id': template_id,
+                'campaign_id': campaign_id,
+                'retry_count': retry_count + 1
+            })
+        else:
+            await db.email_logs.update_one(
+                {'id': log_id},
+                {'$set': {'status': 'failed', 'error_message': error_msg, 'failed_at': datetime.now(timezone.utc).isoformat()}}
+            )
+        
         return False
+
+async def send_templated_email(to_email: str, template_key: str, variables: dict, campaign_id: str = None):
+    """Send email using a template"""
+    subject, html_content = await render_email_template(template_key, variables)
+    if not subject or not html_content:
+        logger.error(f"[EMAIL] Template not found: {template_key}")
+        return False
+    
+    return await send_email_with_logging(
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        template_id=template_key,
+        campaign_id=campaign_id
+    )
+
+async def add_subscriber(email: str, name: str = '', phone: str = '', source: str = 'website'):
+    """Add email to subscribers list"""
+    existing = await db.email_subscribers.find_one({'email': email.lower()})
+    
+    if existing:
+        # Update existing subscriber
+        await db.email_subscribers.update_one(
+            {'email': email.lower()},
+            {'$set': {
+                'name': name or existing.get('name', ''),
+                'phone': phone or existing.get('phone', ''),
+                'last_seen': datetime.now(timezone.utc).isoformat()
+            },
+            '$addToSet': {'sources': source}}
+        )
+        return existing.get('id')
+    else:
+        # Create new subscriber
+        subscriber_id = str(uuid.uuid4())
+        await db.email_subscribers.insert_one({
+            'id': subscriber_id,
+            'email': email.lower(),
+            'name': name,
+            'phone': phone,
+            'sources': [source],
+            'is_subscribed': True,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'last_seen': datetime.now(timezone.utc).isoformat()
+        })
+        return subscriber_id
+
+# Background email queue processor
+async def process_email_queue():
+    """Process queued emails with rate limiting"""
+    global email_queue
+    
+    while email_queue:
+        email_data = email_queue.pop(0)
+        await send_email_with_logging(**email_data)
+        await asyncio.sleep(1)  # Rate limiting - 1 email per second
+
+# ==================== EMAIL API ENDPOINTS ====================
+
+@api_router.get("/admin/email/settings")
+async def get_admin_email_settings(admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Get email settings (without password)"""
+    settings = await db.email_settings.find_one({'is_active': True}, {'_id': 0, 'smtp_password': 0})
+    
+    if not settings:
+        # Return default structure
+        return {
+            'smtp_host': os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
+            'smtp_port': int(os.environ.get('SMTP_PORT', 587)),
+            'smtp_username': os.environ.get('SMTP_USER', ''),
+            'from_email': os.environ.get('FROM_EMAIL', 'noreply@temaruco.com'),
+            'from_name': os.environ.get('FROM_NAME', 'Temaruco'),
+            'reply_to': '',
+            'is_active': True,
+            'has_password': bool(os.environ.get('SMTP_PASSWORD', ''))
+        }
+    
+    # Check if password exists
+    full_settings = await db.email_settings.find_one({'is_active': True}, {'_id': 0})
+    settings['has_password'] = bool(full_settings.get('smtp_password'))
+    
+    return settings
+
+@api_router.post("/admin/email/settings")
+async def save_email_settings(data: Dict[str, Any], request: Request):
+    """Super Admin: Save email SMTP settings"""
+    admin_user = await get_super_admin_user(request)
+    
+    settings_doc = {
+        'id': 'primary',
+        'smtp_host': data.get('smtp_host', 'smtp.gmail.com'),
+        'smtp_port': int(data.get('smtp_port', 587)),
+        'smtp_username': data.get('smtp_username', ''),
+        'from_email': data.get('from_email', ''),
+        'from_name': data.get('from_name', 'Temaruco'),
+        'reply_to': data.get('reply_to', ''),
+        'is_active': data.get('is_active', True),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'updated_by': admin_user.get('email')
+    }
+    
+    # Encrypt password if provided
+    if data.get('smtp_password'):
+        settings_doc['smtp_password'] = encrypt_password(data['smtp_password'])
+    else:
+        # Keep existing password if not updating
+        existing = await db.email_settings.find_one({'id': 'primary'}, {'smtp_password': 1})
+        if existing and existing.get('smtp_password'):
+            settings_doc['smtp_password'] = existing['smtp_password']
+    
+    await db.email_settings.update_one(
+        {'id': 'primary'},
+        {'$set': settings_doc},
+        upsert=True
+    )
+    
+    logger.info(f"[EMAIL] Settings updated by {admin_user.get('email')}")
+    
+    return {'message': 'Email settings saved successfully'}
+
+@api_router.post("/admin/email/test")
+async def test_email_settings(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Send test email to verify SMTP settings"""
+    test_email = data.get('test_email', admin_user.get('email'))
+    
+    subject, html_content = await render_email_template('welcome', {
+        'name': 'Test User',
+        'email': test_email
+    })
+    
+    success = await send_email_with_logging(
+        to_email=test_email,
+        subject=f"[TEST] {subject}",
+        html_content=html_content,
+        template_id='test'
+    )
+    
+    if success:
+        return {'message': f'Test email sent to {test_email}', 'success': True}
+    else:
+        raise HTTPException(status_code=500, detail='Failed to send test email. Check SMTP settings.')
+
+# ==================== EMAIL TEMPLATES API ====================
+
+@api_router.get("/admin/email/templates")
+async def get_email_templates(
+    template_type: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get all email templates"""
+    query = {}
+    if template_type:
+        query['type'] = template_type
+    
+    templates = await db.email_templates.find(query, {'_id': 0}).to_list(100)
+    
+    # Add defaults if not in database
+    for key, default_template in DEFAULT_EMAIL_TEMPLATES.items():
+        exists = any(t.get('key') == key for t in templates)
+        if not exists:
+            templates.append({
+                'key': key,
+                'is_default': True,
+                **default_template
+            })
+    
+    return {'templates': templates}
+
+@api_router.post("/admin/email/templates")
+async def create_email_template(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Create new email template"""
+    template_key = data.get('key', '').lower().replace(' ', '_')
+    
+    if not template_key or not data.get('name') or not data.get('subject'):
+        raise HTTPException(status_code=400, detail="Key, name, and subject are required")
+    
+    # Check for duplicate
+    existing = await db.email_templates.find_one({'key': template_key})
+    if existing:
+        raise HTTPException(status_code=400, detail="Template with this key already exists")
+    
+    template = {
+        'id': str(uuid.uuid4()),
+        'key': template_key,
+        'name': data.get('name'),
+        'type': data.get('type', 'transactional'),
+        'subject': data.get('subject'),
+        'html_content': data.get('html_content', ''),
+        'text_content': data.get('text_content', ''),
+        'variables': data.get('variables', []),
+        'is_active': True,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': admin_user.get('email')
+    }
+    
+    await db.email_templates.insert_one(template)
+    
+    return {'message': 'Template created', 'template': {k: v for k, v in template.items() if k != '_id'}}
+
+@api_router.put("/admin/email/templates/{template_key}")
+async def update_email_template(template_key: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Update email template"""
+    result = await db.email_templates.update_one(
+        {'key': template_key},
+        {'$set': {
+            'name': data.get('name'),
+            'subject': data.get('subject'),
+            'html_content': data.get('html_content'),
+            'text_content': data.get('text_content', ''),
+            'variables': data.get('variables', []),
+            'is_active': data.get('is_active', True),
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'updated_by': admin_user.get('email')
+        }},
+        upsert=True
+    )
+    
+    return {'message': 'Template updated'}
+
+@api_router.delete("/admin/email/templates/{template_key}")
+async def delete_email_template(template_key: str, request: Request):
+    """Super Admin: Delete email template"""
+    await get_super_admin_user(request)
+    
+    if template_key in DEFAULT_EMAIL_TEMPLATES:
+        raise HTTPException(status_code=400, detail="Cannot delete default templates")
+    
+    await db.email_templates.delete_one({'key': template_key})
+    
+    return {'message': 'Template deleted'}
+
+# ==================== EMAIL SUBSCRIBERS API ====================
+
+@api_router.get("/admin/email/subscribers")
+async def get_email_subscribers(
+    page: int = 1,
+    limit: int = 50,
+    search: str = "",
+    subscribed_only: bool = True,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get email subscribers"""
+    query = {}
+    if subscribed_only:
+        query['is_subscribed'] = True
+    if search:
+        query['$or'] = [
+            {'email': {'$regex': search, '$options': 'i'}},
+            {'name': {'$regex': search, '$options': 'i'}}
+        ]
+    
+    skip = (page - 1) * limit
+    
+    subscribers = await db.email_subscribers.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.email_subscribers.count_documents(query)
+    
+    return {
+        'subscribers': subscribers,
+        'total': total,
+        'page': page,
+        'pages': (total + limit - 1) // limit
+    }
+
+@api_router.post("/admin/email/subscribers")
+async def add_email_subscriber(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Manually add subscriber"""
+    email = data.get('email', '').lower().strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    subscriber_id = await add_subscriber(
+        email=email,
+        name=data.get('name', ''),
+        phone=data.get('phone', ''),
+        source='manual_admin'
+    )
+    
+    return {'message': 'Subscriber added', 'id': subscriber_id}
+
+@api_router.patch("/admin/email/subscribers/{subscriber_id}")
+async def update_subscriber(subscriber_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Update subscriber"""
+    await db.email_subscribers.update_one(
+        {'id': subscriber_id},
+        {'$set': {
+            'name': data.get('name'),
+            'is_subscribed': data.get('is_subscribed', True),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {'message': 'Subscriber updated'}
+
+@api_router.delete("/admin/email/subscribers/{subscriber_id}")
+async def delete_subscriber(subscriber_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Delete subscriber"""
+    await db.email_subscribers.delete_one({'id': subscriber_id})
+    return {'message': 'Subscriber deleted'}
+
+@api_router.get("/admin/email/subscribers/export")
+async def export_subscribers(admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Export subscribers as CSV"""
+    subscribers = await db.email_subscribers.find({'is_subscribed': True}, {'_id': 0}).to_list(10000)
+    
+    csv_content = "Email,Name,Phone,Source,Created At\n"
+    for sub in subscribers:
+        sources = ','.join(sub.get('sources', []))
+        csv_content += f"{sub.get('email')},{sub.get('name','')},{sub.get('phone','')},{sources},{sub.get('created_at','')}\n"
+    
+    return Response(
+        content=csv_content,
+        media_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=subscribers.csv'}
+    )
+
+# ==================== EMAIL CAMPAIGNS API ====================
+
+@api_router.get("/admin/email/campaigns")
+async def get_email_campaigns(
+    status: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get email campaigns"""
+    query = {}
+    if status:
+        query['status'] = status
+    
+    campaigns = await db.email_campaigns.find(query, {'_id': 0}).sort('created_at', -1).to_list(100)
+    
+    return {'campaigns': campaigns}
+
+@api_router.post("/admin/email/campaigns")
+async def create_email_campaign(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Create email campaign"""
+    campaign = {
+        'id': str(uuid.uuid4()),
+        'title': data.get('title'),
+        'subject': data.get('subject'),
+        'template_key': data.get('template_key'),
+        'html_content': data.get('html_content', ''),
+        'audience': data.get('audience', 'all'),  # all, new, active
+        'scheduled_time': data.get('scheduled_time'),
+        'status': 'draft',
+        'sent_count': 0,
+        'failed_count': 0,
+        'opened_count': 0,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': admin_user.get('email')
+    }
+    
+    await db.email_campaigns.insert_one(campaign)
+    
+    return {'message': 'Campaign created', 'campaign': {k: v for k, v in campaign.items() if k != '_id'}}
+
+@api_router.put("/admin/email/campaigns/{campaign_id}")
+async def update_email_campaign(campaign_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Update campaign"""
+    campaign = await db.email_campaigns.find_one({'id': campaign_id}, {'_id': 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    if campaign.get('status') == 'sent':
+        raise HTTPException(status_code=400, detail="Cannot edit sent campaign")
+    
+    await db.email_campaigns.update_one(
+        {'id': campaign_id},
+        {'$set': {
+            'title': data.get('title', campaign.get('title')),
+            'subject': data.get('subject', campaign.get('subject')),
+            'html_content': data.get('html_content', campaign.get('html_content')),
+            'audience': data.get('audience', campaign.get('audience')),
+            'scheduled_time': data.get('scheduled_time'),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {'message': 'Campaign updated'}
+
+@api_router.post("/admin/email/campaigns/{campaign_id}/send")
+async def send_email_campaign(campaign_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Send campaign immediately or schedule"""
+    campaign = await db.email_campaigns.find_one({'id': campaign_id}, {'_id': 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    if campaign.get('status') == 'sent':
+        raise HTTPException(status_code=400, detail="Campaign already sent")
+    
+    # Get subscribers based on audience
+    query = {'is_subscribed': True}
+    subscribers = await db.email_subscribers.find(query, {'_id': 0}).to_list(10000)
+    
+    if not subscribers:
+        raise HTTPException(status_code=400, detail="No subscribers to send to")
+    
+    # Update campaign status
+    await db.email_campaigns.update_one(
+        {'id': campaign_id},
+        {'$set': {
+            'status': 'sending',
+            'started_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Send emails
+    sent_count = 0
+    failed_count = 0
+    
+    for subscriber in subscribers:
+        # Render template with subscriber data
+        variables = {
+            'name': subscriber.get('name', 'Valued Customer'),
+            'email': subscriber.get('email'),
+            'subject_line': campaign.get('subject'),
+            'content': campaign.get('html_content', '')
+        }
+        
+        if campaign.get('template_key'):
+            subject, html_content = await render_email_template(campaign['template_key'], variables)
+        else:
+            subject = campaign.get('subject')
+            html_content = campaign.get('html_content', '')
+            # Replace variables manually
+            for key, value in variables.items():
+                html_content = html_content.replace('{{' + key + '}}', str(value) if value else '')
+                subject = subject.replace('{{' + key + '}}', str(value) if value else '')
+        
+        success = await send_email_with_logging(
+            to_email=subscriber['email'],
+            subject=subject,
+            html_content=html_content,
+            campaign_id=campaign_id
+        )
+        
+        if success:
+            sent_count += 1
+        else:
+            failed_count += 1
+    
+    # Update campaign with results
+    await db.email_campaigns.update_one(
+        {'id': campaign_id},
+        {'$set': {
+            'status': 'sent',
+            'sent_count': sent_count,
+            'failed_count': failed_count,
+            'completed_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        'message': f'Campaign sent to {sent_count} subscribers',
+        'sent_count': sent_count,
+        'failed_count': failed_count
+    }
+
+@api_router.delete("/admin/email/campaigns/{campaign_id}")
+async def delete_email_campaign(campaign_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Delete campaign"""
+    await db.email_campaigns.delete_one({'id': campaign_id})
+    return {'message': 'Campaign deleted'}
+
+# ==================== EMAIL LOGS & ANALYTICS API ====================
+
+@api_router.get("/admin/email/logs")
+async def get_email_logs(
+    page: int = 1,
+    limit: int = 50,
+    status: Optional[str] = None,
+    campaign_id: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get email logs"""
+    query = {}
+    if status:
+        query['status'] = status
+    if campaign_id:
+        query['campaign_id'] = campaign_id
+    
+    skip = (page - 1) * limit
+    
+    logs = await db.email_logs.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.email_logs.count_documents(query)
+    
+    return {
+        'logs': logs,
+        'total': total,
+        'page': page,
+        'pages': (total + limit - 1) // limit
+    }
+
+@api_router.get("/admin/email/analytics")
+async def get_email_analytics(admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Get email analytics"""
+    # Count by status
+    total_sent = await db.email_logs.count_documents({'status': 'sent'})
+    total_mocked = await db.email_logs.count_documents({'status': 'mocked'})
+    total_failed = await db.email_logs.count_documents({'status': 'failed'})
+    total_opened = await db.email_logs.count_documents({'opened': True})
+    
+    # Subscriber stats
+    total_subscribers = await db.email_subscribers.count_documents({'is_subscribed': True})
+    total_unsubscribed = await db.email_subscribers.count_documents({'is_subscribed': False})
+    
+    # Campaign stats
+    total_campaigns = await db.email_campaigns.count_documents({})
+    sent_campaigns = await db.email_campaigns.count_documents({'status': 'sent'})
+    
+    return {
+        'emails': {
+            'total_sent': total_sent + total_mocked,
+            'actual_sent': total_sent,
+            'mocked': total_mocked,
+            'failed': total_failed,
+            'opened': total_opened,
+            'open_rate': round((total_opened / (total_sent or 1)) * 100, 1)
+        },
+        'subscribers': {
+            'total': total_subscribers,
+            'unsubscribed': total_unsubscribed
+        },
+        'campaigns': {
+            'total': total_campaigns,
+            'sent': sent_campaigns
+        }
+    }
+
+# Email tracking pixel endpoint
+@api_router.get("/email/track/{log_id}")
+async def track_email_open(log_id: str):
+    """Track email open via 1x1 pixel"""
+    await db.email_logs.update_one(
+        {'id': log_id},
+        {'$set': {'opened': True, 'opened_at': datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Return 1x1 transparent GIF
+    gif_bytes = base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+    return Response(content=gif_bytes, media_type='image/gif')
+
+# Public unsubscribe endpoint
+@api_router.get("/unsubscribe")
+async def unsubscribe_page(email: str = ""):
+    """Public: Unsubscribe page"""
+    return Response(
+        content=f'''
+<!DOCTYPE html>
+<html>
+<head><title>Unsubscribe</title></head>
+<body style="font-family: Arial; max-width: 400px; margin: 50px auto; text-align: center;">
+<h2>Unsubscribe</h2>
+<p>Are you sure you want to unsubscribe <strong>{email}</strong>?</p>
+<form action="/api/unsubscribe" method="POST">
+<input type="hidden" name="email" value="{email}">
+<button type="submit" style="background: #D90429; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Unsubscribe</button>
+</form>
+</body>
+</html>
+''',
+        media_type='text/html'
+    )
+
+@api_router.post("/unsubscribe")
+async def process_unsubscribe(email: str = Form(...)):
+    """Public: Process unsubscribe"""
+    result = await db.email_subscribers.update_one(
+        {'email': email.lower()},
+        {'$set': {'is_subscribed': False, 'unsubscribed_at': datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return Response(
+        content='''
+<!DOCTYPE html>
+<html>
+<head><title>Unsubscribed</title></head>
+<body style="font-family: Arial; max-width: 400px; margin: 50px auto; text-align: center;">
+<h2>✓ Unsubscribed</h2>
+<p>You have been successfully unsubscribed from our mailing list.</p>
+</body>
+</html>
+''',
+        media_type='text/html'
+    )
+
+# Public newsletter signup
+@api_router.post("/newsletter/subscribe")
+async def newsletter_subscribe(data: Dict[str, Any]):
+    """Public: Newsletter signup"""
+    email = data.get('email', '').lower().strip()
+    name = data.get('name', '')
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    subscriber_id = await add_subscriber(email=email, name=name, source='newsletter')
+    
+    # Send welcome email
+    await send_templated_email(email, 'welcome', {'name': name or 'there', 'email': email})
+    
+    return {'message': 'Successfully subscribed!', 'id': subscriber_id}
+
+# Legacy function for backward compatibility
+async def send_email_notification(to_email: str, subject: str, html_content: str, tracking_id: str = None):
+    """Send email notification - now uses the new system"""
+    return await send_email_with_logging(
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        template_id='legacy'
+    )
 
 def get_order_confirmation_email(order_id: str, customer_name: str, total_amount: float, order_type: str, items: list = None):
     """Generate professional order confirmation email HTML"""
