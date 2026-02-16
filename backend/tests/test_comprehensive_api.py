@@ -51,8 +51,8 @@ class TestAdminDashboard:
     @pytest.fixture
     def auth_token(self):
         """Get auth token for admin"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         if response.status_code == 200:
@@ -84,8 +84,8 @@ class TestEmailMarketing:
     @pytest.fixture
     def auth_token(self):
         """Get auth token for admin"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         if response.status_code == 200:
@@ -153,8 +153,8 @@ class TestSiteTexts:
     @pytest.fixture
     def auth_token(self):
         """Get auth token for admin"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         if response.status_code == 200:
@@ -184,8 +184,8 @@ class TestGuestDesigns:
     @pytest.fixture
     def auth_token(self):
         """Get auth token for admin"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         if response.status_code == 200:
@@ -226,8 +226,8 @@ class TestProducts:
     @pytest.fixture
     def auth_token(self):
         """Get auth token for admin"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         if response.status_code == 200:
