@@ -7237,9 +7237,11 @@ async def get_all_guest_designs(
     request: Request,
     page: int = 1,
     limit: int = 50,
-    search: str = ""
+    search: str = "",
+    status: str = ""  # Filter: 'assigned', 'unassigned', or '' for all
 ):
-    """Admin: Get all guest designs with contact info for dashboard"""
+    """Admin: Get all guest designs with contact info for dashboard.
+    Supports filtering by status (assigned/unassigned)."""
     admin_user = await get_admin_user(request)
     
     skip = (page - 1) * limit
@@ -7247,24 +7249,34 @@ async def get_all_guest_designs(
     # Build query
     query = {}
     if search:
-        query = {
-            '$or': [
-                {'guest_email': {'$regex': search, '$options': 'i'}},
-                {'product_id': {'$regex': search, '$options': 'i'}}
-            ]
-        }
+        query['$or'] = [
+            {'guest_email': {'$regex': search, '$options': 'i'}},
+            {'guest_name': {'$regex': search, '$options': 'i'}},
+            {'product_id': {'$regex': search, '$options': 'i'}}
+        ]
+    
+    # Filter by status
+    if status == 'assigned':
+        query['status'] = 'assigned'
+    elif status == 'unassigned':
+        query['status'] = {'$in': ['unassigned', 'uploaded', None]}
     
     # Get designs with pagination
     designs = await db.pod_designs.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
     total = await db.pod_designs.count_documents(query)
     
+    # Count by status
+    assigned_count = await db.pod_designs.count_documents({'status': 'assigned'})
+    unassigned_count = await db.pod_designs.count_documents({'status': {'$in': ['unassigned', 'uploaded', None]}})
+    
     # Enrich with guest contact info
     enriched_designs = []
     for design in designs:
         guest_info = None
-        if design.get('guest_id'):
+        contact_id = design.get('contact_id') or design.get('guest_id')
+        if contact_id:
             guest_contact = await db.pod_guest_contacts.find_one(
-                {'id': design['guest_id']},
+                {'id': contact_id},
                 {'_id': 0, 'name': 1, 'email': 1, 'phone': 1}
             )
             if guest_contact:
@@ -7272,13 +7284,17 @@ async def get_all_guest_designs(
         
         enriched_designs.append({
             **design,
-            'guest_name': guest_info.get('name') if guest_info else 'Unknown',
-            'guest_phone': guest_info.get('phone') if guest_info else ''
+            'guest_name': design.get('guest_name') or (guest_info.get('name') if guest_info else 'Unassigned'),
+            'guest_email': design.get('guest_email') or (guest_info.get('email') if guest_info else ''),
+            'guest_phone': design.get('guest_phone') or (guest_info.get('phone') if guest_info else ''),
+            'is_assigned': design.get('status') == 'assigned'
         })
     
     return {
         'designs': enriched_designs,
         'total': total,
+        'assigned_count': assigned_count,
+        'unassigned_count': unassigned_count,
         'page': page,
         'limit': limit,
         'pages': (total + limit - 1) // limit
