@@ -472,6 +472,12 @@ const PrintOnDemandDesignPage = () => {
     setAddingToCart(true);
     
     try {
+      // Ensure guest contact is created/updated
+      const contactSaved = await saveGuestContact();
+      if (!contactSaved) {
+        setAddingToCart(false);
+        return;
+      }
       setSelectedId(null);
       await new Promise(resolve => setTimeout(resolve, 100));
       
