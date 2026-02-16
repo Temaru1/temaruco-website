@@ -256,6 +256,16 @@ function AppRouter() {
           }
         />
 
+        {/* Admin Site Texts CMS - auth required */}
+        <Route
+          path="/admin/site-texts"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminSiteTextsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Products (Fabrics & Souvenirs) - auth required */}
         <Route
           path="/admin/products"
@@ -286,12 +296,14 @@ function AppRouter() {
 function App() {
   return (
     <CurrencyProvider>
-      <BrowserRouter>
-        <Toaster position="top-right" richColors />
-        <div className="App">
-          <AppRouter />
-        </div>
-      </BrowserRouter>
+      <SiteTextProvider>
+        <BrowserRouter>
+          <Toaster position="top-right" richColors />
+          <div className="App">
+            <AppRouter />
+          </div>
+        </BrowserRouter>
+      </SiteTextProvider>
     </CurrencyProvider>
   );
 }
