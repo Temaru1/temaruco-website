@@ -7491,7 +7491,7 @@ async def admin_seed_site_texts(request: Request):
     admin_user = await get_admin_user(request)
     
     # Check if user is super admin
-    if admin_user.get('role') != 'super_admin':
+    if not admin_user.get('is_super_admin'):
         raise HTTPException(status_code=403, detail="Only super admin can seed texts")
     
     seeded = 0
