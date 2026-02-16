@@ -1618,6 +1618,9 @@ async def create_pod_order(
     file_data = await save_upload_file(design_file, ALLOWED_IMAGE_EXTENSIONS)
     design_url = file_data['file_path']
     
+    # Get design_id from order data if present (linked from POD design flow)
+    design_id = order_dict.get('design_id') or order_dict.get('temp_design_id')
+    
     pod_order = {
         'id': order_id,
         'order_id': order_id,
@@ -1634,6 +1637,9 @@ async def create_pod_order(
         'fabric_quality': order_dict.get('fabric_quality'),
         'design_placement': order_dict.get('design_placement'),
         'design_url': design_url,
+        'design_id': design_id,  # Link to pod_designs collection
+        'original_file_url': order_dict.get('original_file_url'),
+        'mockup_file_url': order_dict.get('mockup_file_url'),
         'mockup_position_x': order_dict.get('mockup_position_x', 0),
         'mockup_position_y': order_dict.get('mockup_position_y', 0),
         'print_scale_percentage': order_dict.get('print_scale_percentage', 35),
@@ -1650,6 +1656,13 @@ async def create_pod_order(
     }
     
     await db.orders.insert_one(pod_order)
+    
+    # Update the design record with the order_id if design_id exists
+    if design_id:
+        await db.pod_designs.update_one(
+            {'temp_design_id': design_id},
+            {'$set': {'order_id': order_id, 'order_created_at': datetime.now(timezone.utc).isoformat()}}
+        )
     
     # Create admin notification
     await create_notification(
