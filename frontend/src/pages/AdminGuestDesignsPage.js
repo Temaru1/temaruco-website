@@ -72,6 +72,86 @@ const AdminGuestDesignsPage = () => {
     }
   };
 
+  // Download original file (full resolution)
+  const downloadOriginal = async (designId) => {
+    if (!designId) return;
+    
+    setDownloading('original');
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/admin/pod/download/original/${designId}`,
+        { responseType: 'blob' }
+      );
+      
+      // Get filename from content-disposition header or generate one
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `design_${designId}_original.png`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Original file downloaded');
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download original file');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  // Download mockup file (full resolution)
+  const downloadMockup = async (designId) => {
+    if (!designId) return;
+    
+    setDownloading('mockup');
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/admin/pod/download/mockup/${designId}`,
+        { responseType: 'blob' }
+      );
+      
+      // Get filename from content-disposition header or generate one
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `design_${designId}_mockup.png`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Mockup file downloaded');
+    } catch (error) {
+      console.error('Download failed:', error);
+      if (error.response?.status === 404) {
+        toast.error('Mockup file not available');
+      } else {
+        toast.error('Failed to download mockup file');
+      }
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const openPreview = (design, type = 'original') => {
     setSelectedDesign(design);
     setPreviewType(type);
