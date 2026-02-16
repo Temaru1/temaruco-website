@@ -292,13 +292,21 @@ const AdminGuestDesignsPage = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-600">{formatDate(design.created_at)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <button
                           onClick={() => openPreview(design, 'original')}
                           className="p-1 text-zinc-500 hover:text-blue-600 transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => downloadOriginal(design.id)}
+                          className="p-1 text-zinc-500 hover:text-green-600 transition-colors"
+                          title="Download Original"
+                          disabled={!design.original_file_url}
+                        >
+                          <Download className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteDesign(design.id)}
