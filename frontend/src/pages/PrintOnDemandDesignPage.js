@@ -48,12 +48,10 @@ const PrintOnDemandDesignPage = () => {
   const originalImageRef = useRef(null); // Store original image for resizing
   
   const productFromState = location.state?.product;
-  const fallbackProduct = POD_PRODUCTS[productId];
-  const product = productFromState || fallbackProduct;
   
   // Design state
   const [selectedVariant, setSelectedVariant] = useState('standard');
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || 'White');
+  const [selectedColor, setSelectedColor] = useState('White');
   const [selectedSize, setSelectedSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
   const [elements, setElements] = useState([]);
@@ -71,6 +69,7 @@ const PrintOnDemandDesignPage = () => {
   const [designId, setDesignId] = useState(null);
   const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
   const [dbProduct, setDbProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   
   // STATELESS: Use temp_design_id stored in localStorage (persists across sessions/cookies)
   const [tempDesignId, setTempDesignId] = useState(() => {
@@ -81,9 +80,10 @@ const PrintOnDemandDesignPage = () => {
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
 
-  // Fetch product from database
+  // Fetch product from database - IMPORTANT: This is the single source of truth for product data
   useEffect(() => {
     const fetchProduct = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(`${API_URL}/api/pod/clothing-items`);
         const items = response.data || [];
