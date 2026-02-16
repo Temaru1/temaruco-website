@@ -5469,17 +5469,22 @@ async def demote_super_admin(admin_id: str, request: Request):
 
 @api_router.delete("/super-admin/admins/{user_id}")
 async def delete_admin(user_id: str, request: Request):
-    """Super Admin: Remove admin privileges"""
+    """Super Admin: Remove admin privileges or delete admin/super admin"""
     super_admin = await get_super_admin_user(request)
     
-    # Don't allow deleting super admin
+    # Find target user
     target_user = await db.users.find_one({'user_id': user_id}, {'_id': 0})
-    if target_user and target_user.get('is_super_admin'):
-        raise HTTPException(status_code=403, detail="Cannot remove super admin")
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Admin not found")
     
+    # Cannot delete yourself
+    if target_user.get('user_id') == super_admin.get('user_id'):
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    # Remove admin privileges (keep user but remove admin status)
     result = await db.users.update_one(
         {'user_id': user_id},
-        {'$set': {'is_admin': False}}
+        {'$set': {'is_admin': False, 'is_super_admin': False}}
     )
     
     if result.matched_count == 0:
