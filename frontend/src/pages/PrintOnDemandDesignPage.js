@@ -876,6 +876,40 @@ const PrintOnDemandDesignPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Sticky Add to Cart Button - Fixed at bottom on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50 md:static md:bg-transparent md:border-0 md:shadow-none md:p-0 md:mt-6">
+        <div className="max-w-7xl mx-auto">
+          <Button
+            onClick={addToCart}
+            disabled={addingToCart || elements.length === 0 || !guestInfo.email || !guestInfo.name || !guestInfo.phone}
+            className="w-full bg-[#D90429] hover:bg-[#B90322] text-white py-4 md:py-6 text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="add-to-cart-btn"
+          >
+            {addingToCart ? (
+              <>
+                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                Processing...
+              </>
+            ) : elements.length === 0 ? (
+              'Upload a design first'
+            ) : !guestInfo.name || !guestInfo.email || !guestInfo.phone ? (
+              'Fill in contact info first'
+            ) : (
+              <>
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Add to Cart - ₦{calculateTotal().toLocaleString()}
+              </>
+            )}
+          </Button>
+          {elements.length === 0 && (
+            <p className="text-xs text-center text-zinc-500 mt-2">Upload your design to enable checkout</p>
+          )}
+        </div>
+      </div>
+      
+      {/* Bottom padding on mobile to account for fixed button */}
+      <div className="h-24 md:h-0" />
     </div>
   );
 };
