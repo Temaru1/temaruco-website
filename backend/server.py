@@ -5206,7 +5206,7 @@ async def update_production_costs(costs_data: dict, request: Request):
 # ==================== SUPER ADMIN ROUTES ====================
 @api_router.post("/super-admin/create-admin")
 async def create_admin(admin_data: dict, request: Request):
-    """Super Admin: Create a new admin user with username and role"""
+    """Super Admin: Create a new admin or super admin user with granular permissions"""
     super_admin = await get_super_admin_user(request)
     
     # Check if email already exists
@@ -5221,81 +5221,119 @@ async def create_admin(admin_data: dict, request: Request):
         if existing_username:
             raise HTTPException(status_code=400, detail="Username already taken")
     
+    # Determine if creating super admin (only super admins can create other super admins)
+    is_creating_super_admin = admin_data.get('is_super_admin', False)
+    
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     
-    # Default role - comprehensive granular permissions
+    # Comprehensive RBAC permissions structure
     default_role = {
-        # Orders & Production
+        # ===== WEBSITE TEXT CMS =====
+        'can_view_site_texts': False,
+        'can_edit_site_texts': False,
+        'can_reset_site_texts': False,
+        
+        # ===== MATERIALS INVENTORY =====
+        'can_view_materials': True,
+        'can_add_materials': True,
+        'can_edit_materials': True,
+        'can_delete_materials': False,
+        'can_add_material_types': True,
+        'can_view_material_history': True,
+        
+        # ===== PRODUCTS (Bulk / POD / Boutique / Souvenirs) =====
+        'can_view_products': True,
+        'can_add_products': True,
+        'can_edit_products': True,
+        'can_delete_products': False,
+        'can_view_designs': True,
+        'can_download_designs': True,
+        
+        # ===== ORDERS & PRODUCTION =====
         'can_view_orders': True,
         'can_manage_orders': True,
+        'can_update_order_status': True,
+        'can_delete_orders': False,
         'can_view_production': True,
         'can_manage_production': True,
         'can_assign_tailors': True,
         
-        # Quotes & Custom Requests
+        # ===== QUOTES & CUSTOM REQUESTS =====
         'can_view_quotes': True,
         'can_manage_quotes': True,
         'can_view_custom_requests': True,
         'can_manage_custom_requests': True,
         
-        # Products & Pricing
-        'can_view_products': True,
-        'can_manage_products': True,
+        # ===== CLIENTS =====
+        'can_view_clients': True,
+        'can_edit_clients': True,
+        'can_delete_clients': False,
+        
+        # ===== FINANCIAL =====
+        'can_view_financials': False,
+        'can_manage_financials': False,
+        'can_delete_payments': False,
         'can_view_pricing': True,
-        'can_manage_pricing': True,
+        'can_manage_pricing': False,
         
-        # Financial
-        'can_view_financials': False,  # Restricted by default
-        'can_manage_financials': False,  # Super restricted
-        'can_delete_payments': False,  # Super admin only by default
-        
-        # Inventory & Procurement
+        # ===== INVENTORY & PROCUREMENT =====
         'can_view_inventory': True,
         'can_manage_inventory': True,
         'can_view_procurement': True,
         'can_manage_procurement': True,
-        'can_view_materials': True,
-        'can_manage_materials': True,
         'can_view_suppliers': True,
         'can_manage_suppliers': True,
         
-        # Clients
-        'can_view_clients': True,
-        'can_manage_clients': True,
+        # ===== CMS & WEBSITE =====
+        'can_manage_cms': False,
+        'can_manage_images': False,
+        'can_manage_pod_items': False,
         
-        # CMS & Website
-        'can_manage_cms': False,  # Restricted by default
-        'can_manage_images': False,  # Restricted by default
-        'can_manage_pod_items': False,  # Restricted by default
-        
-        # Analytics & Reports
-        'can_view_analytics': False,  # Restricted by default
-        'can_view_website_analytics': False,  # Restricted by default
+        # ===== ANALYTICS & REPORTS =====
+        'can_view_analytics': False,
+        'can_view_website_analytics': False,
         'can_export_reports': True,
         
-        # Communication
-        'can_view_emails': False,  # Restricted by default
+        # ===== COMMUNICATION =====
+        'can_view_emails': False,
         'can_send_notifications': True,
         
-        # Admin Management
-        'can_view_admins': False,  # Restricted by default
-        'can_manage_admins': False  # Super admin only
+        # ===== ADMIN MANAGEMENT =====
+        'can_view_admins': False,
+        'can_create_admins': False,
+        'can_edit_admins': False,
+        'can_delete_admins': False,
+        'can_assign_permissions': False,
+        
+        # ===== SETTINGS =====
+        'can_view_settings': False,
+        'can_manage_settings': False,
+        'can_manage_payment_settings': False,
+        'can_manage_inventory_settings': True,
     }
+    
+    # If creating super admin, they get full permissions automatically
+    if is_creating_super_admin:
+        # Super admins get all permissions
+        full_permissions = {k: True for k in default_role.keys()}
+        role = full_permissions
+    else:
+        # Use provided role or default
+        role = admin_data.get('role', default_role)
     
     new_admin = {
         'id': user_id,
         'user_id': user_id,
-        'username': username,  # Username for login
+        'username': username,
         'email': admin_data.get('email'),
         'name': admin_data.get('name'),
         'phone': '',
         'password': hash_password(admin_data.get('password')),
-        # DO NOT store plain_password - security risk - only show once at creation
         'address': '',
         'is_verified': True,
         'is_admin': True,
-        'is_super_admin': False,
-        'role': admin_data.get('role', default_role),  # Role-based permissions
+        'is_super_admin': is_creating_super_admin,
+        'role': role,
         'auth_provider': 'email',
         'created_at': datetime.now(timezone.utc).isoformat(),
         'created_by': super_admin.get('email', 'system')
@@ -5305,17 +5343,21 @@ async def create_admin(admin_data: dict, request: Request):
     
     # Log action
     await db.admin_actions.insert_one({
-        'action': 'create_admin',
+        'action': 'create_super_admin' if is_creating_super_admin else 'create_admin',
         'performed_by': super_admin['email'],
         'target_user': admin_data.get('email'),
         'username': username,
+        'is_super_admin': is_creating_super_admin,
         'timestamp': datetime.now(timezone.utc).isoformat()
     })
     
+    logger.info(f"[ADMIN] {'Super Admin' if is_creating_super_admin else 'Admin'} created: {username} by {super_admin['email']}")
+    
     return {
-        'message': 'Admin created successfully',
+        'message': f'{"Super Admin" if is_creating_super_admin else "Admin"} created successfully',
         'user_id': user_id,
-        'username': username
+        'username': username,
+        'is_super_admin': is_creating_super_admin
     }
 
 @api_router.get("/super-admin/admins")
