@@ -1640,17 +1640,23 @@ async def create_or_get_guest_contact(data: Dict[str, Any]):
 async def upload_pod_design(
     design_file: UploadFile = File(...),
     product_id: str = Form(...),
-    guest_email: str = Form(...),
+    guest_email: str = Form(""),
     guest_name: str = Form(""),
-    guest_phone: str = Form("")
+    guest_phone: str = Form(""),
+    session_id: str = Form(""),
+    item_type: str = Form("")
 ):
     """
     Upload POD design - stores original file and links to guest contact.
-    Mockup is generated client-side and uploaded separately.
+    Supports session-based uploads before guest provides contact info.
     
-    Returns: design_id, original_file_url, guest_id
+    Returns: design_id, original_file_url, guest_id (if available), session_id
     """
-    logger.info(f"[POD DESIGN] Upload started: product={product_id}, email={guest_email}")
+    logger.info(f"[POD DESIGN] Upload started: product={product_id}, email={guest_email}, session={session_id}")
+    
+    # Generate session_id if not provided
+    if not session_id:
+        session_id = f"session_{uuid.uuid4().hex[:12]}"
     
     # Validate file
     is_valid, message = await validate_file_upload(design_file, ALLOWED_IMAGE_EXTENSIONS)
@@ -1658,24 +1664,45 @@ async def upload_pod_design(
         logger.error(f"[POD DESIGN] Validation failed: {message}")
         raise HTTPException(status_code=400, detail=message)
     
-    # Get or create guest contact
-    guest_contact = await db.pod_guest_contacts.find_one({'email': guest_email.lower()})
-    if not guest_contact:
-        guest_id = f"guest_{uuid.uuid4().hex[:12]}"
-        guest_contact = {
-            'id': guest_id,
-            'guest_id': guest_id,
-            'name': guest_name,
-            'email': guest_email.lower(),
-            'phone': guest_phone,
-            'designs': [],
-            'created_at': datetime.now(timezone.utc).isoformat(),
-            'updated_at': datetime.now(timezone.utc).isoformat()
-        }
-        await db.pod_guest_contacts.insert_one(guest_contact)
-        logger.info(f"[POD DESIGN] Created guest contact: {guest_email}")
-    else:
-        guest_id = guest_contact['id']
+    guest_id = None
+    
+    # Get or create guest contact if email provided
+    if guest_email:
+        guest_contact = await db.pod_guest_contacts.find_one({'email': guest_email.lower()})
+        if not guest_contact:
+            guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+            guest_contact = {
+                'id': guest_id,
+                'guest_id': guest_id,
+                'session_id': session_id,
+                'name': guest_name,
+                'email': guest_email.lower(),
+                'phone': guest_phone,
+                'designs': [],
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            await db.pod_guest_contacts.insert_one(guest_contact)
+            
+            # Also create client record
+            client_id = f"client_{uuid.uuid4().hex[:12]}"
+            await db.clients.insert_one({
+                'id': client_id,
+                'client_id': client_id,
+                'name': guest_name or 'Guest',
+                'email': guest_email.lower(),
+                'phone': guest_phone,
+                'type': 'pod_guest',
+                'source': 'print_on_demand',
+                'pod_guest_id': guest_id,
+                'total_orders': 0,
+                'total_spent': 0,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            })
+            logger.info(f"[POD DESIGN] Created guest contact + client: {guest_email}")
+        else:
+            guest_id = guest_contact['id']
     
     # Generate unique design ID
     design_id = f"design_{uuid.uuid4().hex[:12]}"
