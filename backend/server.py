@@ -1523,53 +1523,118 @@ async def get_print_sizes():
 
 @api_router.post("/pod/guest-contact")
 async def create_or_get_guest_contact(data: Dict[str, Any]):
-    """Create or retrieve guest contact record for POD design linking"""
+    """Create or retrieve guest contact record for POD design linking.
+    Also creates/updates record in clients collection for admin visibility."""
     name = data.get('name', '').strip()
     email = data.get('email', '').strip().lower()
     phone = data.get('phone', '').strip()
+    session_id = data.get('session_id', f"session_{uuid.uuid4().hex[:12]}")
     
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
     
-    # Check if guest contact exists
-    existing = await db.pod_guest_contacts.find_one({'email': email})
-    
-    if existing:
-        # Update contact info if provided
-        update_data = {'updated_at': datetime.now(timezone.utc).isoformat()}
-        if name:
-            update_data['name'] = name
-        if phone:
-            update_data['phone'] = phone
+    try:
+        # Check if guest contact exists in pod_guest_contacts
+        existing = await db.pod_guest_contacts.find_one({'email': email})
         
-        await db.pod_guest_contacts.update_one(
-            {'email': email},
-            {'$set': update_data}
-        )
+        if existing:
+            # Update contact info if provided
+            update_data = {'updated_at': datetime.now(timezone.utc).isoformat()}
+            if name:
+                update_data['name'] = name
+            if phone:
+                update_data['phone'] = phone
+            if session_id:
+                update_data['session_id'] = session_id
+            
+            await db.pod_guest_contacts.update_one(
+                {'email': email},
+                {'$set': update_data}
+            )
+            
+            guest_id = existing['id']
+            existing.pop('_id', None)
+            existing.update(update_data)
+            logger.info(f"[POD] Updated guest contact: {email}")
+        else:
+            # Create new guest contact
+            guest_id = f"guest_{uuid.uuid4().hex[:12]}"
+            guest_contact = {
+                'id': guest_id,
+                'guest_id': guest_id,
+                'session_id': session_id,
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'designs': [],
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.pod_guest_contacts.insert_one(guest_contact)
+            guest_contact.pop('_id', None)
+            existing = guest_contact
+            logger.info(f"[POD] Created guest contact: {email} -> {guest_id}")
         
-        existing.pop('_id', None)
-        existing.update(update_data)
-        logger.info(f"[POD] Updated guest contact: {email}")
+        # Also create/update in clients collection for admin visibility
+        client_record = await db.clients.find_one({'email': email})
+        if not client_record:
+            client_id = f"client_{uuid.uuid4().hex[:12]}"
+            client_record = {
+                'id': client_id,
+                'client_id': client_id,
+                'name': name or 'Guest',
+                'email': email,
+                'phone': phone,
+                'type': 'pod_guest',
+                'source': 'print_on_demand',
+                'pod_guest_id': guest_id,
+                'total_orders': 0,
+                'total_spent': 0,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+            await db.clients.insert_one(client_record)
+            logger.info(f"[POD] Created client record: {email} -> {client_id}")
+        else:
+            # Update client record
+            await db.clients.update_one(
+                {'email': email},
+                {'$set': {
+                    'name': name or client_record.get('name', 'Guest'),
+                    'phone': phone or client_record.get('phone', ''),
+                    'pod_guest_id': guest_id,
+                    'updated_at': datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        
+        # Link any unlinked designs from this session to the contact
+        if session_id:
+            unlinked_designs = await db.pod_designs.find({
+                'session_id': session_id,
+                'guest_id': {'$exists': False}
+            }).to_list(100)
+            
+            for design in unlinked_designs:
+                await db.pod_designs.update_one(
+                    {'id': design['id']},
+                    {'$set': {
+                        'guest_id': guest_id,
+                        'guest_email': email,
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                await db.pod_guest_contacts.update_one(
+                    {'id': guest_id},
+                    {'$push': {'designs': design['id']}}
+                )
+                logger.info(f"[POD] Linked design {design['id']} to guest {guest_id}")
+        
         return existing
-    
-    # Create new guest contact
-    guest_id = f"guest_{uuid.uuid4().hex[:12]}"
-    guest_contact = {
-        'id': guest_id,
-        'guest_id': guest_id,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'designs': [],
-        'created_at': datetime.now(timezone.utc).isoformat(),
-        'updated_at': datetime.now(timezone.utc).isoformat()
-    }
-    
-    await db.pod_guest_contacts.insert_one(guest_contact)
-    guest_contact.pop('_id', None)
-    
-    logger.info(f"[POD] Created guest contact: {email} -> {guest_id}")
-    return guest_contact
+        
+    except Exception as e:
+        logger.error(f"[POD] Guest contact creation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create guest contact")
 
 @api_router.post("/pod/upload-design")
 async def upload_pod_design(
