@@ -274,6 +274,7 @@ const AdminGuestDesignsPage = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Phone</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Product</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Original</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Mockup</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Date</th>
@@ -283,7 +284,7 @@ const AdminGuestDesignsPage = () => {
             <tbody className="divide-y divide-zinc-200">
               {designs.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan="9" className="px-4 py-8 text-center text-zinc-500">
                     No guest designs found
                   </td>
                 </tr>
@@ -298,6 +299,15 @@ const AdminGuestDesignsPage = () => {
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
                         {design.product_id || design.item_type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        design.status === 'assigned' || design.is_assigned
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {design.status === 'assigned' || design.is_assigned ? 'Assigned' : 'Unassigned'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
