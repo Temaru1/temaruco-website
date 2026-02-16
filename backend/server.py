@@ -5506,6 +5506,12 @@ async def create_admin(admin_data: dict, request: Request):
         'is_super_admin': is_creating_super_admin
     }
 
+@api_router.get("/super-admin/permissions")
+async def get_available_permissions(request: Request):
+    """Super Admin: Get all available permissions for RBAC configuration"""
+    await get_super_admin_user(request)
+    return {'modules': AVAILABLE_PERMISSIONS}
+
 @api_router.get("/super-admin/admins")
 async def get_all_admins(request: Request):
     """Super Admin: Get all admin users"""
