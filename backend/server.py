@@ -1732,9 +1732,11 @@ async def upload_pod_design(
     design_record = {
         'id': design_id,
         'design_id': design_id,
+        'session_id': session_id,
         'guest_id': guest_id,
-        'guest_email': guest_email.lower(),
+        'guest_email': guest_email.lower() if guest_email else None,
         'product_id': product_id,
+        'item_type': item_type or product_id,
         'original_file_url': original_url,
         'mockup_file_url': None,
         'print_size': 'a4',
@@ -1743,20 +1745,25 @@ async def upload_pod_design(
         'position_y': 0,
         'rotation': 0,
         'file_size': len(contents),
+        'status': 'uploaded',
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
     
-    await db.pod_designs.insert_one(design_record)
+    result = await db.pod_designs.insert_one(design_record)
+    if not result.inserted_id:
+        logger.error(f"[POD DESIGN] DB insert failed for design {design_id}")
+        raise HTTPException(status_code=500, detail="Failed to save design record")
     
-    # Link design to guest contact
-    await db.pod_guest_contacts.update_one(
-        {'id': guest_id},
-        {
-            '$push': {'designs': design_id},
-            '$set': {'updated_at': datetime.now(timezone.utc).isoformat()}
-        }
-    )
+    # Link design to guest contact if we have one
+    if guest_id:
+        await db.pod_guest_contacts.update_one(
+            {'id': guest_id},
+            {
+                '$push': {'designs': design_id},
+                '$set': {'updated_at': datetime.now(timezone.utc).isoformat()}
+            }
+        )
     
     logger.info(f"[POD DESIGN] Design linked to guest: {design_id} -> {guest_id}")
     
