@@ -374,6 +374,43 @@ Clone and enhance the Temaruco website with:
 - Procurement/inventory tracking
 - Financial reports generation
 
+## Completed Work (Feb 16, 2026) - Materials Inventory Module Enhancement
+
+### Materials Inventory Module (Enhanced)
+**New Features:**
+- **View Button**: Each material has a View button to open detailed modal
+- **View Modal**: Shows all material details (name, type, quantity, unit, cost, supplier, location, notes, dates)
+- **Quantity History Log**: Full audit trail of all quantity changes
+  - Change type (add/remove/adjust)
+  - Quantity changed
+  - Previous and new quantities
+  - Admin who made the change
+  - Reason for change
+  - Timestamp
+- **Dynamic Material Types**: Admin can create new material types from dropdown
+  - "+ Create New Type" option in type dropdown
+  - Type name and description fields
+  - Case-insensitive duplicate prevention
+  - Minimum 2 character validation
+  - Soft delete (deactivate) support for custom types
+  - Existing materials keep assigned types even if type deactivated
+- **Validation**:
+  - Quantity cannot go below zero
+  - Reason required for adjustments
+  - Auto-generated timestamps
+  - Admin ID auto-linked
+
+**Database Updates:**
+- `material_types` collection: Custom material types with id, name, description, status, created_by
+- `materials_transactions` collection: Quantity history with change_type, quantity_changed, previous/new quantity, reason, admin, timestamp
+
+**API Endpoints:**
+- `GET /api/admin/materials-inventory/{id}` - Get material details with history
+- `GET /api/admin/material-types-full` - Get all types with metadata
+- `POST /api/admin/material-types-full` - Create new type
+- `PUT /api/admin/material-types-full/{id}` - Update type
+- `PATCH /api/admin/material-types-full/{id}/status` - Activate/deactivate type
+
 ## Completed Work (Feb 16, 2026) - Website Text CMS
 
 ### Website Text Management System (CMS)
