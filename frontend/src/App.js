@@ -244,6 +244,16 @@ function AppRouter() {
           }
         />
 
+        {/* Admin Guest Designs - auth required */}
+        <Route
+          path="/admin/guest-designs"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminGuestDesignsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Products (Fabrics & Souvenirs) - auth required */}
         <Route
           path="/admin/products"
