@@ -492,6 +492,26 @@ const AdminGuestDesignsPage = () => {
                 )}
               </div>
               
+              {/* Download Buttons */}
+              <div className="mt-4 flex gap-3 justify-center">
+                <button
+                  onClick={() => downloadOriginal(selectedDesign.id)}
+                  disabled={!selectedDesign.original_file_url || downloading === 'original'}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {downloading === 'original' ? 'Downloading...' : 'Download Original'}
+                </button>
+                <button
+                  onClick={() => downloadMockup(selectedDesign.id)}
+                  disabled={!selectedDesign.mockup_file_url || downloading === 'mockup'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {downloading === 'mockup' ? 'Downloading...' : 'Download Mockup'}
+                </button>
+              </div>
+              
               {/* Design Details */}
               <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-zinc-50 rounded-lg p-3">
