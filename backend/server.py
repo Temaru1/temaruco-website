@@ -8852,7 +8852,7 @@ async def get_all_pod_clothing_items(admin_user: Dict = Depends(get_admin_user))
 
 @api_router.post("/admin/pod/clothing-items")
 async def create_pod_clothing_item(item: BulkClothingItem, admin_user: Dict = Depends(get_admin_user)):
-    """Admin: Create new POD clothing item"""
+    """Admin: Create new POD clothing item with print area"""
     
     # Check if item with same name exists
     existing = await db.pod_clothing_items.find_one({
@@ -8870,7 +8870,11 @@ async def create_pod_clothing_item(item: BulkClothingItem, admin_user: Dict = De
         'luxury_price': item.luxury_price,
         'base_price': item.standard_price,  # Keep base_price for backward compatibility
         'image_url': item.image_url,
+        'base_image_url': item.image_url,  # Same as image_url by default
         'description': item.description or '',
+        'colors': item.colors if hasattr(item, 'colors') and item.colors else ['White', 'Black'],
+        'sizes': item.sizes if hasattr(item, 'sizes') and item.sizes else ['S', 'M', 'L', 'XL'],
+        'print_area': {'x': 150, 'y': 80, 'width': 200, 'height': 250},  # Default print area
         'is_active': item.is_active if item.is_active is not None else True,
         'created_by': admin_user['email'],
         'created_at': datetime.now(timezone.utc).isoformat(),
@@ -8895,7 +8899,7 @@ async def update_pod_clothing_item(
     item: BulkClothingItem,
     admin_user: Dict = Depends(get_admin_user)
 ):
-    """Admin: Update POD clothing item with variant pricing"""
+    """Admin: Update POD clothing item with variant pricing and print area"""
     
     update_data = {
         'name': item.name,
@@ -8904,11 +8908,18 @@ async def update_pod_clothing_item(
         'luxury_price': item.luxury_price,
         'base_price': item.standard_price,  # Keep base_price for backward compatibility
         'image_url': item.image_url,
+        'base_image_url': item.image_url,  # Update base_image_url as well
         'description': item.description,
         'is_active': item.is_active if item.is_active is not None else True,
         'updated_by': admin_user['email'],
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
+    
+    # Preserve colors, sizes, and print_area if not in update
+    if hasattr(item, 'colors') and item.colors:
+        update_data['colors'] = item.colors
+    if hasattr(item, 'sizes') and item.sizes:
+        update_data['sizes'] = item.sizes
     
     result = await db.pod_clothing_items.update_one(
         {'id': item_id},
@@ -8919,6 +8930,40 @@ async def update_pod_clothing_item(
         raise HTTPException(status_code=404, detail="Clothing item not found")
     
     return {'message': 'POD clothing item updated successfully'}
+
+@api_router.patch("/admin/pod/clothing-items/{item_id}/print-area")
+async def update_pod_print_area(
+    item_id: str,
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Update print area for a POD clothing item"""
+    
+    print_area = data.get('print_area', {})
+    
+    # Validate print_area structure
+    if not all(k in print_area for k in ['x', 'y', 'width', 'height']):
+        raise HTTPException(status_code=400, detail="print_area must contain x, y, width, height")
+    
+    result = await db.pod_clothing_items.update_one(
+        {'id': item_id},
+        {'$set': {
+            'print_area': {
+                'x': int(print_area['x']),
+                'y': int(print_area['y']),
+                'width': int(print_area['width']),
+                'height': int(print_area['height']),
+                'rotation': int(print_area.get('rotation', 0))
+            },
+            'updated_by': admin_user['email'],
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Clothing item not found")
+    
+    return {'message': 'Print area updated successfully'}
 
 @api_router.delete("/admin/pod/clothing-items/{item_id}")
 async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_admin_user)):
