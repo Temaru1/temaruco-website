@@ -1770,6 +1770,7 @@ async def upload_pod_design(
     design_record.pop('_id', None)
     return {
         'design_id': design_id,
+        'session_id': session_id,
         'guest_id': guest_id,
         'original_file_url': original_url,
         'message': 'Design uploaded successfully'
