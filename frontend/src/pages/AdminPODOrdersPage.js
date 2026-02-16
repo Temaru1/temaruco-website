@@ -348,6 +348,75 @@ const AdminPODOrdersPage = () => {
                   </div>
                 )}
 
+                {/* Linked Design Files (Original + Mockup) */}
+                {(selectedOrder.original_file_url || selectedOrder.mockup_file_url || selectedOrder.design_id) && (
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                      <Eye size={18} />
+                      Linked Design Files
+                    </h3>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Original Design */}
+                        {selectedOrder.original_file_url && (
+                          <div className="bg-white rounded-lg p-3 border">
+                            <p className="text-xs text-zinc-500 mb-2">Original Design (High-Res)</p>
+                            <div className="relative group">
+                              <img 
+                                src={`${API_URL}${selectedOrder.original_file_url}`}
+                                alt="Original Design"
+                                className="w-full h-40 object-contain bg-zinc-50 rounded"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                              <a
+                                href={`${API_URL}${selectedOrder.original_file_url}`}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 w-full btn-primary text-sm flex items-center justify-center gap-2"
+                              >
+                                <Download size={14} />
+                                Download Original
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Mockup Preview */}
+                        {selectedOrder.mockup_file_url && (
+                          <div className="bg-white rounded-lg p-3 border">
+                            <p className="text-xs text-zinc-500 mb-2">Product Mockup</p>
+                            <div className="relative group">
+                              <img 
+                                src={`${API_URL}${selectedOrder.mockup_file_url}`}
+                                alt="Product Mockup"
+                                className="w-full h-40 object-contain bg-zinc-50 rounded"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                              <a
+                                href={`${API_URL}${selectedOrder.mockup_file_url}`}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 w-full btn-outline text-sm flex items-center justify-center gap-2"
+                              >
+                                <Download size={14} />
+                                Download Mockup
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {selectedOrder.design_id && (
+                        <p className="text-xs text-blue-600 mt-3">
+                          Design ID: <code className="bg-blue-100 px-1 rounded">{selectedOrder.design_id}</code>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Payment Receipt */}
                 <div>
                   <h3 className="font-bold text-lg mb-3">Payment Receipt</h3>
