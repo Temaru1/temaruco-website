@@ -10956,11 +10956,15 @@ async def send_quote_reminder_emails():
 
 @app.on_event("startup")
 async def startup_db_client():
-    """Test MongoDB connection on startup"""
+    """Initialize database and seed defaults on startup"""
     try:
         # Ping the database to verify connection
         await client.admin.command('ping')
         logger.info(f"Successfully connected to MongoDB: {os.environ.get('DB_NAME', 'unknown')}")
+        
+        # Initialize system configuration and seed defaults
+        await initialize_system_config()
+        await seed_database_defaults()
         
         # Start the scheduler for automated reminders (runs daily at 9 AM)
         scheduler.add_job(send_quote_reminder_emails, CronTrigger(hour=9, minute=0), id='quote_reminders', replace_existing=True)
@@ -10969,7 +10973,249 @@ async def startup_db_client():
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}")
         # Don't fail startup - let Kubernetes restart the pod
-        # raise  # Uncomment this in production to fail fast
+
+
+async def initialize_system_config():
+    """Initialize system_config collection with feature flags and settings"""
+    
+    # Default feature flags - only inserted if not already present
+    default_flags = [
+        {'key': 'pod_enabled', 'value': True, 'category': 'features', 'description': 'Enable Print-on-Demand feature', 'editable': True},
+        {'key': 'bulk_orders_enabled', 'value': True, 'category': 'features', 'description': 'Enable Bulk Orders feature', 'editable': True},
+        {'key': 'boutique_enabled', 'value': True, 'category': 'features', 'description': 'Enable Boutique store', 'editable': True},
+        {'key': 'fabrics_enabled', 'value': True, 'category': 'features', 'description': 'Enable Fabrics store', 'editable': True},
+        {'key': 'souvenirs_enabled', 'value': True, 'category': 'features', 'description': 'Enable Souvenirs store', 'editable': True},
+        {'key': 'design_services_enabled', 'value': True, 'category': 'features', 'description': 'Enable Design Services', 'editable': True},
+        {'key': 'email_marketing_enabled', 'value': True, 'category': 'features', 'description': 'Enable Email Marketing system', 'editable': True},
+        {'key': 'flutterwave_payments_enabled', 'value': True, 'category': 'payments', 'description': 'Enable Flutterwave payments', 'editable': True},
+        {'key': 'pod_image_proxy_enabled', 'value': True, 'category': 'pod', 'description': 'Proxy external images for POD canvas', 'editable': True},
+        {'key': 'guest_tracking_enabled', 'value': True, 'category': 'pod', 'description': 'Enable stateless guest design tracking', 'editable': True},
+        {'key': 'min_bulk_quantity', 'value': 10, 'category': 'business_rules', 'description': 'Minimum quantity for bulk orders', 'editable': True},
+        {'key': 'pod_print_fee', 'value': 500, 'category': 'pricing', 'description': 'Additional fee for POD printing (NGN)', 'editable': True},
+        {'key': 'default_currency', 'value': 'NGN', 'category': 'localization', 'description': 'Default currency code', 'editable': True},
+    ]
+    
+    # Default print size configurations
+    default_print_sizes = [
+        {'key': 'print_size_badge', 'value': {'width': 120, 'height': 120, 'label': 'Badge', 'description': '80-120px', 'scale_factor': 0.15}, 'category': 'pod_settings', 'description': 'Badge print size config', 'editable': True},
+        {'key': 'print_size_a4', 'value': {'width': 2480, 'height': 3508, 'label': 'A4', 'description': '210×297mm', 'scale_factor': 0.5}, 'category': 'pod_settings', 'description': 'A4 print size config', 'editable': True},
+        {'key': 'print_size_a3', 'value': {'width': 3508, 'height': 4961, 'label': 'A3', 'description': '297×420mm', 'scale_factor': 0.7}, 'category': 'pod_settings', 'description': 'A3 print size config', 'editable': True},
+        {'key': 'print_size_a2', 'value': {'width': 4961, 'height': 7016, 'label': 'A2', 'description': '420×594mm', 'scale_factor': 1.0}, 'category': 'pod_settings', 'description': 'A2 print size config', 'editable': True},
+    ]
+    
+    all_configs = default_flags + default_print_sizes
+    
+    for config in all_configs:
+        existing = await db.system_config.find_one({'key': config['key']})
+        if not existing:
+            config['created_at'] = datetime.now(timezone.utc).isoformat()
+            config['updated_at'] = datetime.now(timezone.utc).isoformat()
+            await db.system_config.insert_one(config)
+            logger.info(f"Initialized system config: {config['key']}")
+    
+    # Create index on key field
+    await db.system_config.create_index('key', unique=True)
+    logger.info("System configuration initialized")
+
+
+async def seed_database_defaults():
+    """Seed database with default data if collections are empty (runs once on first deploy)"""
+    
+    # Seed POD clothing items if collection is empty
+    pod_count = await db.pod_clothing_items.count_documents({})
+    if pod_count == 0:
+        default_pod_items = [
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'T-Shirt',
+                'standard_price': 2000,
+                'premium_price': 3000,
+                'luxury_price': 4500,
+                'base_price': 2000,
+                'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+                'description': 'Classic short sleeve cotton t-shirt',
+                'colors': ['White', 'Black', 'Navy', 'Grey', 'Red'],
+                'sizes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 150, 'y': 80, 'width': 200, 'height': 250, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Polo Shirt',
+                'standard_price': 2500,
+                'premium_price': 3750,
+                'luxury_price': 5000,
+                'base_price': 2500,
+                'image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=600&q=80',
+                'description': 'Collared polo with buttons',
+                'colors': ['White', 'Black', 'Navy', 'Red', 'Blue'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 160, 'y': 90, 'width': 180, 'height': 200, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Hoodie',
+                'standard_price': 4500,
+                'premium_price': 6750,
+                'luxury_price': 9000,
+                'base_price': 4500,
+                'image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80',
+                'description': 'Warm hoodie with front pocket',
+                'colors': ['Black', 'Grey', 'Navy', 'White'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 140, 'y': 100, 'width': 220, 'height': 220, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Joggers',
+                'standard_price': 3500,
+                'premium_price': 5250,
+                'luxury_price': 7000,
+                'base_price': 3500,
+                'image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
+                'description': 'Comfortable track pants',
+                'colors': ['Black', 'Grey', 'Navy'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 80, 'y': 150, 'width': 100, 'height': 150, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Varsity Jacket',
+                'standard_price': 8000,
+                'premium_price': 12000,
+                'luxury_price': 16000,
+                'base_price': 8000,
+                'image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80',
+                'description': 'Classic sporty varsity jacket',
+                'colors': ['Black/White', 'Navy/White', 'Red/White'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 130, 'y': 80, 'width': 240, 'height': 280, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Tank Top',
+                'standard_price': 1500,
+                'premium_price': 2250,
+                'luxury_price': 3000,
+                'base_price': 1500,
+                'image_url': 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600&q=80',
+                'description': 'Sleeveless athletic tank',
+                'colors': ['White', 'Black', 'Grey'],
+                'sizes': ['XS', 'S', 'M', 'L', 'XL'],
+                'print_area': {'x': 150, 'y': 60, 'width': 200, 'height': 220, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Sweatshirt',
+                'standard_price': 4000,
+                'premium_price': 6000,
+                'luxury_price': 8000,
+                'base_price': 4000,
+                'image_url': 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=600&q=80',
+                'description': 'Cozy crew neck sweatshirt',
+                'colors': ['Black', 'Grey', 'Navy', 'Cream'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 140, 'y': 90, 'width': 220, 'height': 230, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Baseball Cap',
+                'standard_price': 1500,
+                'premium_price': 2250,
+                'luxury_price': 3000,
+                'base_price': 1500,
+                'image_url': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+                'description': 'Classic baseball cap',
+                'colors': ['Black', 'White', 'Navy', 'Red'],
+                'sizes': ['One Size'],
+                'print_area': {'x': 170, 'y': 100, 'width': 160, 'height': 100, 'rotation': 0},
+                'is_active': True,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }
+        ]
+        
+        await db.pod_clothing_items.insert_many(default_pod_items)
+        logger.info(f"Seeded {len(default_pod_items)} POD clothing items to database")
+    
+    # Seed bulk clothing items if empty
+    bulk_count = await db.bulk_clothing_items.count_documents({})
+    if bulk_count == 0:
+        default_bulk_items = [
+            {'id': str(uuid.uuid4()), 'name': 'T-Shirt', 'standard_price': 1500, 'premium_price': 2250, 'luxury_price': 3000, 'base_price': 1500, 'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80', 'description': 'Classic cotton t-shirt', 'colors': ['White', 'Black', 'Navy', 'Grey', 'Red'], 'sizes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 'is_active': True, 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Polo Shirt', 'standard_price': 2000, 'premium_price': 3000, 'luxury_price': 4000, 'base_price': 2000, 'image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400&q=80', 'description': 'Collared polo shirt', 'colors': ['White', 'Black', 'Navy', 'Red', 'Blue'], 'sizes': ['S', 'M', 'L', 'XL', 'XXL'], 'is_active': True, 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Hoodie', 'standard_price': 3500, 'premium_price': 5250, 'luxury_price': 7000, 'base_price': 3500, 'image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&q=80', 'description': 'Warm hoodie with pocket', 'colors': ['Black', 'Grey', 'Navy', 'White'], 'sizes': ['S', 'M', 'L', 'XL', 'XXL'], 'is_active': True, 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Shorts', 'standard_price': 1200, 'premium_price': 1800, 'luxury_price': 2400, 'base_price': 1200, 'image_url': 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400&q=80', 'description': 'Athletic shorts', 'colors': ['Black', 'Navy', 'Grey'], 'sizes': ['S', 'M', 'L', 'XL', 'XXL'], 'is_active': True, 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Tracksuit', 'standard_price': 5000, 'premium_price': 7500, 'luxury_price': 10000, 'base_price': 5000, 'image_url': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80', 'description': 'Complete tracksuit set', 'colors': ['Black', 'Navy', 'Grey'], 'sizes': ['S', 'M', 'L', 'XL', 'XXL'], 'is_active': True, 'created_at': datetime.now(timezone.utc).isoformat()},
+        ]
+        await db.bulk_clothing_items.insert_many(default_bulk_items)
+        logger.info(f"Seeded {len(default_bulk_items)} bulk clothing items to database")
+    
+    # Seed material types if empty
+    material_types_count = await db.material_types.count_documents({})
+    if material_types_count == 0:
+        default_material_types = [
+            {'id': str(uuid.uuid4()), 'name': 'Thread', 'description': 'Sewing threads of various colors', 'unit': 'spools', 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Fabric', 'description': 'Various fabric materials', 'unit': 'yards', 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Buttons', 'description': 'Buttons of various sizes', 'unit': 'pieces', 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Zippers', 'description': 'Zippers of various lengths', 'unit': 'pieces', 'created_at': datetime.now(timezone.utc).isoformat()},
+            {'id': str(uuid.uuid4()), 'name': 'Labels', 'description': 'Clothing labels and tags', 'unit': 'pieces', 'created_at': datetime.now(timezone.utc).isoformat()},
+        ]
+        await db.material_types.insert_many(default_material_types)
+        logger.info(f"Seeded {len(default_material_types)} material types to database")
+    
+    # Seed email templates if empty
+    email_templates_count = await db.email_templates.count_documents({})
+    if email_templates_count == 0:
+        from services.email_service import DEFAULT_EMAIL_TEMPLATES
+        for key, template in DEFAULT_EMAIL_TEMPLATES.items():
+            await db.email_templates.insert_one({
+                'id': str(uuid.uuid4()),
+                'key': key,
+                'is_default': True,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                **template
+            })
+        logger.info(f"Seeded {len(DEFAULT_EMAIL_TEMPLATES)} email templates to database")
+    
+    logger.info("Database seeding complete")
+
+
+async def log_audit_event(action: str, entity_type: str, entity_id: str, user_email: str, changes: dict = None, old_values: dict = None):
+    """Log audit event for tracking changes"""
+    audit_entry = {
+        'id': str(uuid.uuid4()),
+        'action': action,  # create, update, delete
+        'entity_type': entity_type,  # pod_item, feature_flag, site_text, etc.
+        'entity_id': entity_id,
+        'user_email': user_email,
+        'changes': changes,
+        'old_values': old_values,
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'ip_address': None  # Can be set from request if needed
+    }
+    await db.audit_logs.insert_one(audit_entry)
+    return audit_entry['id']
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
