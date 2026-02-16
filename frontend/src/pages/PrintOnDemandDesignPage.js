@@ -12,6 +12,17 @@ import { getImageUrl } from '../utils/imageUtils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get proxied URL for external images (to avoid CORS issues on canvas)
+const getProxiedImageUrl = (url) => {
+  if (!url) return '';
+  // If it's already a local URL, return as-is
+  if (url.startsWith('/api/') || url.startsWith(API_URL)) {
+    return getImageUrl(url);
+  }
+  // For external URLs, proxy through our backend
+  return `${API_URL}/api/image-proxy?url=${encodeURIComponent(url)}`;
+};
+
 // Quality Variants Configuration
 const QUALITY_VARIANTS = [
   { id: 'standard', label: 'Standard', icon: Star, color: 'bg-zinc-100 border-zinc-300 text-zinc-700', activeColor: 'bg-zinc-900 border-zinc-900 text-white', badgeColor: 'bg-zinc-600' },
