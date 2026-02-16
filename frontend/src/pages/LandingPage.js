@@ -3,9 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Package, Paintbrush, Shirt, ShoppingBag, Scissors, Gift } from 'lucide-react';
 import SEO from '../components/SEO';
 import { Button } from '../components/ui/button';
+import { useSiteTexts } from '../contexts/SiteTextContext';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { getText } = useSiteTexts();
 
   const services = [
     {
@@ -67,18 +69,17 @@ const LandingPage = () => {
             <div className="space-y-8">
               <div>
                 <p className="text-sm font-semibold tracking-widest uppercase text-[#D90429] mb-4">
-                  Premium Clothing Manufacturing
+                  {getText('home.hero.subtitle', 'PREMIUM CLOTHING MANUFACTURING')}
                 </p>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-zinc-900 leading-[1.1]">
-                  Quality Clothing,
+                  {getText('home.hero.title1', 'Quality Clothing,')}
                   <br />
-                  <span className="text-[#D90429]">Made for You</span>
+                  <span className="text-[#D90429]">{getText('home.hero.title2', 'Made for You')}</span>
                 </h1>
               </div>
               
               <p className="text-lg text-zinc-600 max-w-lg leading-relaxed">
-                From bulk orders for schools and corporates to custom print-on-demand services. 
-                Nigeria's trusted clothing factory delivering excellence since day one.
+                {getText('home.hero.description', 'From bulk orders for schools and corporates to custom print-on-demand services. Nigeria\'s trusted clothing factory delivering excellence since day one.')}
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -87,7 +88,7 @@ const LandingPage = () => {
                   className="bg-[#D90429] hover:bg-[#B90322] text-white rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   data-testid="hero-cta-bulk"
                 >
-                  Start Bulk Order
+                  {getText('home.hero.cta_primary', 'Start Bulk Order')}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
                 <Button 
@@ -96,7 +97,7 @@ const LandingPage = () => {
                   className="rounded-full px-8 py-6 text-lg font-medium border-2 hover:bg-zinc-50"
                   data-testid="hero-cta-track"
                 >
-                  Track Order
+                  {getText('home.hero.cta_secondary', 'Track Order')}
                 </Button>
               </div>
 
