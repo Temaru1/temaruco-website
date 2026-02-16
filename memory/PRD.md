@@ -542,3 +542,91 @@ Clone and enhance the Temaruco website with:
 - **Database Collection**: `site_texts`
   - Fields: key, value, page, section, description, max_length, last_updated, updated_by
 
+## Completed Work (Feb 16, 2026) - Full Email Marketing System
+
+### Email Marketing System (Complete)
+- **Admin Module**: Settings → Email Marketing (`/admin/email`)
+- **Navigation**: Added to AdminPage sidebar under Settings
+- **Route**: `/admin/email` with protected auth
+
+**6 Main Tabs:**
+1. **Analytics Dashboard**
+   - Total Sent count
+   - Open Rate percentage
+   - Subscribers count
+   - Failed count
+   - Quick Stats: Actual Sent, Mocked, Campaigns sent, Unsubscribed
+
+2. **SMTP Settings**
+   - Gmail SMTP pre-configured (smtp.gmail.com:587)
+   - Username: temarucoltd@gmail.com
+   - From Name: Temaruco
+   - Status: Configured (green badge when password exists)
+   - Edit Settings modal (Super Admin only for password)
+   - Send Test Email functionality
+
+3. **Email Templates**
+   - 6 default templates: Welcome, Order Confirmation, Password Reset, Quote Reminder, Newsletter, Promotional
+   - Create custom templates with key, name, type (transactional/marketing), subject, HTML content
+   - Variables support: {{name}}, {{email}}, {{company_name}}, {{order_id}}, etc.
+   - Edit/Delete templates (defaults cannot be deleted)
+
+4. **Subscribers Management**
+   - List all subscribers with pagination
+   - View email, name, source, status, date
+   - Add subscriber manually
+   - Remove subscriber
+   - Export to CSV functionality
+
+5. **Email Campaigns**
+   - Create marketing campaigns
+   - Set title, subject, HTML content, audience
+   - Draft → Sending → Sent status flow
+   - Send to all subscribers
+   - Track sent/failed counts
+
+6. **Email Logs**
+   - Full audit trail of all sent emails
+   - Recipient, subject, status (sent/mocked/failed), opened, date
+   - Pagination support
+
+**Backend Features:**
+- SMTP password encryption using Fernet (cryptography library)
+- Email open tracking via 1x1 pixel
+- Public unsubscribe endpoint with HTML page
+- Newsletter subscription endpoint for frontend forms
+- Background email queue for rate limiting
+- Transactional email integration (order confirmation, quote emails)
+
+**API Endpoints:**
+- `GET /api/admin/email/settings` - Get SMTP settings (no password)
+- `POST /api/admin/email/settings` - Save SMTP settings (Super Admin)
+- `POST /api/admin/email/test` - Send test email
+- `GET /api/admin/email/templates` - List all templates
+- `POST /api/admin/email/templates` - Create template
+- `PUT /api/admin/email/templates/{key}` - Update template
+- `DELETE /api/admin/email/templates/{key}` - Delete template (Super Admin)
+- `GET /api/admin/email/subscribers` - List subscribers
+- `POST /api/admin/email/subscribers` - Add subscriber
+- `PATCH /api/admin/email/subscribers/{id}` - Update subscriber
+- `DELETE /api/admin/email/subscribers/{id}` - Delete subscriber
+- `GET /api/admin/email/subscribers/export` - Export CSV
+- `GET /api/admin/email/campaigns` - List campaigns
+- `POST /api/admin/email/campaigns` - Create campaign
+- `PUT /api/admin/email/campaigns/{id}` - Update campaign
+- `POST /api/admin/email/campaigns/{id}/send` - Send campaign
+- `DELETE /api/admin/email/campaigns/{id}` - Delete campaign
+- `GET /api/admin/email/logs` - Email logs with pagination
+- `GET /api/admin/email/analytics` - Email analytics
+- `GET /api/email/track/{log_id}` - Tracking pixel
+- `GET /api/unsubscribe` - Unsubscribe page
+- `POST /api/unsubscribe` - Process unsubscribe
+- `POST /api/newsletter/subscribe` - Public newsletter signup
+
+**Database Collections:**
+- `email_settings` - SMTP configuration with encrypted password
+- `email_templates` - Custom and default templates
+- `email_subscribers` - Newsletter subscribers
+- `email_campaigns` - Marketing campaigns
+- `email_logs` - Sent email audit trail
+
