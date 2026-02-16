@@ -630,3 +630,49 @@ Clone and enhance the Temaruco website with:
 - `email_campaigns` - Marketing campaigns
 - `email_logs` - Sent email audit trail
 
+## Backend Refactoring Progress (Feb 16, 2026)
+
+### Current Structure
+The backend has been partially refactored with a modular architecture:
+
+```
+/app/backend/
+├── server.py (10,842 lines) - Main monolithic file (still active)
+├── core/
+│   ├── config.py - Environment variables
+│   ├── database.py - MongoDB connection
+│   └── auth.py - Authentication utilities
+├── services/
+│   ├── __init__.py
+│   └── email_service.py (NEW) - Email service class with templates
+├── routes/
+│   ├── __init__.py
+│   ├── auth.py - Auth routes (existing)
+│   ├── payments.py - Payment routes (existing)
+│   └── email.py (NEW) - Email API routes (ready for integration)
+└── models/
+    └── schemas.py - Pydantic models
+```
+
+### Refactoring Completed
+- **Email Service Module** (`services/email_service.py`):
+  - `EmailService` class with all email operations
+  - `DEFAULT_EMAIL_TEMPLATES` dictionary
+  - Encryption/decryption functions
+  - `get_order_confirmation_email()` helper
+  
+- **Email Routes Module** (`routes/email.py`):
+  - All email API endpoints extracted
+  - Settings, templates, subscribers, campaigns, logs, analytics
+  - Public endpoints: tracking pixel, unsubscribe, newsletter
+
+### Remaining Refactoring (Future)
+These sections in `server.py` should be extracted:
+- POD Design System (lines 1678-2356)
+- Boutique/Fabrics/Souvenirs (lines 2357-2653)
+- Admin Orders (lines 4631-5292)
+- Super Admin/RBAC (lines 6530-6862)
+- Materials Inventory (lines 7939-8247)
+- Site Text CMS (lines 8886-9187)
+
+
