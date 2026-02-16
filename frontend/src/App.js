@@ -57,6 +57,7 @@ import AdminDesignInquiriesPage from './pages/AdminDesignInquiriesPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import BulkOrderDetailsPage from './pages/BulkOrderDetailsPage';
 import AdminSiteTextsPage from './pages/AdminSiteTextsPage';
+import AdminEmailPage from './pages/AdminEmailPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
@@ -263,6 +264,16 @@ function AppRouter() {
           element={
             <ProtectedRoute requireAuth={true} requireAdmin={true}>
               <AdminSiteTextsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Email Marketing System - auth required */}
+        <Route
+          path="/admin/email"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminEmailPage />
             </ProtectedRoute>
           }
         />
