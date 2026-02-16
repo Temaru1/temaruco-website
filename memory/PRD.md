@@ -374,6 +374,50 @@ Clone and enhance the Temaruco website with:
 - Procurement/inventory tracking
 - Financial reports generation
 
+## Completed Work (Feb 16, 2026) - Admin Dashboard + POD + Mobile Fixes
+
+### 1. Unified Products Admin Page
+- New page: `/admin/all-products` shows ALL product types in one view
+- Filter tabs: All / Bulk / POD / Boutique / Fabric / Souvenir with counts
+- Placeholder products now editable and deletable (was hidden before)
+- Edit and Delete buttons for all products including placeholders
+
+### 2. Dynamic Product Categories
+- Database: `product_categories` collection
+- Admin can create/edit/delete categories for Boutique, Fabric, Souvenir
+- Categories automatically update products when renamed
+- SuperAdmin-only delete (regular admins can only edit)
+- API Endpoints:
+  - `GET /api/admin/categories` - List all categories
+  - `POST /api/admin/categories` - Create category
+  - `PUT /api/admin/categories/{id}` - Update category
+  - `DELETE /api/admin/categories/{id}` - Delete category (SuperAdmin)
+
+### 3. POD Add to Cart Button Position
+- Moved to BOTTOM of page (was at top)
+- Sticky/fixed position on mobile for easy access
+- Shows total price in button
+- Disabled states with clear messaging
+
+### 4. POD Order → Design Linking
+- Orders now store `design_id` linked to `pod_designs` collection
+- Order details modal shows:
+  - Original design (high-res download)
+  - Product mockup (download)
+  - Design ID reference
+- No more manual searching across pages
+
+### 5. Mobile Table Horizontal Scroll
+- All admin tables now scroll horizontally on mobile
+- Added `-webkit-overflow-scrolling: touch` for smooth iOS scrolling
+- Custom red scrollbar styling
+- Tables maintain minimum width for readability
+
+### 6. Materials Inventory (Already Implemented)
+- View Details button with history
+- Quantity History Log with audit trail
+- Dynamic Material Types creation
+
 ## Completed Work (Feb 16, 2026) - Admin RBAC System
 
 ### Role-Based Access Control (RBAC) System
