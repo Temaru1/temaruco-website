@@ -48,24 +48,27 @@ Clone and enhance the Temaruco website with:
 
 ### Print-On-Demand Design System (ENHANCED - Feb 2026)
 - **Dual File Storage**: Original design + Generated mockup saved separately
-- **Guest Contact Linking**: Designs automatically linked to guest contact records in `clients` collection
-- **Session-Based Uploads**: Designs can be uploaded before contact info provided, linked later via session_id
+- **STATELESS Guest Tracking (Feb 16, 2026)**: 
+  - Uses UUID-based `temp_design_id` stored in localStorage (no cookies/sessions required)
+  - Designs uploaded as `status='unassigned'`, linked to contact later via `temp_design_id`
+  - Survives browser close, cache clear, cookie clear
 - **Print Size Selection**: Badge, A4, A3, A2 with dynamic resizing
 - **Canvas-Based Rendering**: Transformable design layer using Konva.js
 - **Position Controls**: Drag, center, reset functionality
 - **Admin Dashboard Module**: Guest Designs page under Orders menu
   - View all guest designs with previews
+  - **Status Filter Tabs**: All / Assigned / Unassigned with counts
   - View guest contacts with design counts
   - Modal preview for original + mockup files
   - **Download buttons**: Full resolution file downloads (not compressed)
   - Search and pagination
 - **Backend Endpoints**:
   - `/api/pod/print-sizes` - Get available print sizes
-  - `/api/pod/guest-contact` - Create/get guest contact (also creates client record)
-  - `/api/pod/upload-design` - Upload original design with session/guest linking
+  - `/api/pod/upload-design` - STATELESS upload: returns temp_design_id, status='unassigned'
+  - `/api/pod/link-design` - Links design to contact via temp_design_id, status='assigned'
   - `/api/pod/upload-mockup/{design_id}` - Upload generated mockup
   - `/api/pod/design/{design_id}/transform` - Update design transform
-  - `/api/admin/pod/guest-designs` - Admin: Get all guest designs
+  - `/api/admin/pod/guest-designs` - Admin: Get all guest designs (supports status filter)
   - `/api/admin/pod/guest-contacts` - Admin: Get all guest contacts
   - `/api/admin/pod/design/{design_id}` - Admin: Get/delete design
   - `/api/admin/pod/download/original/{design_id}` - Admin: Download original file (full resolution)
@@ -74,7 +77,7 @@ Clone and enhance the Temaruco website with:
   - `/uploads/designs/original/` - Original design files
   - `/uploads/designs/mockups/` - Generated mockups
 - **Database Collections**:
-  - `pod_designs` - Design records with file URLs
+  - `pod_designs` - Design records with file URLs, temp_design_id, status (assigned/unassigned)
   - `pod_guest_contacts` - Guest contact records
   - `clients` - Client records (auto-created for POD guests)
 
