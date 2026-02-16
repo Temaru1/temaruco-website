@@ -881,7 +881,7 @@ const PrintOnDemandDesignPage = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50 md:static md:bg-transparent md:border-0 md:shadow-none md:p-0 md:mt-6">
         <div className="max-w-7xl mx-auto">
           <Button
-            onClick={addToCart}
+            onClick={handleAddToCart}
             disabled={addingToCart || elements.length === 0 || !guestInfo.email || !guestInfo.name || !guestInfo.phone}
             className="w-full bg-[#D90429] hover:bg-[#B90322] text-white py-4 md:py-6 text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="add-to-cart-btn"
