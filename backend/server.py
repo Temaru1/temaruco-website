@@ -6760,6 +6760,212 @@ async def delete_material(material_id: str, admin_user: Dict = Depends(get_admin
     
     return {'message': 'Material deleted successfully'}
 
+# Get single material with full details and history
+@api_router.get("/admin/materials-inventory/{material_id}")
+async def get_material_details(material_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Get material details with quantity history"""
+    material = await db.materials_inventory.find_one({'id': material_id}, {'_id': 0})
+    
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+    
+    # Get quantity history from transactions
+    history = await db.materials_transactions.find(
+        {'material_id': material_id}
+    ).sort('created_at', -1).to_list(100)
+    
+    # Convert to proper format
+    quantity_history = []
+    for h in history:
+        change_type = 'adjust'
+        if h.get('adjustment', 0) > 0:
+            change_type = 'add'
+        elif h.get('adjustment', 0) < 0:
+            change_type = 'remove'
+            
+        quantity_history.append({
+            'id': h.get('id'),
+            'change_type': change_type,
+            'quantity_changed': abs(h.get('adjustment', 0)),
+            'previous_quantity': h.get('quantity_before', 0),
+            'new_quantity': h.get('quantity_after', 0),
+            'reason': h.get('reason', ''),
+            'admin_email': h.get('adjusted_by', 'Unknown'),
+            'timestamp': h.get('created_at', '')
+        })
+    
+    return {
+        'material': material,
+        'quantity_history': quantity_history
+    }
+
+# ==================== ENHANCED MATERIAL TYPES MANAGEMENT ====================
+
+@api_router.get("/admin/material-types-full")
+async def get_material_types_full(admin_user: Dict = Depends(get_admin_user)):
+    """Get all material types with full metadata"""
+    # Default material types
+    default_types = [
+        {"name": "Fabrics", "description": "Various fabric materials", "is_default": True, "status": "active"},
+        {"name": "Threads", "description": "Sewing threads", "is_default": True, "status": "active"},
+        {"name": "Buttons", "description": "All types of buttons", "is_default": True, "status": "active"},
+        {"name": "Zippers", "description": "Zippers and closures", "is_default": True, "status": "active"},
+        {"name": "Labels", "description": "Labels and tags", "is_default": True, "status": "active"},
+        {"name": "Accessories", "description": "Misc accessories", "is_default": True, "status": "active"},
+        {"name": "Elastic", "description": "Elastic bands", "is_default": True, "status": "active"},
+        {"name": "Needles", "description": "Sewing needles", "is_default": True, "status": "active"},
+        {"name": "Patterns", "description": "Pattern materials", "is_default": True, "status": "active"},
+        {"name": "Lining", "description": "Lining materials", "is_default": True, "status": "active"},
+        {"name": "Packaging", "description": "Packaging materials", "is_default": True, "status": "active"},
+    ]
+    
+    # Get custom types from collection
+    custom_types = await db.material_types.find({}, {'_id': 0}).to_list(100)
+    
+    # Combine defaults with custom types
+    all_types = []
+    default_names = set()
+    
+    for dt in default_types:
+        all_types.append(dt)
+        default_names.add(dt['name'].lower())
+    
+    for ct in custom_types:
+        if ct['name'].lower() not in default_names:
+            ct['is_default'] = False
+            all_types.append(ct)
+    
+    # Sort by name
+    all_types.sort(key=lambda x: x['name'])
+    
+    # Get count of materials using each type
+    type_counts = {}
+    materials = await db.materials_inventory.find({}, {'material_type': 1, '_id': 0}).to_list(1000)
+    for m in materials:
+        mt = m.get('material_type', '')
+        type_counts[mt] = type_counts.get(mt, 0) + 1
+    
+    for t in all_types:
+        t['materials_count'] = type_counts.get(t['name'], 0)
+    
+    return {
+        'types': all_types,
+        'total': len(all_types)
+    }
+
+@api_router.post("/admin/material-types-full")
+async def create_material_type(data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Create a new custom material type"""
+    name = data.get('name', '').strip()
+    description = data.get('description', '').strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Type name is required")
+    
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="Type name must be at least 2 characters")
+    
+    # Check for duplicates (case-insensitive)
+    default_names = ['fabrics', 'threads', 'buttons', 'zippers', 'labels', 'accessories', 'elastic', 'needles', 'patterns', 'lining', 'packaging']
+    if name.lower() in default_names:
+        raise HTTPException(status_code=400, detail="This type already exists as a default type")
+    
+    existing = await db.material_types.find_one({'name': {'$regex': f'^{name}$', '$options': 'i'}})
+    if existing:
+        raise HTTPException(status_code=400, detail="A type with this name already exists")
+    
+    type_doc = {
+        'id': str(uuid.uuid4()),
+        'name': name,
+        'description': description,
+        'status': 'active',
+        'created_by_admin_id': admin_user.get('id', admin_user.get('email')),
+        'created_by_email': admin_user.get('email'),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.material_types.insert_one(type_doc)
+    
+    return {
+        'message': 'Material type created successfully',
+        'type': {
+            'id': type_doc['id'],
+            'name': type_doc['name'],
+            'description': type_doc['description'],
+            'status': type_doc['status'],
+            'is_default': False,
+            'materials_count': 0
+        }
+    }
+
+@api_router.put("/admin/material-types-full/{type_id}")
+async def update_material_type(type_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Update a custom material type (rename or change description)"""
+    name = data.get('name', '').strip()
+    description = data.get('description', '').strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Type name is required")
+    
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="Type name must be at least 2 characters")
+    
+    # Check if type exists
+    existing = await db.material_types.find_one({'id': type_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Material type not found")
+    
+    old_name = existing['name']
+    
+    # Check for duplicate names (if name changed)
+    if name.lower() != old_name.lower():
+        duplicate = await db.material_types.find_one({
+            'name': {'$regex': f'^{name}$', '$options': 'i'},
+            'id': {'$ne': type_id}
+        })
+        if duplicate:
+            raise HTTPException(status_code=400, detail="A type with this name already exists")
+    
+    # Update type
+    await db.material_types.update_one(
+        {'id': type_id},
+        {'$set': {
+            'name': name,
+            'description': description,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'updated_by': admin_user.get('email')
+        }}
+    )
+    
+    # Update all materials using this type (if name changed)
+    if name != old_name:
+        await db.materials_inventory.update_many(
+            {'material_type': old_name},
+            {'$set': {'material_type': name}}
+        )
+    
+    return {'message': 'Material type updated successfully'}
+
+@api_router.patch("/admin/material-types-full/{type_id}/status")
+async def toggle_material_type_status(type_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Activate or deactivate a material type (soft delete)"""
+    status = data.get('status', 'inactive')
+    
+    existing = await db.material_types.find_one({'id': type_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Material type not found")
+    
+    await db.material_types.update_one(
+        {'id': type_id},
+        {'$set': {
+            'status': status,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'updated_by': admin_user.get('email')
+        }}
+    )
+    
+    return {'message': f'Material type {"activated" if status == "active" else "deactivated"} successfully'}
+
 # ==================== PRODUCT INVENTORY MANAGEMENT ====================
 
 LOW_STOCK_THRESHOLD = 10  # Default threshold for low stock alerts
