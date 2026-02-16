@@ -7298,6 +7298,101 @@ async def delete_design_admin(design_id: str, request: Request):
     
     return {'message': 'Design deleted successfully'}
 
+@api_router.get("/admin/pod/download/original/{design_id}")
+async def download_original_design(design_id: str, request: Request):
+    """Admin: Download original design file in full resolution"""
+    admin_user = await get_admin_user(request)
+    
+    design = await db.pod_designs.find_one({'id': design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    original_url = design.get('original_file_url')
+    if not original_url:
+        raise HTTPException(status_code=404, detail="Original file not found")
+    
+    # Extract filename from URL
+    filename = original_url.split('/')[-1]
+    file_path = POD_ORIGINALS_DIR / filename
+    
+    if not file_path.exists():
+        logger.error(f"[DOWNLOAD] Original file not found: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    # Determine mime type
+    ext = filename.split('.')[-1].lower()
+    mime_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+    media_type = mime_types.get(ext, 'application/octet-stream')
+    
+    # Generate download filename with guest info
+    guest_email = design.get('guest_email', 'unknown')
+    product_id = design.get('product_id', 'product')
+    download_filename = f"{product_id}_original_{design_id}{os.path.splitext(filename)[1]}"
+    
+    logger.info(f"[DOWNLOAD] Admin {admin_user['email']} downloaded original: {design_id}")
+    
+    return FileResponse(
+        path=str(file_path),
+        filename=download_filename,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{download_filename}"'
+        }
+    )
+
+@api_router.get("/admin/pod/download/mockup/{design_id}")
+async def download_mockup_design(design_id: str, request: Request):
+    """Admin: Download mockup file in full resolution"""
+    admin_user = await get_admin_user(request)
+    
+    design = await db.pod_designs.find_one({'id': design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    mockup_url = design.get('mockup_file_url')
+    if not mockup_url:
+        raise HTTPException(status_code=404, detail="Mockup file not found")
+    
+    # Extract filename from URL
+    filename = mockup_url.split('/')[-1]
+    file_path = POD_MOCKUPS_DIR / filename
+    
+    if not file_path.exists():
+        logger.error(f"[DOWNLOAD] Mockup file not found: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    # Determine mime type
+    ext = filename.split('.')[-1].lower()
+    mime_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+    media_type = mime_types.get(ext, 'application/octet-stream')
+    
+    # Generate download filename
+    product_id = design.get('product_id', 'product')
+    download_filename = f"{product_id}_mockup_{design_id}.png"
+    
+    logger.info(f"[DOWNLOAD] Admin {admin_user['email']} downloaded mockup: {design_id}")
+    
+    return FileResponse(
+        path=str(file_path),
+        filename=download_filename,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{download_filename}"'
+        }
+    )
+
 # ==================== BULK ORDER CLOTHING ITEMS MANAGEMENT ====================
 @api_router.get("/bulk/clothing-items")
 async def get_bulk_clothing_items():
