@@ -41,6 +41,7 @@ import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
 import AdminClothingItemsPage from './pages/AdminClothingItemsPage';
 import AdminProductsPage from './pages/AdminProductsPage';
 import AdminGuestDesignsPage from './pages/AdminGuestDesignsPage';
+import AdminAllProductsPage from './pages/AdminAllProductsPage';
 
 // New Pages
 import FabricsPage from './pages/FabricsPage';
