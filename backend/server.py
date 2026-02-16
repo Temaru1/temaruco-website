@@ -7231,6 +7231,308 @@ async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_
     
     return {'message': 'POD clothing item deleted successfully'}
 
+# ==================== SITE TEXT CMS MANAGEMENT ====================
+# Default site texts - used for initialization and reset
+DEFAULT_SITE_TEXTS = {
+    # Homepage
+    "home.hero.subtitle": {"value": "PREMIUM CLOTHING MANUFACTURING", "page": "home", "section": "hero", "description": "Hero section subtitle", "max_length": 100},
+    "home.hero.title1": {"value": "Quality Clothing,", "page": "home", "section": "hero", "description": "Hero title line 1", "max_length": 50},
+    "home.hero.title2": {"value": "Made for You", "page": "home", "section": "hero", "description": "Hero title line 2 (italic)", "max_length": 50},
+    "home.hero.description": {"value": "From bulk orders for schools and corporates to custom print-on-demand services. Nigeria's trusted clothing factory delivering excellence since day one.", "page": "home", "section": "hero", "description": "Hero description text", "max_length": 300},
+    "home.hero.cta_primary": {"value": "Start Bulk Order", "page": "home", "section": "hero", "description": "Primary CTA button text", "max_length": 30},
+    "home.hero.cta_secondary": {"value": "Track Order", "page": "home", "section": "hero", "description": "Secondary CTA button text", "max_length": 30},
+    "home.services.title": {"value": "Our Services", "page": "home", "section": "services", "description": "Services section title", "max_length": 50},
+    "home.services.subtitle": {"value": "Everything you need for quality clothing", "page": "home", "section": "services", "description": "Services section subtitle", "max_length": 100},
+    "home.trust.title": {"value": "Trusted by Thousands", "page": "home", "section": "trust", "description": "Trust section title", "max_length": 50},
+    "home.trust.description": {"value": "Join hundreds of satisfied customers who trust Temaruco for their clothing needs.", "page": "home", "section": "trust", "description": "Trust section description", "max_length": 200},
+    
+    # Bulk Orders
+    "bulk.page.title": {"value": "Bulk Orders", "page": "bulk", "section": "header", "description": "Page title", "max_length": 50},
+    "bulk.page.subtitle": {"value": "Quality clothing for schools, corporates, and events", "page": "bulk", "section": "header", "description": "Page subtitle", "max_length": 100},
+    "bulk.step1.title": {"value": "Select Item", "page": "bulk", "section": "steps", "description": "Step 1 title", "max_length": 30},
+    "bulk.step2.title": {"value": "Choose Quality", "page": "bulk", "section": "steps", "description": "Step 2 title", "max_length": 30},
+    "bulk.step3.title": {"value": "Select Colors & Sizes", "page": "bulk", "section": "steps", "description": "Step 3 title", "max_length": 30},
+    "bulk.step4.title": {"value": "Review & Order", "page": "bulk", "section": "steps", "description": "Step 4 title", "max_length": 30},
+    "bulk.min_quantity": {"value": "Minimum order: 10 pieces per item", "page": "bulk", "section": "info", "description": "Minimum quantity notice", "max_length": 100},
+    
+    # Print on Demand
+    "pod.page.title": {"value": "Print on Demand", "page": "pod", "section": "header", "description": "Page title", "max_length": 50},
+    "pod.page.subtitle": {"value": "Custom printed clothing, one piece at a time", "page": "pod", "section": "header", "description": "Page subtitle", "max_length": 100},
+    "pod.design.instructions": {"value": "Upload your design, position it on the garment, and add to cart. We'll print and deliver!", "page": "pod", "section": "design", "description": "Design tool instructions", "max_length": 200},
+    "pod.upload.button": {"value": "Upload Design", "page": "pod", "section": "design", "description": "Upload button text", "max_length": 30},
+    "pod.contact.title": {"value": "Your Contact Info", "page": "pod", "section": "contact", "description": "Contact form title", "max_length": 50},
+    "pod.contact.note": {"value": "Required to save your design and process orders.", "page": "pod", "section": "contact", "description": "Contact form note", "max_length": 100},
+    
+    # Boutique
+    "boutique.page.title": {"value": "Boutique", "page": "boutique", "section": "header", "description": "Page title", "max_length": 50},
+    "boutique.page.subtitle": {"value": "Ready-to-wear Nigerian fashion", "page": "boutique", "section": "header", "description": "Page subtitle", "max_length": 100},
+    "boutique.filter.all": {"value": "All Products", "page": "boutique", "section": "filters", "description": "All products filter", "max_length": 30},
+    "boutique.filter.traditional": {"value": "Traditional", "page": "boutique", "section": "filters", "description": "Traditional filter", "max_length": 30},
+    "boutique.filter.modern": {"value": "Modern", "page": "boutique", "section": "filters", "description": "Modern filter", "max_length": 30},
+    
+    # Fabrics
+    "fabrics.page.title": {"value": "Fabrics", "page": "fabrics", "section": "header", "description": "Page title", "max_length": 50},
+    "fabrics.page.subtitle": {"value": "Premium quality fabrics for your projects", "page": "fabrics", "section": "header", "description": "Page subtitle", "max_length": 100},
+    
+    # Souvenirs
+    "souvenirs.page.title": {"value": "Souvenirs", "page": "souvenirs", "section": "header", "description": "Page title", "max_length": 50},
+    "souvenirs.page.subtitle": {"value": "Custom branded merchandise and gifts", "page": "souvenirs", "section": "header", "description": "Page subtitle", "max_length": 100},
+    
+    # Cart & Checkout
+    "cart.page.title": {"value": "Shopping Cart", "page": "cart", "section": "header", "description": "Cart page title", "max_length": 50},
+    "cart.empty.message": {"value": "Your cart is empty", "page": "cart", "section": "empty", "description": "Empty cart message", "max_length": 50},
+    "cart.empty.cta": {"value": "Continue Shopping", "page": "cart", "section": "empty", "description": "Empty cart CTA", "max_length": 30},
+    "cart.checkout.button": {"value": "Proceed to Checkout", "page": "cart", "section": "checkout", "description": "Checkout button text", "max_length": 30},
+    "checkout.title": {"value": "Order Summary", "page": "checkout", "section": "header", "description": "Checkout page title", "max_length": 50},
+    "checkout.payment.title": {"value": "Payment Method", "page": "checkout", "section": "payment", "description": "Payment section title", "max_length": 50},
+    
+    # Footer
+    "footer.company.name": {"value": "Temaruco Clothing Factory", "page": "global", "section": "footer", "description": "Company name in footer", "max_length": 50},
+    "footer.company.description": {"value": "Nigeria's trusted clothing manufacturer since day one.", "page": "global", "section": "footer", "description": "Company description", "max_length": 150},
+    "footer.contact.title": {"value": "Contact Us", "page": "global", "section": "footer", "description": "Contact section title", "max_length": 30},
+    "footer.links.title": {"value": "Quick Links", "page": "global", "section": "footer", "description": "Links section title", "max_length": 30},
+    "footer.services.title": {"value": "Services", "page": "global", "section": "footer", "description": "Services section title", "max_length": 30},
+    "footer.copyright": {"value": "© 2024 Temaruco Clothing Factory. All rights reserved.", "page": "global", "section": "footer", "description": "Copyright text", "max_length": 100},
+    
+    # Navigation
+    "nav.bulk_orders": {"value": "Bulk Orders", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.print_on_demand": {"value": "Print-On-Demand", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.custom_order": {"value": "Custom Order", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.boutique": {"value": "Boutique", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.fabrics": {"value": "Fabrics", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.souvenirs": {"value": "Souvenirs", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.design_services": {"value": "Design Services", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    "nav.contact": {"value": "Contact", "page": "global", "section": "navigation", "description": "Navigation link", "max_length": 30},
+    
+    # Common buttons
+    "btn.add_to_cart": {"value": "Add to Cart", "page": "global", "section": "buttons", "description": "Add to cart button", "max_length": 30},
+    "btn.buy_now": {"value": "Buy Now", "page": "global", "section": "buttons", "description": "Buy now button", "max_length": 30},
+    "btn.continue": {"value": "Continue", "page": "global", "section": "buttons", "description": "Continue button", "max_length": 30},
+    "btn.back": {"value": "Back", "page": "global", "section": "buttons", "description": "Back button", "max_length": 30},
+    "btn.submit": {"value": "Submit", "page": "global", "section": "buttons", "description": "Submit button", "max_length": 30},
+    "btn.save": {"value": "Save", "page": "global", "section": "buttons", "description": "Save button", "max_length": 30},
+    "btn.cancel": {"value": "Cancel", "page": "global", "section": "buttons", "description": "Cancel button", "max_length": 30},
+    
+    # Contact Page
+    "contact.page.title": {"value": "Contact Us", "page": "contact", "section": "header", "description": "Page title", "max_length": 50},
+    "contact.page.subtitle": {"value": "We'd love to hear from you", "page": "contact", "section": "header", "description": "Page subtitle", "max_length": 100},
+    "contact.form.title": {"value": "Send us a message", "page": "contact", "section": "form", "description": "Form title", "max_length": 50},
+    "contact.address.title": {"value": "Our Address", "page": "contact", "section": "info", "description": "Address section title", "max_length": 30},
+    "contact.hours.title": {"value": "Business Hours", "page": "contact", "section": "info", "description": "Hours section title", "max_length": 30},
+    
+    # About Page
+    "about.page.title": {"value": "About Us", "page": "about", "section": "header", "description": "Page title", "max_length": 50},
+    "about.page.subtitle": {"value": "Our story and mission", "page": "about", "section": "header", "description": "Page subtitle", "max_length": 100},
+    "about.mission.title": {"value": "Our Mission", "page": "about", "section": "mission", "description": "Mission section title", "max_length": 50},
+    "about.values.title": {"value": "Our Values", "page": "about", "section": "values", "description": "Values section title", "max_length": 50},
+    
+    # Design Services
+    "design_services.page.title": {"value": "Design Services", "page": "design_services", "section": "header", "description": "Page title", "max_length": 50},
+    "design_services.page.subtitle": {"value": "Professional design help for your projects", "page": "design_services", "section": "header", "description": "Page subtitle", "max_length": 100},
+    
+    # Order Tracking
+    "tracking.page.title": {"value": "Track Your Order", "page": "tracking", "section": "header", "description": "Page title", "max_length": 50},
+    "tracking.placeholder": {"value": "Enter your order code", "page": "tracking", "section": "form", "description": "Input placeholder", "max_length": 50},
+    "tracking.button": {"value": "Track Order", "page": "tracking", "section": "form", "description": "Track button text", "max_length": 30},
+}
+
+@api_router.get("/site-texts")
+async def get_all_site_texts():
+    """
+    Public endpoint: Get all site texts for frontend.
+    Returns a simple key-value map for efficient frontend usage.
+    No authentication required for reading.
+    """
+    try:
+        texts = await db.site_texts.find({}, {'_id': 0, 'key': 1, 'value': 1}).to_list(1000)
+        
+        # Convert to simple key-value map
+        text_map = {t['key']: t['value'] for t in texts}
+        
+        # Fill in defaults for any missing keys
+        for key, data in DEFAULT_SITE_TEXTS.items():
+            if key not in text_map:
+                text_map[key] = data['value']
+        
+        return {
+            'texts': text_map,
+            'last_updated': datetime.now(timezone.utc).isoformat(),
+            'cache_ttl': 60  # Suggest 60 second cache to frontend
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch site texts: {str(e)}")
+        # Return defaults on error
+        return {
+            'texts': {k: v['value'] for k, v in DEFAULT_SITE_TEXTS.items()},
+            'last_updated': datetime.now(timezone.utc).isoformat(),
+            'cache_ttl': 60
+        }
+
+@api_router.get("/admin/site-texts")
+async def admin_get_site_texts(
+    request: Request,
+    page: int = 1,
+    limit: int = 50,
+    search: str = "",
+    filter_page: str = ""
+):
+    """Admin: Get all site texts with full metadata for management."""
+    admin_user = await get_admin_user(request)
+    
+    skip = (page - 1) * limit
+    
+    # Build query
+    query = {}
+    if search:
+        query['$or'] = [
+            {'key': {'$regex': search, '$options': 'i'}},
+            {'value': {'$regex': search, '$options': 'i'}},
+            {'description': {'$regex': search, '$options': 'i'}}
+        ]
+    if filter_page:
+        query['page'] = filter_page
+    
+    # Get texts from DB
+    texts = await db.site_texts.find(query, {'_id': 0}).sort('key', 1).skip(skip).limit(limit).to_list(limit)
+    total = await db.site_texts.count_documents(query)
+    
+    # Get unique pages for filter dropdown
+    all_pages = await db.site_texts.distinct('page')
+    
+    return {
+        'texts': texts,
+        'total': total,
+        'page': page,
+        'limit': limit,
+        'pages': (total + limit - 1) // limit,
+        'available_pages': sorted(all_pages)
+    }
+
+@api_router.put("/admin/site-texts/{key:path}")
+async def admin_update_site_text(key: str, data: Dict[str, Any], request: Request):
+    """Admin: Update a site text value."""
+    admin_user = await get_admin_user(request)
+    
+    new_value = data.get('value', '').strip()
+    
+    if not new_value:
+        raise HTTPException(status_code=400, detail="Value cannot be empty")
+    
+    # Sanitize - remove HTML tags
+    import re
+    new_value = re.sub(r'<[^>]+>', '', new_value)
+    
+    # Check max length
+    default_data = DEFAULT_SITE_TEXTS.get(key, {})
+    max_length = default_data.get('max_length', 500)
+    
+    if len(new_value) > max_length:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Text exceeds maximum length of {max_length} characters"
+        )
+    
+    # Update or create
+    result = await db.site_texts.update_one(
+        {'key': key},
+        {
+            '$set': {
+                'value': new_value,
+                'last_updated': datetime.now(timezone.utc).isoformat(),
+                'updated_by': admin_user['email']
+            }
+        },
+        upsert=True
+    )
+    
+    logger.info(f"[CMS] Site text '{key}' updated by {admin_user['email']}")
+    
+    return {
+        'message': 'Text updated successfully',
+        'key': key,
+        'value': new_value,
+        'last_updated': datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.post("/admin/site-texts/reset/{key:path}")
+async def admin_reset_site_text(key: str, request: Request):
+    """Admin: Reset a site text to its default value."""
+    admin_user = await get_admin_user(request)
+    
+    if key not in DEFAULT_SITE_TEXTS:
+        raise HTTPException(status_code=404, detail="No default value found for this key")
+    
+    default_value = DEFAULT_SITE_TEXTS[key]['value']
+    
+    await db.site_texts.update_one(
+        {'key': key},
+        {
+            '$set': {
+                'value': default_value,
+                'last_updated': datetime.now(timezone.utc).isoformat(),
+                'updated_by': admin_user['email'],
+                'reset_to_default': True
+            }
+        },
+        upsert=True
+    )
+    
+    logger.info(f"[CMS] Site text '{key}' reset to default by {admin_user['email']}")
+    
+    return {
+        'message': 'Text reset to default',
+        'key': key,
+        'value': default_value
+    }
+
+@api_router.post("/admin/site-texts/seed")
+async def admin_seed_site_texts(request: Request):
+    """Admin: Initialize/seed all default site texts."""
+    admin_user = await get_admin_user(request)
+    
+    # Check if user is super admin
+    if admin_user.get('role') != 'super_admin':
+        raise HTTPException(status_code=403, detail="Only super admin can seed texts")
+    
+    seeded = 0
+    for key, data in DEFAULT_SITE_TEXTS.items():
+        existing = await db.site_texts.find_one({'key': key})
+        if not existing:
+            await db.site_texts.insert_one({
+                'key': key,
+                'value': data['value'],
+                'page': data['page'],
+                'section': data['section'],
+                'description': data['description'],
+                'max_length': data.get('max_length', 500),
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'last_updated': datetime.now(timezone.utc).isoformat(),
+                'updated_by': 'system'
+            })
+            seeded += 1
+    
+    logger.info(f"[CMS] Seeded {seeded} site texts by {admin_user['email']}")
+    
+    return {'message': f'Seeded {seeded} new texts', 'total_defaults': len(DEFAULT_SITE_TEXTS)}
+
+@api_router.get("/admin/site-texts/defaults")
+async def admin_get_default_texts(request: Request):
+    """Admin: Get list of all default text keys for reference."""
+    admin_user = await get_admin_user(request)
+    
+    defaults = []
+    for key, data in DEFAULT_SITE_TEXTS.items():
+        defaults.append({
+            'key': key,
+            'default_value': data['value'],
+            'page': data['page'],
+            'section': data['section'],
+            'description': data['description'],
+            'max_length': data.get('max_length', 500)
+        })
+    
+    return {'defaults': defaults, 'total': len(defaults)}
+
 # ==================== ADMIN: GUEST DESIGNS MANAGEMENT ====================
 @api_router.get("/admin/pod/guest-designs")
 async def get_all_guest_designs(
