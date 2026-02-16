@@ -523,6 +523,7 @@ const PrintOnDemandDesignPage = () => {
         print_size: printSize,
         print_size_label: PRINT_SIZES[printSize].label,
         design_id: designId,
+        temp_design_id: tempDesignId || localStorage.getItem('pod_temp_design_id'),
         guest_id: guestId,
         original_file_url: uploadedOriginalUrl,
         mockup_file_url: mockupUrl,

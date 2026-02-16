@@ -11,6 +11,7 @@ const AdminGuestDesignsPage = () => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('designs'); // 'designs' or 'contacts'
+  const [statusFilter, setStatusFilter] = useState(''); // '', 'assigned', 'unassigned'
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -18,6 +19,8 @@ const AdminGuestDesignsPage = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewType, setPreviewType] = useState('original'); // 'original' or 'mockup'
   const [downloading, setDownloading] = useState(null); // 'original' | 'mockup' | null
+  const [assignedCount, setAssignedCount] = useState(0);
+  const [unassignedCount, setUnassignedCount] = useState(0);
 
   useEffect(() => {
     if (activeTab === 'designs') {
@@ -25,16 +28,18 @@ const AdminGuestDesignsPage = () => {
     } else {
       loadContacts();
     }
-  }, [activeTab, currentPage, searchTerm]);
+  }, [activeTab, currentPage, searchTerm, statusFilter]);
 
   const loadDesigns = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/admin/pod/guest-designs`, {
-        params: { page: currentPage, limit: 20, search: searchTerm }
+        params: { page: currentPage, limit: 20, search: searchTerm, status: statusFilter }
       });
       setDesigns(response.data.designs || []);
       setTotalPages(response.data.pages || 1);
+      setAssignedCount(response.data.assigned_count || 0);
+      setUnassignedCount(response.data.unassigned_count || 0);
     } catch (error) {
       console.error('Failed to load designs:', error);
       toast.error('Failed to load guest designs');
@@ -179,7 +184,7 @@ const AdminGuestDesignsPage = () => {
       {/* Tabs */}
       <div className="flex border-b mb-6">
         <button
-          onClick={() => { setActiveTab('designs'); setCurrentPage(1); }}
+          onClick={() => { setActiveTab('designs'); setCurrentPage(1); setStatusFilter(''); }}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'designs'
               ? 'border-[#D90429] text-[#D90429]'
@@ -201,6 +206,45 @@ const AdminGuestDesignsPage = () => {
           Guest Contacts
         </button>
       </div>
+
+      {/* Status Filter Tabs (only for designs) */}
+      {activeTab === 'designs' && (
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => { setStatusFilter(''); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              statusFilter === ''
+                ? 'bg-zinc-900 text-white'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+            }`}
+            data-testid="filter-all"
+          >
+            All ({assignedCount + unassignedCount})
+          </button>
+          <button
+            onClick={() => { setStatusFilter('assigned'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              statusFilter === 'assigned'
+                ? 'bg-green-600 text-white'
+                : 'bg-green-100 text-green-700 hover:bg-green-200'
+            }`}
+            data-testid="filter-assigned"
+          >
+            Assigned ({assignedCount})
+          </button>
+          <button
+            onClick={() => { setStatusFilter('unassigned'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              statusFilter === 'unassigned'
+                ? 'bg-orange-600 text-white'
+                : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+            }`}
+            data-testid="filter-unassigned"
+          >
+            Unassigned ({unassignedCount})
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="mb-6">
