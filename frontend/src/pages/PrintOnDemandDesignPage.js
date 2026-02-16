@@ -80,6 +80,7 @@ const PrintOnDemandDesignPage = () => {
   const [designId, setDesignId] = useState(null);
   const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
   const [dbProduct, setDbProduct] = useState(null);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
