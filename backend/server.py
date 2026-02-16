@@ -9123,6 +9123,134 @@ DEFAULT_SITE_TEXTS = {
     "tracking.button": {"value": "Track Order", "page": "tracking", "section": "form", "description": "Track button text", "max_length": 30},
 }
 
+# ==================== SYSTEM CONFIG / FEATURE FLAGS API ====================
+
+@api_router.get("/system-config")
+async def get_public_system_config():
+    """Public: Get public system configuration (feature flags for frontend)"""
+    configs = await db.system_config.find(
+        {'category': {'$in': ['features', 'localization', 'pricing']}},
+        {'_id': 0, 'key': 1, 'value': 1, 'category': 1}
+    ).to_list(100)
+    
+    return {key_val['key']: key_val['value'] for key_val in configs}
+
+@api_router.get("/admin/system-config")
+async def get_all_system_config(admin_user: Dict = Depends(get_admin_user)):
+    """Admin: Get all system configuration"""
+    configs = await db.system_config.find({}, {'_id': 0}).sort('category', 1).to_list(200)
+    
+    # Group by category
+    by_category = {}
+    for config in configs:
+        cat = config.get('category', 'general')
+        if cat not in by_category:
+            by_category[cat] = []
+        by_category[cat].append(config)
+    
+    return {'configs': configs, 'by_category': by_category}
+
+@api_router.put("/admin/system-config/{config_key}")
+async def update_system_config(config_key: str, data: Dict[str, Any], request: Request):
+    """Super Admin: Update system configuration value"""
+    admin_user = await get_super_admin_user(request)
+    
+    existing = await db.system_config.find_one({'key': config_key}, {'_id': 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    
+    if not existing.get('editable', True):
+        raise HTTPException(status_code=403, detail="This configuration cannot be edited")
+    
+    old_value = existing.get('value')
+    new_value = data.get('value')
+    
+    await db.system_config.update_one(
+        {'key': config_key},
+        {'$set': {
+            'value': new_value,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'updated_by': admin_user.get('email')
+        }}
+    )
+    
+    # Log the change
+    await log_audit_event(
+        action='update',
+        entity_type='system_config',
+        entity_id=config_key,
+        user_email=admin_user.get('email'),
+        changes={'value': new_value},
+        old_values={'value': old_value}
+    )
+    
+    return {'message': f'Configuration {config_key} updated successfully'}
+
+@api_router.post("/admin/system-config")
+async def create_system_config(data: Dict[str, Any], request: Request):
+    """Super Admin: Create new system configuration"""
+    admin_user = await get_super_admin_user(request)
+    
+    key = data.get('key', '').lower().replace(' ', '_')
+    if not key:
+        raise HTTPException(status_code=400, detail="Key is required")
+    
+    existing = await db.system_config.find_one({'key': key})
+    if existing:
+        raise HTTPException(status_code=400, detail="Configuration with this key already exists")
+    
+    config = {
+        'key': key,
+        'value': data.get('value'),
+        'category': data.get('category', 'general'),
+        'description': data.get('description', ''),
+        'editable': True,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': admin_user.get('email')
+    }
+    
+    await db.system_config.insert_one(config)
+    
+    await log_audit_event(
+        action='create',
+        entity_type='system_config',
+        entity_id=key,
+        user_email=admin_user.get('email'),
+        changes=config
+    )
+    
+    return {'message': 'Configuration created', 'key': key}
+
+@api_router.get("/admin/audit-logs")
+async def get_audit_logs(
+    entity_type: Optional[str] = None,
+    entity_id: Optional[str] = None,
+    user_email: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get audit logs"""
+    query = {}
+    if entity_type:
+        query['entity_type'] = entity_type
+    if entity_id:
+        query['entity_id'] = entity_id
+    if user_email:
+        query['user_email'] = user_email
+    
+    skip = (page - 1) * limit
+    logs = await db.audit_logs.find(query, {'_id': 0}).sort('timestamp', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.audit_logs.count_documents(query)
+    
+    return {
+        'logs': logs,
+        'total': total,
+        'page': page,
+        'pages': (total + limit - 1) // limit
+    }
+
 @api_router.get("/site-texts")
 async def get_all_site_texts():
     """
