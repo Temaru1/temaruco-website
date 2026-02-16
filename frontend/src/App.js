@@ -40,6 +40,7 @@ import AdminSettingsPage from './pages/AdminSettingsPage';
 import AdminPODOrdersPage from './pages/AdminPODOrdersPage';
 import AdminClothingItemsPage from './pages/AdminClothingItemsPage';
 import AdminProductsPage from './pages/AdminProductsPage';
+import AdminGuestDesignsPage from './pages/AdminGuestDesignsPage';
 
 // New Pages
 import FabricsPage from './pages/FabricsPage';
