@@ -55,10 +55,12 @@ import DesignServicesPage from './pages/DesignServicesPage';
 import AdminDesignInquiriesPage from './pages/AdminDesignInquiriesPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import BulkOrderDetailsPage from './pages/BulkOrderDetailsPage';
+import AdminSiteTextsPage from './pages/AdminSiteTextsPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { SiteTextProvider } from './contexts/SiteTextContext';
 
 import './App.css';
 
