@@ -8690,10 +8690,10 @@ def get_variant_price(item: dict, variant: str) -> float:
 
 @api_router.get("/pod/clothing-items")
 async def get_pod_clothing_items():
-    """Public: Get all active POD clothing items with variant pricing"""
+    """Public: Get all active POD clothing items with variant pricing and print areas"""
     items = await db.pod_clothing_items.find({'is_active': True}, {'_id': 0}).sort('name', 1).to_list(100)
     
-    # If no items exist, return default items with variant pricing
+    # If no items exist, return default items with variant pricing and print areas
     if not items:
         default_items = [
             {
@@ -8703,10 +8703,12 @@ async def get_pod_clothing_items():
                 'premium_price': 3000,
                 'luxury_price': 4500,
                 'base_price': 2000,
-                'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
                 'description': 'Classic short sleeve',
                 'colors': ['White', 'Black', 'Navy', 'Grey', 'Red'],
                 'sizes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 150, 'y': 80, 'width': 200, 'height': 250},
                 'is_active': True
             },
             {
@@ -8716,10 +8718,12 @@ async def get_pod_clothing_items():
                 'premium_price': 3750,
                 'luxury_price': 5000,
                 'base_price': 2500,
-                'image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=600&q=80',
                 'description': 'Collared with buttons',
                 'colors': ['White', 'Black', 'Navy', 'Red', 'Blue'],
                 'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 160, 'y': 90, 'width': 180, 'height': 200},
                 'is_active': True
             },
             {
@@ -8729,10 +8733,12 @@ async def get_pod_clothing_items():
                 'premium_price': 6750,
                 'luxury_price': 9000,
                 'base_price': 4500,
-                'image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80',
                 'description': 'With hood and pocket',
                 'colors': ['Black', 'Grey', 'Navy', 'White'],
                 'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 140, 'y': 100, 'width': 220, 'height': 220},
                 'is_active': True
             },
             {
@@ -8742,10 +8748,12 @@ async def get_pod_clothing_items():
                 'premium_price': 5250,
                 'luxury_price': 7000,
                 'base_price': 3500,
-                'image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
                 'description': 'Comfortable track pants',
                 'colors': ['Black', 'Grey', 'Navy'],
                 'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 80, 'y': 150, 'width': 100, 'height': 150},
                 'is_active': True
             },
             {
@@ -8755,10 +8763,12 @@ async def get_pod_clothing_items():
                 'premium_price': 12000,
                 'luxury_price': 16000,
                 'base_price': 8000,
-                'image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80',
                 'description': 'Classic sporty jacket',
                 'colors': ['Black/White', 'Navy/White', 'Red/White'],
                 'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 130, 'y': 80, 'width': 240, 'height': 280},
                 'is_active': True
             },
             {
@@ -8768,22 +8778,60 @@ async def get_pod_clothing_items():
                 'premium_price': 2250,
                 'luxury_price': 3000,
                 'base_price': 1500,
-                'image_url': 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=400&q=80',
+                'image_url': 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600&q=80',
                 'description': 'Sleeveless tank',
                 'colors': ['White', 'Black', 'Grey'],
                 'sizes': ['XS', 'S', 'M', 'L', 'XL'],
+                'print_area': {'x': 150, 'y': 60, 'width': 200, 'height': 220},
+                'is_active': True
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Sweatshirt',
+                'standard_price': 4000,
+                'premium_price': 6000,
+                'luxury_price': 8000,
+                'base_price': 4000,
+                'image_url': 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?w=600&q=80',
+                'description': 'Cozy crew neck',
+                'colors': ['Black', 'Grey', 'Navy', 'Cream'],
+                'sizes': ['S', 'M', 'L', 'XL', 'XXL'],
+                'print_area': {'x': 140, 'y': 90, 'width': 220, 'height': 230},
+                'is_active': True
+            },
+            {
+                'id': str(uuid.uuid4()),
+                'name': 'Baseball Cap',
+                'standard_price': 1500,
+                'premium_price': 2250,
+                'luxury_price': 3000,
+                'base_price': 1500,
+                'image_url': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+                'base_image_url': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+                'description': 'Classic baseball cap',
+                'colors': ['Black', 'White', 'Navy', 'Red'],
+                'sizes': ['One Size'],
+                'print_area': {'x': 170, 'y': 100, 'width': 160, 'height': 100},
                 'is_active': True
             }
         ]
         return default_items
     
-    # Ensure all items have variant pricing (migrate legacy items)
+    # Ensure all items have variant pricing and print_area (migrate legacy items)
     for item in items:
         if 'standard_price' not in item:
             base = item.get('base_price', 2000)
             item['standard_price'] = base
             item['premium_price'] = int(base * 1.5)
             item['luxury_price'] = int(base * 2)
+        # Ensure base_image_url exists (same as image_url if not set)
+        if 'base_image_url' not in item:
+            item['base_image_url'] = item.get('image_url', '')
+        # Default print_area if not set
+        if 'print_area' not in item:
+            item['print_area'] = {'x': 150, 'y': 80, 'width': 200, 'height': 250}
     
     return items
 
