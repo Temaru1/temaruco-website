@@ -5375,28 +5375,97 @@ async def get_all_admins(request: Request):
 
 @api_router.patch("/super-admin/admin/{admin_id}/role")
 async def update_admin_role(admin_id: str, role_data: dict, request: Request):
-    """Super Admin: Update admin role/permissions"""
+    """Super Admin: Update admin role/permissions or promote to super admin"""
     super_admin = await get_super_admin_user(request)
+    
+    # Check if promoting to super admin
+    promote_to_super_admin = role_data.pop('promote_to_super_admin', False)
+    
+    # Find target admin
+    target_admin = await db.users.find_one(
+        {'$or': [{'id': admin_id}, {'user_id': admin_id}]},
+        {'_id': 0}
+    )
+    
+    if not target_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Cannot modify your own super admin status
+    if target_admin.get('user_id') == super_admin.get('user_id') and promote_to_super_admin:
+        raise HTTPException(status_code=400, detail="Cannot modify your own super admin status")
+    
+    update_data = {'role': role_data}
+    
+    if promote_to_super_admin:
+        update_data['is_super_admin'] = True
+        # Super admins get full permissions
+        update_data['role'] = {k: True for k in role_data.keys()} if role_data else target_admin.get('role', {})
     
     # Update role
     result = await db.users.update_one(
         {'$or': [{'id': admin_id}, {'user_id': admin_id}]},
-        {'$set': {'role': role_data}}
+        {'$set': update_data}
     )
     
     if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Admin not found")
+        raise HTTPException(status_code=404, detail="Admin not found or no changes made")
     
     # Log action
     await db.admin_actions.insert_one({
-        'action': 'update_admin_role',
+        'action': 'promote_to_super_admin' if promote_to_super_admin else 'update_admin_role',
         'performed_by': super_admin['email'],
         'target_admin_id': admin_id,
-        'new_role': role_data,
+        'target_email': target_admin.get('email'),
+        'promoted_to_super_admin': promote_to_super_admin,
         'timestamp': datetime.now(timezone.utc).isoformat()
     })
     
-    return {'message': 'Admin role updated successfully'}
+    logger.info(f"[ADMIN] {'Promoted to Super Admin' if promote_to_super_admin else 'Updated role'}: {target_admin.get('email')} by {super_admin['email']}")
+    
+    return {
+        'message': 'Admin promoted to Super Admin' if promote_to_super_admin else 'Admin role updated successfully',
+        'is_super_admin': promote_to_super_admin or target_admin.get('is_super_admin', False)
+    }
+
+@api_router.patch("/super-admin/admin/{admin_id}/demote")
+async def demote_super_admin(admin_id: str, request: Request):
+    """Super Admin: Demote a super admin to regular admin"""
+    super_admin = await get_super_admin_user(request)
+    
+    # Find target admin
+    target_admin = await db.users.find_one(
+        {'$or': [{'id': admin_id}, {'user_id': admin_id}]},
+        {'_id': 0}
+    )
+    
+    if not target_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Cannot demote yourself
+    if target_admin.get('user_id') == super_admin.get('user_id'):
+        raise HTTPException(status_code=400, detail="Cannot demote yourself")
+    
+    if not target_admin.get('is_super_admin'):
+        raise HTTPException(status_code=400, detail="User is not a super admin")
+    
+    # Demote
+    await db.users.update_one(
+        {'$or': [{'id': admin_id}, {'user_id': admin_id}]},
+        {'$set': {'is_super_admin': False}}
+    )
+    
+    # Log action
+    await db.admin_actions.insert_one({
+        'action': 'demote_super_admin',
+        'performed_by': super_admin['email'],
+        'target_admin_id': admin_id,
+        'target_email': target_admin.get('email'),
+        'timestamp': datetime.now(timezone.utc).isoformat()
+    })
+    
+    logger.info(f"[ADMIN] Demoted from Super Admin: {target_admin.get('email')} by {super_admin['email']}")
+    
+    return {'message': 'Super Admin demoted to regular Admin'}
 
 @api_router.delete("/super-admin/admins/{user_id}")
 async def delete_admin(user_id: str, request: Request):
