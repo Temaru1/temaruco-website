@@ -25,8 +25,8 @@ class TestAdminAuth:
     
     def test_admin_login_success(self):
         """Test admin login with valid credentials"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "superadmin@temaruco.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "superadmin@temaruco.com",
             "password": "superadmin123"
         })
         assert response.status_code == 200
@@ -38,8 +38,8 @@ class TestAdminAuth:
     
     def test_admin_login_invalid_credentials(self):
         """Test admin login with invalid credentials"""
-        response = requests.post(f"{BASE_URL}/api/auth/admin-login", json={
-            "username": "wrong@email.com",
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": "wrong@email.com",
             "password": "wrongpassword"
         })
         assert response.status_code in [401, 400]
