@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Trash2, X, User, Mail, Phone, Calendar, Image as ImageIcon, FileImage, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, Trash2, X, User, Mail, Phone, Calendar, Image as ImageIcon, FileImage, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { getImageUrl } from '../utils/imageUtils';
@@ -17,6 +17,7 @@ const AdminGuestDesignsPage = () => {
   const [selectedDesign, setSelectedDesign] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewType, setPreviewType] = useState('original'); // 'original' or 'mockup'
+  const [downloading, setDownloading] = useState(null); // 'original' | 'mockup' | null
 
   useEffect(() => {
     if (activeTab === 'designs') {
