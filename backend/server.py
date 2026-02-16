@@ -7115,6 +7115,189 @@ async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_
     
     return {'message': 'POD clothing item deleted successfully'}
 
+# ==================== ADMIN: GUEST DESIGNS MANAGEMENT ====================
+@api_router.get("/admin/pod/guest-designs")
+async def get_all_guest_designs(
+    request: Request,
+    page: int = 1,
+    limit: int = 50,
+    search: str = ""
+):
+    """Admin: Get all guest designs with contact info for dashboard"""
+    admin_user = await get_admin_user(request)
+    
+    skip = (page - 1) * limit
+    
+    # Build query
+    query = {}
+    if search:
+        query = {
+            '$or': [
+                {'guest_email': {'$regex': search, '$options': 'i'}},
+                {'product_id': {'$regex': search, '$options': 'i'}}
+            ]
+        }
+    
+    # Get designs with pagination
+    designs = await db.pod_designs.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.pod_designs.count_documents(query)
+    
+    # Enrich with guest contact info
+    enriched_designs = []
+    for design in designs:
+        guest_info = None
+        if design.get('guest_id'):
+            guest_contact = await db.pod_guest_contacts.find_one(
+                {'id': design['guest_id']},
+                {'_id': 0, 'name': 1, 'email': 1, 'phone': 1}
+            )
+            if guest_contact:
+                guest_info = guest_contact
+        
+        enriched_designs.append({
+            **design,
+            'guest_name': guest_info.get('name') if guest_info else 'Unknown',
+            'guest_phone': guest_info.get('phone') if guest_info else ''
+        })
+    
+    return {
+        'designs': enriched_designs,
+        'total': total,
+        'page': page,
+        'limit': limit,
+        'pages': (total + limit - 1) // limit
+    }
+
+@api_router.get("/admin/pod/guest-contacts")
+async def get_all_guest_contacts(
+    request: Request,
+    page: int = 1,
+    limit: int = 50,
+    search: str = ""
+):
+    """Admin: Get all guest contacts with their designs"""
+    admin_user = await get_admin_user(request)
+    
+    skip = (page - 1) * limit
+    
+    # Build query
+    query = {}
+    if search:
+        query = {
+            '$or': [
+                {'name': {'$regex': search, '$options': 'i'}},
+                {'email': {'$regex': search, '$options': 'i'}},
+                {'phone': {'$regex': search, '$options': 'i'}}
+            ]
+        }
+    
+    # Get contacts with pagination
+    contacts = await db.pod_guest_contacts.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.pod_guest_contacts.count_documents(query)
+    
+    # Enrich with design count and latest design
+    enriched_contacts = []
+    for contact in contacts:
+        design_count = len(contact.get('designs', []))
+        latest_design = None
+        
+        if design_count > 0:
+            latest = await db.pod_designs.find_one(
+                {'guest_id': contact['id']},
+                {'_id': 0}
+            )
+            if latest:
+                latest_design = latest
+        
+        enriched_contacts.append({
+            **contact,
+            'design_count': design_count,
+            'latest_design': latest_design
+        })
+    
+    return {
+        'contacts': enriched_contacts,
+        'total': total,
+        'page': page,
+        'limit': limit,
+        'pages': (total + limit - 1) // limit
+    }
+
+@api_router.get("/admin/pod/guest/{guest_id}/designs")
+async def get_guest_designs_admin(guest_id: str, request: Request):
+    """Admin: Get all designs for a specific guest"""
+    admin_user = await get_admin_user(request)
+    
+    guest = await db.pod_guest_contacts.find_one({'id': guest_id}, {'_id': 0})
+    if not guest:
+        raise HTTPException(status_code=404, detail="Guest not found")
+    
+    designs = await db.pod_designs.find(
+        {'guest_id': guest_id},
+        {'_id': 0}
+    ).sort('created_at', -1).to_list(100)
+    
+    return {
+        'guest': guest,
+        'designs': designs
+    }
+
+@api_router.get("/admin/pod/design/{design_id}")
+async def get_design_details_admin(design_id: str, request: Request):
+    """Admin: Get detailed design info"""
+    admin_user = await get_admin_user(request)
+    
+    design = await db.pod_designs.find_one({'id': design_id}, {'_id': 0})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    # Get guest info
+    guest_info = None
+    if design.get('guest_id'):
+        guest_info = await db.pod_guest_contacts.find_one(
+            {'id': design['guest_id']},
+            {'_id': 0}
+        )
+    
+    # Get product info
+    product_info = await db.pod_clothing_items.find_one(
+        {'$or': [
+            {'id': design.get('product_id')},
+            {'name': {'$regex': design.get('product_id', ''), '$options': 'i'}}
+        ]},
+        {'_id': 0}
+    )
+    
+    return {
+        'design': design,
+        'guest': guest_info,
+        'product': product_info
+    }
+
+@api_router.delete("/admin/pod/design/{design_id}")
+async def delete_design_admin(design_id: str, request: Request):
+    """Admin: Delete a guest design"""
+    admin_user = await get_admin_user(request)
+    
+    design = await db.pod_designs.find_one({'id': design_id})
+    if not design:
+        raise HTTPException(status_code=404, detail="Design not found")
+    
+    # Remove design from guest contact
+    if design.get('guest_id'):
+        await db.pod_guest_contacts.update_one(
+            {'id': design['guest_id']},
+            {'$pull': {'designs': design_id}}
+        )
+    
+    # Delete design record
+    await db.pod_designs.delete_one({'id': design_id})
+    
+    # Optionally delete files (keeping them for now for audit)
+    logger.info(f"[ADMIN] Deleted design {design_id} by {admin_user['email']}")
+    
+    return {'message': 'Design deleted successfully'}
+
 # ==================== BULK ORDER CLOTHING ITEMS MANAGEMENT ====================
 @api_router.get("/bulk/clothing-items")
 async def get_bulk_clothing_items():
