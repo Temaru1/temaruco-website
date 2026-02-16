@@ -374,6 +374,54 @@ Clone and enhance the Temaruco website with:
 - Procurement/inventory tracking
 - Financial reports generation
 
+## Completed Work (Feb 16, 2026) - Admin RBAC System
+
+### Role-Based Access Control (RBAC) System
+**Super Admin Capabilities:**
+- Create other Super Admins (with full system access)
+- Create regular Admins with granular permissions
+- Promote regular Admins to Super Admin
+- Demote Super Admins to regular Admin
+- Delete any Admin (except themselves)
+- Assign/revoke individual permissions per module
+
+**13 Permission Modules:**
+1. Website Text CMS (3 permissions)
+2. Materials Inventory (6 permissions)
+3. Products (6 permissions)
+4. Orders & Production (7 permissions)
+5. Quotes (4 permissions)
+6. Clients (3 permissions)
+7. Financials (5 permissions)
+8. Inventory & Procurement (6 permissions)
+9. CMS & Website (3 permissions)
+10. Analytics (3 permissions)
+11. Communication (2 permissions)
+12. Admin Management (5 permissions)
+13. Settings (4 permissions)
+
+**Security:**
+- Server-side permission validation on all endpoints
+- Super Admins have ALL permissions by default
+- Cannot delete or demote yourself
+- Activity logging for all admin actions
+- Passwords hashed securely
+
+**API Endpoints:**
+- `GET /api/super-admin/permissions` - Get all available permissions
+- `POST /api/super-admin/create-admin` - Create admin or super admin
+- `PATCH /api/super-admin/admin/{id}/role` - Update permissions or promote
+- `PATCH /api/super-admin/admin/{id}/demote` - Demote super admin
+- `DELETE /api/super-admin/admins/{id}` - Remove admin privileges
+
+**UI Features:**
+- Role filter (All / Super Admins / Regular Admins)
+- Crown icon for Super Admins
+- Expandable permission modules with checkboxes
+- Module-level toggle (enable/disable all permissions)
+- One-time password display after creation
+- Copy credentials button
+
 ## Completed Work (Feb 16, 2026) - Materials Inventory Module Enhancement
 
 ### Materials Inventory Module (Enhanced)
