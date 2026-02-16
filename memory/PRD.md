@@ -57,6 +57,7 @@ Clone and enhance the Temaruco website with:
   - View all guest designs with previews
   - View guest contacts with design counts
   - Modal preview for original + mockup files
+  - **Download buttons**: Full resolution file downloads (not compressed)
   - Search and pagination
 - **Backend Endpoints**:
   - `/api/pod/print-sizes` - Get available print sizes
@@ -67,6 +68,8 @@ Clone and enhance the Temaruco website with:
   - `/api/admin/pod/guest-designs` - Admin: Get all guest designs
   - `/api/admin/pod/guest-contacts` - Admin: Get all guest contacts
   - `/api/admin/pod/design/{design_id}` - Admin: Get/delete design
+  - `/api/admin/pod/download/original/{design_id}` - Admin: Download original file (full resolution)
+  - `/api/admin/pod/download/mockup/{design_id}` - Admin: Download mockup file (full resolution)
 - **Storage Locations**:
   - `/uploads/designs/original/` - Original design files
   - `/uploads/designs/mockups/` - Generated mockups
