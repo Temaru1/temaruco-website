@@ -755,6 +755,152 @@ async def get_super_admin_user(request: Request) -> Dict:
         raise HTTPException(status_code=403, detail="Super admin access required")
     return user
 
+# Permission check helper for RBAC
+async def check_permission(request: Request, permission: str) -> Dict:
+    """Check if the current user has a specific permission"""
+    user = await get_current_user_from_cookie_or_header(request)
+    
+    # Super admins have all permissions
+    if user.get('is_super_admin'):
+        return user
+    
+    # Check if admin
+    if not user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check specific permission
+    role = user.get('role', {})
+    if not role.get(permission, False):
+        raise HTTPException(status_code=403, detail=f"Permission denied: {permission}")
+    
+    return user
+
+# Available permissions definition
+AVAILABLE_PERMISSIONS = {
+    'website_text_cms': {
+        'label': 'Website Text CMS',
+        'permissions': [
+            {'key': 'can_view_site_texts', 'label': 'View Site Texts', 'description': 'View all editable text content'},
+            {'key': 'can_edit_site_texts', 'label': 'Edit Site Texts', 'description': 'Modify text content on the website'},
+            {'key': 'can_reset_site_texts', 'label': 'Reset Site Texts', 'description': 'Reset texts to default values'},
+        ]
+    },
+    'materials_inventory': {
+        'label': 'Materials Inventory',
+        'permissions': [
+            {'key': 'can_view_materials', 'label': 'View Materials', 'description': 'View materials inventory'},
+            {'key': 'can_add_materials', 'label': 'Add Materials', 'description': 'Add new materials to inventory'},
+            {'key': 'can_edit_materials', 'label': 'Edit Materials', 'description': 'Edit existing materials'},
+            {'key': 'can_delete_materials', 'label': 'Delete Materials', 'description': 'Delete materials from inventory'},
+            {'key': 'can_add_material_types', 'label': 'Add Material Types', 'description': 'Create new material categories'},
+            {'key': 'can_view_material_history', 'label': 'View History', 'description': 'View quantity change history'},
+        ]
+    },
+    'products': {
+        'label': 'Products (Bulk/POD/Boutique/Souvenirs)',
+        'permissions': [
+            {'key': 'can_view_products', 'label': 'View Products', 'description': 'View all product listings'},
+            {'key': 'can_add_products', 'label': 'Add Products', 'description': 'Add new products'},
+            {'key': 'can_edit_products', 'label': 'Edit Products', 'description': 'Edit existing products'},
+            {'key': 'can_delete_products', 'label': 'Delete Products', 'description': 'Delete products'},
+            {'key': 'can_view_designs', 'label': 'View Designs', 'description': 'View customer designs'},
+            {'key': 'can_download_designs', 'label': 'Download Designs', 'description': 'Download original/mockup files'},
+        ]
+    },
+    'orders_production': {
+        'label': 'Orders & Production',
+        'permissions': [
+            {'key': 'can_view_orders', 'label': 'View Orders', 'description': 'View all orders'},
+            {'key': 'can_manage_orders', 'label': 'Manage Orders', 'description': 'Full order management'},
+            {'key': 'can_update_order_status', 'label': 'Update Status', 'description': 'Change order status'},
+            {'key': 'can_delete_orders', 'label': 'Delete Orders', 'description': 'Delete orders'},
+            {'key': 'can_view_production', 'label': 'View Production', 'description': 'View production queue'},
+            {'key': 'can_manage_production', 'label': 'Manage Production', 'description': 'Manage production workflow'},
+            {'key': 'can_assign_tailors', 'label': 'Assign Tailors', 'description': 'Assign orders to tailors'},
+        ]
+    },
+    'quotes': {
+        'label': 'Quotes & Custom Requests',
+        'permissions': [
+            {'key': 'can_view_quotes', 'label': 'View Quotes', 'description': 'View all quotes'},
+            {'key': 'can_manage_quotes', 'label': 'Manage Quotes', 'description': 'Create and edit quotes'},
+            {'key': 'can_view_custom_requests', 'label': 'View Custom Requests', 'description': 'View custom order requests'},
+            {'key': 'can_manage_custom_requests', 'label': 'Manage Custom Requests', 'description': 'Handle custom requests'},
+        ]
+    },
+    'clients': {
+        'label': 'Clients',
+        'permissions': [
+            {'key': 'can_view_clients', 'label': 'View Clients', 'description': 'View client information'},
+            {'key': 'can_edit_clients', 'label': 'Edit Clients', 'description': 'Edit client details'},
+            {'key': 'can_delete_clients', 'label': 'Delete Clients', 'description': 'Delete client records'},
+        ]
+    },
+    'financials': {
+        'label': 'Financial',
+        'permissions': [
+            {'key': 'can_view_financials', 'label': 'View Financials', 'description': 'View financial reports'},
+            {'key': 'can_manage_financials', 'label': 'Manage Financials', 'description': 'Manage financial data'},
+            {'key': 'can_delete_payments', 'label': 'Delete Payments', 'description': 'Delete payment records'},
+            {'key': 'can_view_pricing', 'label': 'View Pricing', 'description': 'View product pricing'},
+            {'key': 'can_manage_pricing', 'label': 'Manage Pricing', 'description': 'Modify product pricing'},
+        ]
+    },
+    'inventory_procurement': {
+        'label': 'Inventory & Procurement',
+        'permissions': [
+            {'key': 'can_view_inventory', 'label': 'View Inventory', 'description': 'View product inventory'},
+            {'key': 'can_manage_inventory', 'label': 'Manage Inventory', 'description': 'Manage stock levels'},
+            {'key': 'can_view_procurement', 'label': 'View Procurement', 'description': 'View procurement orders'},
+            {'key': 'can_manage_procurement', 'label': 'Manage Procurement', 'description': 'Create procurement orders'},
+            {'key': 'can_view_suppliers', 'label': 'View Suppliers', 'description': 'View supplier list'},
+            {'key': 'can_manage_suppliers', 'label': 'Manage Suppliers', 'description': 'Add/edit suppliers'},
+        ]
+    },
+    'cms_website': {
+        'label': 'CMS & Website',
+        'permissions': [
+            {'key': 'can_manage_cms', 'label': 'Manage CMS', 'description': 'Manage website content'},
+            {'key': 'can_manage_images', 'label': 'Manage Images', 'description': 'Upload and manage images'},
+            {'key': 'can_manage_pod_items', 'label': 'Manage POD Items', 'description': 'Manage print-on-demand items'},
+        ]
+    },
+    'analytics': {
+        'label': 'Analytics & Reports',
+        'permissions': [
+            {'key': 'can_view_analytics', 'label': 'View Analytics', 'description': 'View business analytics'},
+            {'key': 'can_view_website_analytics', 'label': 'View Website Analytics', 'description': 'View website traffic'},
+            {'key': 'can_export_reports', 'label': 'Export Reports', 'description': 'Export data reports'},
+        ]
+    },
+    'communication': {
+        'label': 'Communication',
+        'permissions': [
+            {'key': 'can_view_emails', 'label': 'View Customer Emails', 'description': 'View collected emails'},
+            {'key': 'can_send_notifications', 'label': 'Send Notifications', 'description': 'Send customer notifications'},
+        ]
+    },
+    'admin_management': {
+        'label': 'Admin Management',
+        'permissions': [
+            {'key': 'can_view_admins', 'label': 'View Admins', 'description': 'View admin list'},
+            {'key': 'can_create_admins', 'label': 'Create Admins', 'description': 'Create new admin accounts'},
+            {'key': 'can_edit_admins', 'label': 'Edit Admins', 'description': 'Edit admin details'},
+            {'key': 'can_delete_admins', 'label': 'Delete Admins', 'description': 'Remove admin accounts'},
+            {'key': 'can_assign_permissions', 'label': 'Assign Permissions', 'description': 'Modify admin permissions'},
+        ]
+    },
+    'settings': {
+        'label': 'Settings',
+        'permissions': [
+            {'key': 'can_view_settings', 'label': 'View Settings', 'description': 'View system settings'},
+            {'key': 'can_manage_settings', 'label': 'Manage Settings', 'description': 'Modify general settings'},
+            {'key': 'can_manage_payment_settings', 'label': 'Payment Settings', 'description': 'Manage payment config'},
+            {'key': 'can_manage_inventory_settings', 'label': 'Inventory Settings', 'description': 'Manage inventory settings'},
+        ]
+    },
+}
+
 async def send_email_mock(to: str, subject: str, body: str):
     """Mock email sending function"""
     logger.info(f"[MOCK EMAIL] To: {to}, Subject: {subject}, Body: {body[:100]}...")
