@@ -720,6 +720,7 @@ const AdminPage = () => {
         { label: 'Dashboard', path: '/admin/dashboard/', icon: LayoutDashboard },
         { label: 'All Orders', path: '/admin/dashboard/orders', icon: Package },
         { label: 'POD Orders', path: '/admin/pod-orders', icon: Shirt },
+        { label: 'Guest Designs', path: '/admin/guest-designs', icon: Image },
         { label: 'Enquiries', path: '/admin/dashboard/custom-requests', icon: FileQuestion },
         { label: 'Quotes', path: '/admin/dashboard/quotes', icon: FileText },
       ]
