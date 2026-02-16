@@ -295,35 +295,63 @@ const PrintOnDemandDesignPage = () => {
 
   // Upload design to server
   const uploadDesignToServer = async (file) => {
-    if (!guestInfo.email) {
-      toast.error('Please enter your email first');
-      return;
-    }
-    
     setIsUploading(true);
     
     try {
       const formData = new FormData();
       formData.append('design_file', file);
       formData.append('product_id', activeProduct.id || productId);
-      formData.append('guest_email', guestInfo.email);
-      formData.append('guest_name', guestInfo.name);
-      formData.append('guest_phone', guestInfo.phone);
+      formData.append('session_id', sessionId);
+      formData.append('item_type', activeProduct.name || productId);
+      
+      // Include guest info if available
+      if (guestInfo.email) {
+        formData.append('guest_email', guestInfo.email);
+        formData.append('guest_name', guestInfo.name);
+        formData.append('guest_phone', guestInfo.phone);
+      }
       
       const response = await axios.post(`${API_URL}/api/pod/upload-design`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
       setDesignId(response.data.design_id);
-      setGuestId(response.data.guest_id);
+      if (response.data.guest_id) {
+        setGuestId(response.data.guest_id);
+      }
       setUploadedOriginalUrl(response.data.original_file_url);
       
-      toast.success('Design saved to your account!');
+      toast.success('Design uploaded successfully!');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to save design to server');
+      toast.error('Failed to save design');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // Create/update guest contact and link designs
+  const saveGuestContact = async () => {
+    if (!guestInfo.email || !guestInfo.name || !guestInfo.phone) {
+      toast.error('Please fill in all contact fields');
+      return false;
+    }
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/pod/guest-contact`, {
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+        session_id: sessionId
+      });
+      
+      setGuestId(response.data.id);
+      toast.success('Contact info saved!');
+      return true;
+    } catch (error) {
+      console.error('Failed to save contact:', error);
+      toast.error('Failed to save contact info');
+      return false;
     }
   };
 
