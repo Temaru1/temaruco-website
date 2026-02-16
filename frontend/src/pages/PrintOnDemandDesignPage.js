@@ -145,25 +145,23 @@ const PrintOnDemandDesignPage = () => {
   };
 
   // Load the BASE image from the product - SAME image as shown on product card
+  // Uses image proxy to avoid CORS issues on canvas for external images
   useEffect(() => {
     if (!activeProduct) return;
     
     const imageUrl = activeProduct.base_image_url || activeProduct.image_url || activeProduct.image;
-    const fullUrl = getImageUrl(imageUrl);
+    // Use proxied URL for external images to ensure CORS compatibility
+    const fullUrl = getProxiedImageUrl(imageUrl);
     
-    // Try loading with crossOrigin first for canvas export capability
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
     img.src = fullUrl;
     
     img.onload = () => setProductImage(img);
     
-    // If CORS fails, load without crossOrigin (display-only, no export)
     img.onerror = () => {
-      console.log('Loading image without CORS...');
-      const fallbackImg = new window.Image();
-      fallbackImg.src = fullUrl;
-      fallbackImg.onload = () => setProductImage(fallbackImg);
+      console.error('Failed to load product image:', imageUrl);
+      toast.error('Failed to load product image');
     };
   }, [activeProduct]);
 
