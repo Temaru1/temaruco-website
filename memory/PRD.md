@@ -630,6 +630,58 @@ Clone and enhance the Temaruco website with:
 - `email_campaigns` - Marketing campaigns
 - `email_logs` - Sent email audit trail
 
+## Database-Driven System Architecture (Feb 16, 2026) ✅
+
+### Core Principle
+All system-critical behavior lives in database tables, NOT in code. Nothing resets on redeploy.
+
+### Collections & Persistence
+
+**`system_config`** - Feature flags & system settings
+- Feature toggles: `pod_enabled`, `bulk_orders_enabled`, `email_marketing_enabled`, etc.
+- Business rules: `min_bulk_quantity`, `pod_print_fee`
+- Localization: `default_currency`
+- Print size configs: `print_size_a4`, `print_size_a3`, etc.
+- All editable by Super Admin via API
+
+**`pod_clothing_items`** - POD products (seeded on first deploy)
+- `base_image_url`: Exact image for product card AND design canvas
+- `print_area`: `{x, y, width, height, rotation}` - persisted mockup position
+- Pricing, colors, sizes all stored in DB
+
+**`bulk_clothing_items`** - Bulk products (seeded on first deploy)
+**`material_types`** - Inventory categories (seeded on first deploy)
+**`email_templates`** - Email templates (seeded on first deploy)
+**`site_texts`** - CMS text content
+**`audit_logs`** - All admin changes tracked
+
+### Startup Behavior
+On app boot (`startup_db_client`):
+1. Initialize system_config with defaults (only if key doesn't exist)
+2. Seed database defaults (only if collections are empty)
+3. Create indexes
+4. Start scheduler
+
+### API Endpoints
+- `GET /api/system-config` - Public feature flags
+- `GET /api/admin/system-config` - All configs grouped by category
+- `PUT /api/admin/system-config/{key}` - Update config (Super Admin)
+- `POST /api/admin/system-config` - Create new config (Super Admin)
+- `GET /api/admin/audit-logs` - View all admin changes
+
+### Audit Logging
+All admin changes tracked via `log_audit_event()`:
+- Action: create, update, delete
+- Entity type & ID
+- User email
+- Old and new values
+- Timestamp
+
+### File Storage
+- Uploads stored in `/app/backend/uploads/`
+- Subfolders: `designs/original/`, `designs/mockups/`, `design_references/`
+- Database links files to products/orders/guests
+
 ## Backend Refactoring Progress (Feb 16, 2026)
 
 ### POD Image Reuse System (Feb 16, 2026) ✅
