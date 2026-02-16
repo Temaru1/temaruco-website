@@ -1,45 +1,71 @@
-<analysis>**original_problem_statement**: The project is a comprehensive e-commerce and service platform for an apparel business. It started as a UI/UX redesign with payment bug fixes and has evolved to include a mockup builder, multi-currency support, customer accounts, admin dashboards, and more.
+<analysis>**original_problem_statement**: The user's goal in this session was to overhaul and fix the entire product image system, enhance the Print-on-Demand (POD) feature, and improve guest data handling.
 
-In this session, the user's focus shifted dramatically. The initial plan to fix landing page UI and run a site-wide test was abandoned. Instead, the user requested a complete overhaul of the payment system, replacing Stripe and Paystack with Flutterwave. Following that, the user requested an improved checkout flow for cart and bulk orders, a fix for the navbar logo size, and a fix for products not appearing on the frontend. The user then specified a new, three-tier variant pricing system (Standard, Premium, Luxury) to be implemented for both Bulk Orders and Print-on-Demand products. Finally, the user reported that uploaded product images were not rendering and provided a specific image to be used for the T-shirt product.
+The session began with a series of requests to update specific product images (T-Shirt, Polo, etc.) and create a new 'Shorts' product. This led to the user reporting a critical bug where uploaded images were not showing up correctly on their live production site.
+
+The agent then undertook a major fix of the image system across all modules (Bulk, POD, Boutique, etc.), addressing three core problems:
+1.  **Persistence:** Images uploaded but didn't save correctly.
+2.  **Cropping:** Product images were being cut off.
+3.  **Preview Size:** Variation preview images were too small.
+
+Following this, the user requested a significant enhancement of the POD design feature, requiring:
+1.  **Dual-file storage:** Saving both the original uploaded design and the generated mockup.
+2.  **Dynamic resizing:** Allowing guests to select print sizes (Badge, A4, A3, A2) without re-uploading.
+3.  **Data pipeline:** Automatically creating guest contact records and linking them to their uploaded designs.
+4.  **Admin visibility:** Creating a new admin dashboard to view, preview, and download all guest designs.
+
+Finally, the user mandated a move to a stateless guest tracking system using a UUID, making the feature work even if browser cookies are disabled.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack React/FastAPI/MongoDB application. The original payment gateways (Stripe, Paystack) have been completely removed and replaced with Flutterwave, which is configured with live keys. A major new feature has been implemented: a three-tier variant pricing system (Standard, Premium, Luxury) for both Bulk Order and Print-on-Demand products, affecting the backend, frontend product pages, and the admin management panel. The bulk order process has been enhanced with a dedicated order review page before checkout. An issue preventing uploaded images from rendering has been fixed by correcting the static file serving path on the backend and adding a URL resolver on the frontend. The backend remains a hybrid, with the monolithic  still in use but heavily modified.
+The application is a full-stack React/FastAPI/MongoDB e-commerce platform.
+
+In this session, the agent completed a full overhaul of the product image system, ensuring images are stored reliably, displayed without cropping (), and have large, clear previews on variation selection pages. This fix was applied site-wide.
+
+The Print-on-Demand (POD) designer was significantly rebuilt. It now supports dual file storage (original design + mockup), dynamic print size selection, position controls, and links uploaded designs to an automatically created guest contact record in the database.
+
+A new admin module was created at . This page allows administrators to view a table of all guest designs, see previews of the original and mockup files, and includes buttons to download the full-resolution files securely.
+
+The backend  file has been heavily modified to support these new features, including a unified image upload service, new database schemas for designs and contacts, and new API endpoints for the admin dashboard.
+
+The implementation of a stateless guest tracking system (using a UUID) is currently in progress. The backend has been partially updated, but the frontend has not been touched yet for this specific task.
 
 **Last working item**:
--   **Last item agent was working:** The user provided an image and requested that it be used for the T-shirt product. This came immediately after the agent fixed a site-wide issue where uploaded product images were not rendering. The agent had just finished fixing the image serving path and was about to update the specific T-shirt product in the database.
+-   **Last item agent was working:** Implementing a stateless guest tracking system for Print-On-Demand (POD) designs. The goal is to track guest uploads using a UUID () stored in the frontend's local storage and a hidden form field, eliminating reliance on browser sessions or cookies. The agent was in the process of rewriting the backend logic.
 -   **Status:** IN PROGRESS
--   **Agent Testing Done:** Y
--   **Which testing method agent to use?** Manual testing by using  to update the database record for the T-Shirt product with the new image URL. Afterward, use the screenshot tool to view the  page and verify the new image renders correctly.
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** testing agent v3 fork. This is a critical data pipeline change affecting both frontend and backend. The test should verify the end-to-end flow: 1. Guest uploads a design, receives a , and the design is saved as unassigned. 2. Simulate clearing cache/cookies. 3. Guest fills contact form, sending the . 4. Verify the design is updated to assigned and linked to the new contact record. 5. Check the admin dashboard to confirm the design moved from the unassigned to the assigned view.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Update T-shirt product image. (P0)
+-   **Issue 1:** Complete the stateless guest tracking implementation for POD. (P0)
 -   **Issue 2:** Implement pending landing page and admin UI changes. (P1)
--   **Issue 3:** Execute the user-requested full, critical site test. (P2)
--   **Issue 4:** Complete the backend refactoring. (P3)
+-   **Issue 3:** Execute a full, critical site test. (P2)
+-   **Issue 4:** Complete the backend refactoring from . (P3)
 
 **Issues Detail:**
--   **Issue 1:** Update T-shirt product image.
-    -   **Attempted fixes:** None for this specific request. The underlying image rendering bug was just fixed.
+-   **Issue 1:** Complete the stateless guest tracking implementation for POD.
+    -   **Attempted fixes:** The agent started rewriting the backend endpoints (, ) to use a  and a  field.
     -   **Next debug checklist:**
-        1.  Write and execute a Python script to connect to the database.
-        2.  Find the 'T-Shirt' product document in the  collection.
-        3.  Update its  field with .
-        4.  Take a screenshot of the Print-on-Demand page to verify the change.
-    -   **Why fix this issue and what will be achieved with the fix?** To fulfill the user's latest explicit request and provide a final validation of the image rendering fix.
-    -   **Status:** NOT STARTED
+        1.  Finalize the backend logic in  for  to save the design as unassigned and return a .
+        2.  Finalize the  endpoint to find the design by  and assign it to the created contact.
+        3.  Update the  endpoint to filter by  (unassigned or assigned).
+        4.  Modify :
+            -   On design upload, store the returned  in both local storage and a hidden form field.
+            -   When the contact form is submitted, send the  along with the guest's details.
+        5.  Update  to include tabs or filters for Assigned and Unassigned designs.
+    -   **Why fix this issue and what will be achieved with the fix?** To create a robust guest data pipeline that doesn't lose user work if they clear their cache, switch devices, or have cookies disabled.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on other issue:** No
 
 -   **Issue 2:** Implement pending landing page and admin UI changes.
-    -   **Attempted fixes:** None. This was the original plan for the session but was deferred.
+    -   **Attempted fixes:** None in this session; deferred from start.
     -   **Next debug checklist:**
         1.  Edit  to replace the hero image and add a Quick Price Calculator section.
         2.  Edit the track order page to auto-format the Order ID input.
-        3.  Edit  and the admin sidebar component to add the route and link for .
+        3.  Edit  and  to add a route and link for .
     -   **Why fix this issue and what will be achieved with the fix?** To complete the user's outstanding requests from the previous session.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
@@ -47,48 +73,59 @@ A full-stack React/FastAPI/MongoDB application. The original payment gateways (S
     -   **Blocked on other issue:** No
 
 -   **Issue 3:** Execute the user-requested full, critical site test.
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:** Call the  with a comprehensive plan covering all major user flows, especially the new Flutterwave payment and tiered pricing systems.
-    -   **Why fix this issue and what will be achieved with the fix?** To ensure application-wide stability and catch regressions after major architectural changes (payment system, pricing model).
+    -   **Attempted fixes:** None. Deferred due to higher priority feature work.
+    -   **Next debug checklist:** Call  with a comprehensive plan covering all major user flows, especially payments (Flutterwave), tiered pricing, the overhauled image system, and the entire POD design pipeline.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure application stability and catch regressions after numerous major architectural changes.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on other issue:** No
 
 -   **Issue 4:** Complete the backend refactoring.
-    -   **Attempted fixes:** The modular structure exists, but migration of logic from  is stalled.
-    -   **Next debug checklist:** Systematically move endpoints and business logic from  into the  and a new  directory, then switch the supervisor process to use .
-    -   **Why fix this issue and what will be achieved with the fix?** To improve backend maintainability, reduce technical debt, and enable safer future development.
+    -   **Attempted fixes:** A modular structure exists, but all new logic in this session was added to , increasing technical debt.
+    -   **Next debug checklist:** Systematically move endpoints (especially the new POD and admin logic) from  into the  and new service files.
+    -   **Why fix this issue and what will be achieved with the fix?** To improve backend maintainability, scalability, and safety for future development.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on other issue:** No
 
 **In progress Task List**:
--   **Task 1:** Complete backend refactoring.
-    -   **Where to resume:** Continue migrating routes and business logic from  into the new modular file structure.
-    -   **What will be achieved with this?** A maintainable, scalable, and organized backend codebase.
+-   **Task 1:** Complete stateless guest tracking implementation.
+    -   **Where to resume:** Finish implementing the backend logic in , then move to the frontend  to manage the .
+    -   **What will be achieved with this?** A persistent, stateless POD design flow that works without cookies.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on something:** No
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **Admin Inventory Page:** Build the frontend UI for admins to manage product stock levels. (P1)
-    -   **Shipping Integration:** Integrate with a shipping provider for delivery options and tracking. (P2)
+    -   Implement UI changes on the Landing Page and Track Order Page. (P1)
+    -   Run a full, critical site-wide test using the testing agent. (P2)
+    -   Build the Admin Inventory Page UI. (P2)
 -   **Future Tasks:**
-    -   **Multiple Print Areas:** Enhance the design tool to support designing on the front, back, and sleeves.
-    -   **Browser Push Notifications:** Implement browser-level notifications for admins.
+    -   Integrate with a shipping provider.
+    -   Enhance the design tool to support multiple print areas (front, back, sleeves).
+    -   Implement browser push notifications for admins.
 
 **Completed work in this session**
--   **Payment System Overhaul:** Successfully removed Stripe and Paystack and integrated Flutterwave as the sole payment provider.
--   **Tiered Variant Pricing System (Bulk & POD):** Implemented a three-tier pricing system (Standard, Premium, Luxury) across backend models, frontend selection UI, and the admin management panel for both bulk and POD products.
--   **Improved Bulk Order Flow:** Created a new  for order review and integrated it into the purchasing flow, culminating in a Flutterwave payment modal.
--   **Image Rendering Fix:** Diagnosed and fixed a bug where uploaded images were not displaying. Corrected the backend static file route to  and updated all relevant frontend components to correctly resolve image URLs.
--   **Checkout & UI Fixes:** Updated the main cart checkout to use Flutterwave directly, fixed an issue where products were reported as not showing, and increased the navbar logo size.
+-   **Product Image Updates:** Updated images for T-Shirt, Polo, Joggers, Hoodie, and Varsity Jacket.
+-   **New 'Shorts' Product:** Created the 'Shorts' product for both Bulk and POD.
+-   **Site-Wide Image System Overhaul:**
+    -   Fixed image persistence by creating a unified backend upload service and correcting URL paths to .
+    -   Fixed image cropping on all product cards by applying  CSS.
+    -   Enlarged the product preview on variation selection pages for Bulk and POD for better visibility.
+-   **Enhanced Print-On-Demand (POD) Feature:**
+    -   Implemented dual-file storage (original design and generated mockup).
+    -   Added dynamic print size selection (Badge, A4, A3, A2).
+    -   Automated guest contact creation and linked them to their designs.
+-   **New Admin Dashboard Module:**
+    -   Created a Guest Designs page () for admins.
+    -   Implemented functionality to preview and download both original and mockup files for each guest design.
+-   **Full POD Flow Test:** Manually tested the entire POD flow from product selection to cart, verifying backend data creation with .
 
 **Earlier issues found/mentioned but not fixed**
--   None new; the outstanding issues are captured in the Pending/In progress Issue list.
+-   **Production Deployment:** The user's initial report of images not showing on their live site () was due to changes being in the preview environment only. The agent fixed the underlying bug (incorrect upload path), but the user still needs to redeploy the application for the fix to take effect on their production site. This needs to be communicated clearly.
 
 **Known issue recurrence from previous fork**
 -   None.
@@ -97,88 +134,88 @@ A full-stack React/FastAPI/MongoDB application. The original payment gateways (S
 
 
 **Key Technical Concepts**
--   **Frontend:** React, Tailwind CSS, Axios.
--   **Backend:** FastAPI, Motor (async MongoDB), JWT.
--   **Database:** MongoDB.
--   **Architecture:** Hybrid monolithic/modular.  is still the entry point.
--   **Payments:** **Flutterwave** (integrated via  library).
+-   **Stateless Tracking:** Moving from session-based tracking to a UUID () stored in frontend local storage and a database record to persist guest activity.
+-   **Secure File Downloads:** Using FastAPI's  behind an authenticated endpoint to allow admins to download files without exposing public URLs.
+-   **Unified File Upload Service:** Centralizing file upload logic into a single, robust backend service with validation and logging.
+-   **Dynamic Frontend:** Using React and  to create a dynamic design canvas that responds to user input (resizing, positioning) without page reloads.
 
 **key DB schema**
--   **bulk_clothing_items / pod_clothing_items:** 
--   **orders:** 
+-   **pod_designs:** 
+-   **clients:** 
 
 **changes in tech stack**
--   **Flutterwave:** Replaced Stripe and Paystack. The  library for payments is no longer in use.
+-   None.
 
 **All files of reference**
 -   **Created:**
-    -   
-    -   
-    -   
+    -   : New admin dashboard for viewing guest designs.
+    -   : Shared frontend functions for handling image URLs.
 -   **Updated (Major):**
-    -   : Removed Stripe/Paystack logic, added Flutterwave endpoints, implemented variant pricing models and logic for bulk/POD items, fixed image serving path.
-    -   : Rebuilt to support variant selection and new order flow.
-    -    & : Rebuilt to support variant selection.
-    -   : Rebuilt to support managing variant prices for both bulk and POD items.
-    -   : Updated with a new direct Flutterwave checkout flow.
--   **Deleted:**
-    -   
-    -   
+    -   : Added all logic for the image system overhaul, the enhanced POD designer, the new admin module, and the start of the stateless tracking system.
+    -   : Completely rewritten to support the new design features (canvas, resizing, dual-file upload, contact form).
+    -   : Updated CSS and layout for image display and large variation previews.
+    -   : Updated CSS for product image display.
+    -   : Updated CSS for image previews.
+    -   : Added sidebar link to the new Guest Designs page.
+    -   : Added the route for the new admin page.
+-   **Multiple other pages were updated with CSS fixes:** , , , .
 
 **Areas that need refactoring**:
--   The  file remains critically monolithic and is the highest priority technical debt. The refactoring effort needs to be completed.
+-    is critically monolithic. The large amount of new logic for images, POD, and admin functions should be extracted into separate route and service files.
+-    is now a very large and complex component that manages state for the canvas, product data, guest info, and API calls. It should be broken down into smaller, more manageable components (e.g., , , ).
 
 **key api endpoints**
--   : (POST) Creates a Flutterwave payment session.
--   : (POST) Handles Flutterwave payment notifications.
--   : (GET) Serves uploaded product images.
--   , : (POST, PUT) Manage products with variant pricing.
--   : (POST) Creates a bulk order, now including variant information.
+-   : (POST) Handles initial design upload, saves files, creates an unassigned design record, and returns a .
+-   : (POST) Creates a guest contact and updates the design record from unassigned to assigned.
+-   : (GET) Fetches guest designs, filterable by status.
+-   : (GET) Securely downloads the original uploaded design file for an admin.
+-   : (GET) Securely downloads the generated mockup file for an admin.
 
 **Critical Info for New Agent**
--   **PRIORITY 0:** Fulfill the user's latest request to update the T-shirt image using the provided URL.
--   **Payment System is Flutterwave:** The entire payment system was replaced. Do not look for Stripe or Paystack code. All payment flows now use Flutterwave.
--   **Variant Pricing is Live:** A three-tier pricing system (Standard, Premium, Luxury) is active for both Bulk and POD products. This affects product display, price calculation, order creation, and admin management.
--   **Image URLs:** Uploaded images are now served from the  path. A helper function  exists in  and should be used to display all product images to ensure they render correctly.
--   **Deferred Tasks:** The original plan to work on the landing page and run a full site test is still pending and should be addressed after the current image update task.
+-   **PRIORITY 0:** Your immediate task is to complete the stateless guest tracking implementation. The backend work is started, but the frontend  needs to be updated to handle the  (store in local storage, send with contact form).
+-   **Stateless is the Rule:** The POD flow must function without relying on browser sessions or cookies. The  is the key to linking an anonymous upload to a guest's contact info.
+-   **Production Deployment:** The user is viewing their site on a live domain. Remember to inform the user that all fixes and features (including the critical image path fix) will only be visible on their live site after they redeploy the application.
+-   **Admin Testing:** Testing admin pages with the screenshot tool is unreliable due to stateless sessions. Use  with an auth token to test admin API endpoints directly, or perform a manual multi-step test that includes logging in.
 
 **documents and test reports created in this job**
--   None.
+-   : Updated with the new features and fixes.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Use this as the shirt image**: User provided an image to use for the T-shirt. (PENDING)
-2.  **Uploaded product images dont render/show on products**: User reported a bug with image rendering. (FIXED)
-3.  **Do the same for print on demand**: User requested variant pricing for POD products. (COMPLETED)
-4.  **Update the Bulk Clothing Order System...**: User provided detailed requirements for the tiered pricing system on bulk orders. (COMPLETED)
-5.  **In bulk order, when a guest clicks on Place Order...**: User provided detailed requirements for the new bulk order review page and flow. (COMPLETED)
-6.  **after guest is done ordering...**: User reported issues with cart checkout, product visibility, and logo size. (FIXED)
-7.  **remove both and add flutterwave**: User requested to replace Stripe/Paystack with Flutterwave. (COMPLETED)
-8.  **what payment integrations are in the app?**: User asked for clarification on existing payment methods. (ADDRESSED)
-9.  **User approved initial plan**: This plan was then superseded by subsequent requests.
-10. **System Message**: Start of session.
+1.  **Test full POD flow**: User requested a complete, step-by-step test of the POD feature. (Completed manually by agent).
+2.  **Add download capability**: User requested download buttons for original and mockup files in the admin dashboard. (Completed).
+3.  **Fix guest data pipeline**: User requested a new admin module to view guest designs and link them to contact records. (Completed).
+4.  **Use product image for mockup**: User clarified that the canvas background should be the actual product image. (Fixed).
+5.  **Fix POD design feature**: User detailed requirements for a major POD enhancement (dual-file storage, dynamic resizing, etc.). (Completed).
+6.  **Fix the product image system**: User provided a detailed 3-part requirement to fix image persistence, cropping, and preview sizes across the entire app. (Completed).
+7.  **What I am seeing is not what you are showing me**: User reported a discrepancy between the preview environment and their live production site. (Diagnosed as a deployment issue).
+8.  **Some images are showing and others are not**: User reported the initial critical bug with image uploads on their production site. (Root cause fixed).
+9.  **Confirm that the backend db is synced**: User asked for verification of image updates in the database. (Completed).
+10. **Create shorts product...**: User requested a new product with a specific image. (Completed).
 
 **Project Health Check:**
--   **Broken:** None are known to be actively broken.
--   **Mocked:** Flutterwave is configured with live keys.
--   **At Risk:** The monolithic  file is a major liability. The stability of the application is at risk due to the lack of a full regression test after the major payment and pricing model changes.
+-   **Broken:** The guest design data pipeline is currently broken mid-implementation. It will not function correctly until the stateless UUID tracking is fully implemented on both the frontend and backend.
+-   **Mocked:** Flutterwave payment integration is live.
+-   **At Risk:** The monolithic  file is a significant technical debt and stability risk. The lack of an automated regression test after substantial changes also puts the application at risk of undiscovered bugs.
 
 **3rd Party Integrations**
--   **Flutterwave (Payments):** Live and operational. Replaced Stripe and Paystack.
+-   **Flutterwave (Payments):** Live and operational.
 -   **ip-api.com:** Geolocation for currency.
 -   **MongoDB:** Database.
 -   **Recharts:** Analytics dashboard charts.
--   **Konva.js:** Mockup builder canvas.
+-   **Konva.js / react-konva:** Mockup builder canvas.
 -   **APScheduler:** Backend background jobs.
 -   **exchangerate-api.com:** Live currency rates.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO. All testing in this session was performed manually by the agent using ,  scripts, and extensive screenshot verification of the frontend flows.
+-   **Testing agent used after significant changes:** NO. All testing was done manually with screenshots and , which is insufficient for the scale of changes made. A full regression test is highly recommended.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** Unknown. A full site test is strongly recommended.
+-   **Known regressions:** Unknown. A full site test is needed to identify any.
 
 **Credentials to test flow:**
 -   **Admin Login:**  / 
 
 **What agent forgot to execute**
--   The original high-priority tasks from the start of the session (implement landing page UI changes, run a full site test) were not executed because the user's requests led to a complete pivot. These tasks are still pending.</analysis>
+-   The agent correctly prioritized the user's immediate feature requests and bug fixes over the initial plan. The deferred tasks that are still pending are:
+    -   Implementing the landing page UI changes.
+    -   Running a comprehensive, automated, full-site test.</analysis>
