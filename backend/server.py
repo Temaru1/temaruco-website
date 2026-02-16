@@ -8976,6 +8976,48 @@ async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_
     
     return {'message': 'POD clothing item deleted successfully'}
 
+# ==================== IMAGE PROXY FOR CORS ====================
+@api_router.get("/image-proxy")
+async def proxy_image(url: str):
+    """Proxy external images to avoid CORS issues on canvas"""
+    import httpx
+    from fastapi.responses import Response
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL parameter required")
+    
+    # Only allow certain domains for security
+    allowed_domains = [
+        'images.unsplash.com',
+        'customer-assets.emergentagent.com',
+        'placehold.co',
+        'via.placeholder.com'
+    ]
+    
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    if parsed.netloc not in allowed_domains:
+        raise HTTPException(status_code=403, detail="Domain not allowed for proxying")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=10.0, follow_redirects=True)
+            response.raise_for_status()
+            
+            content_type = response.headers.get('content-type', 'image/png')
+            
+            return Response(
+                content=response.content,
+                media_type=content_type,
+                headers={
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'public, max-age=86400'
+                }
+            )
+    except Exception as e:
+        logger.error(f"Image proxy error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch image")
+
 # ==================== SITE TEXT CMS MANAGEMENT ====================
 # Default site texts - used for initialization and reset
 DEFAULT_SITE_TEXTS = {
