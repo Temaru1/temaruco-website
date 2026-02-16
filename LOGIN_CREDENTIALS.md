@@ -36,12 +36,12 @@ Password: admin123
 ## How to Login
 
 ### Method 1: Admin Login Page
-1. Go to: `https://picxpress-1.preview.emergentagent.com/admin/login`
+1. Go to: `https://guest-tracker-40.preview.emergentagent.com/admin/login`
 2. Enter email and password
 3. Click "Sign In"
 
 ### Method 2: Main Site
-1. Go to: `https://picxpress-1.preview.emergentagent.com`
+1. Go to: `https://guest-tracker-40.preview.emergentagent.com`
 2. Click "Admin" in navigation
 3. Enter credentials
 
@@ -214,6 +214,6 @@ Expected output:
 ✅ All admin features accessible  
 ✅ Image upload functionality ready  
 
-**Login URL**: https://picxpress-1.preview.emergentagent.com/admin/login
+**Login URL**: https://guest-tracker-40.preview.emergentagent.com/admin/login
 
 Start uploading your bulk order clothing images now! 🎉
