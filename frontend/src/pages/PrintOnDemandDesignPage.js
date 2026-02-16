@@ -80,7 +80,12 @@ const PrintOnDemandDesignPage = () => {
   const [designId, setDesignId] = useState(null);
   const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
   const [dbProduct, setDbProduct] = useState(null);
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  
+  // STATELESS: Use temp_design_id stored in localStorage (persists across sessions/cookies)
+  const [tempDesignId, setTempDesignId] = useState(() => {
+    // Try to restore from localStorage on mount
+    return localStorage.getItem('pod_temp_design_id') || null;
+  });
   
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -287,13 +292,11 @@ const PrintOnDemandDesignPage = () => {
     };
     reader.readAsDataURL(file);
     
-    // Upload to server if guest info provided
-    if (guestInfo.email) {
-      await uploadDesignToServer(file);
-    }
+    // Upload to server immediately (stateless - no guest info required)
+    await uploadDesignToServer(file);
   };
 
-  // Upload design to server
+  // Upload design to server (STATELESS - no session/cookie required)
   const uploadDesignToServer = async (file) => {
     setIsUploading(true);
     
@@ -301,27 +304,25 @@ const PrintOnDemandDesignPage = () => {
       const formData = new FormData();
       formData.append('design_file', file);
       formData.append('product_id', activeProduct.id || productId);
-      formData.append('session_id', sessionId);
       formData.append('item_type', activeProduct.name || productId);
-      
-      // Include guest info if available
-      if (guestInfo.email) {
-        formData.append('guest_email', guestInfo.email);
-        formData.append('guest_name', guestInfo.name);
-        formData.append('guest_phone', guestInfo.phone);
-      }
+      // Note: No session_id, guest info, or cookies needed for initial upload
       
       const response = await axios.post(`${API_URL}/api/pod/upload-design`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      setDesignId(response.data.design_id);
-      if (response.data.guest_id) {
-        setGuestId(response.data.guest_id);
-      }
+      const newTempDesignId = response.data.temp_design_id;
+      
+      // CRITICAL: Store temp_design_id in localStorage for persistence
+      // This survives browser close, cookie clear, cache clear
+      localStorage.setItem('pod_temp_design_id', newTempDesignId);
+      setTempDesignId(newTempDesignId);
+      
+      setDesignId(newTempDesignId);
       setUploadedOriginalUrl(response.data.original_file_url);
       
-      toast.success('Design uploaded successfully!');
+      console.log('[POD] Design uploaded with temp_design_id:', newTempDesignId);
+      toast.success('Design uploaded! Fill in your details to complete.');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to save design');
@@ -330,27 +331,42 @@ const PrintOnDemandDesignPage = () => {
     }
   };
 
-  // Create/update guest contact and link designs
-  const saveGuestContact = async () => {
+  // Link design to contact (STATELESS - uses temp_design_id from localStorage)
+  const linkDesignToContact = async () => {
     if (!guestInfo.email || !guestInfo.name || !guestInfo.phone) {
       toast.error('Please fill in all contact fields');
       return false;
     }
     
+    // Get temp_design_id from state or localStorage (for persistence)
+    const storedTempDesignId = tempDesignId || localStorage.getItem('pod_temp_design_id');
+    
+    if (!storedTempDesignId) {
+      toast.error('No design found. Please upload a design first.');
+      return false;
+    }
+    
     try {
-      const response = await axios.post(`${API_URL}/api/pod/guest-contact`, {
+      // Use the new stateless endpoint that links design to contact
+      const response = await axios.post(`${API_URL}/api/pod/link-design`, {
+        temp_design_id: storedTempDesignId,
         name: guestInfo.name,
         email: guestInfo.email,
-        phone: guestInfo.phone,
-        session_id: sessionId
+        phone: guestInfo.phone
       });
       
-      setGuestId(response.data.id);
-      toast.success('Contact info saved!');
+      setGuestId(response.data.contact_id);
+      console.log('[POD] Design linked to contact:', response.data);
+      
+      // Clear temp_design_id from localStorage after successful linking
+      localStorage.removeItem('pod_temp_design_id');
+      
+      toast.success('Contact info saved and design linked!');
       return true;
     } catch (error) {
-      console.error('Failed to save contact:', error);
-      toast.error('Failed to save contact info');
+      console.error('Failed to link design:', error);
+      const message = error.response?.data?.detail || 'Failed to save contact info';
+      toast.error(message);
       return false;
     }
   };
@@ -472,9 +488,9 @@ const PrintOnDemandDesignPage = () => {
     setAddingToCart(true);
     
     try {
-      // Ensure guest contact is created/updated
-      const contactSaved = await saveGuestContact();
-      if (!contactSaved) {
+      // Link design to contact using stateless approach
+      const contactLinked = await linkDesignToContact();
+      if (!contactLinked) {
         setAddingToCart(false);
         return;
       }
