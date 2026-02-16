@@ -374,3 +374,42 @@ Clone and enhance the Temaruco website with:
 - Procurement/inventory tracking
 - Financial reports generation
 
+## Completed Work (Feb 16, 2026) - Website Text CMS
+
+### Website Text Management System (CMS)
+- **Admin Module**: Settings → Website Text
+- **Live Sync**: Changes reflect automatically within 60 seconds (no redeploy needed)
+- **Features**:
+  - Table view with all text keys
+  - Search by key, value, or description
+  - Filter by page (home, bulk, pod, boutique, etc.)
+  - Inline editing with confirmation popup
+  - Reset to default functionality
+  - Character limit validation
+  - Admin-only access
+- **73 Default Text Keys** covering:
+  - Homepage (hero titles, CTAs, descriptions)
+  - Bulk Orders page
+  - Print-on-Demand page
+  - Boutique, Fabrics, Souvenirs pages
+  - Cart & Checkout
+  - Footer
+  - Navigation
+  - Common buttons
+  - Contact, About pages
+  - Order tracking
+- **API Endpoints**:
+  - `GET /api/site-texts` - Public: Get all texts (cached 60s)
+  - `GET /api/admin/site-texts` - Admin: Get texts with metadata
+  - `PUT /api/admin/site-texts/:key` - Admin: Update text
+  - `POST /api/admin/site-texts/reset/:key` - Admin: Reset to default
+  - `POST /api/admin/site-texts/seed` - Super Admin: Initialize defaults
+- **Frontend Integration**:
+  - `SiteTextContext` provider wraps entire app
+  - `useSiteText(key)` hook for components
+  - 60-second cache TTL with localStorage
+  - Auto-refresh on tab visibility change
+  - Fallback to defaults on API failure
+- **Database Collection**: `site_texts`
+  - Fields: key, value, page, section, description, max_length, last_updated, updated_by
+
