@@ -6462,28 +6462,48 @@ async def update_admin_settings(settings: AdminSettings, request: Request):
 @api_router.post("/admin/upload-image")
 async def upload_admin_image(
     image: UploadFile = File(...),
-    module: str = "general",
+    module: str = Form(default="general"),
     request: Request = None
 ):
     """
     Admin: Unified image upload endpoint for all modules
     Supports: bulk, pod, fabric, boutique, souvenir
+    Uses Supabase Cloud Storage with local fallback.
     """
     admin_user = await get_admin_user(request)
     
     logger.info(f"[UPLOAD][{module}] Admin upload initiated by: {admin_user['email']}")
     
-    # Save image with module context for logging
-    file_data = await save_upload_file(image, ALLOWED_IMAGE_EXTENSIONS, module=module)
-    
-    logger.info(f"[UPLOAD][{module}] Upload complete. URL: {file_data['file_path']}")
-    
-    return {
-        'image_url': file_data['file_path'], 
-        'message': 'Image uploaded successfully',
-        'file_name': file_data['file_name'],
-        'file_size': file_data['file_size']
-    }
+    try:
+        # Map module names to folder paths for better organization
+        folder_map = {
+            'bulk': 'bulk-products',
+            'pod': 'pod-products',
+            'fabric': 'fabrics',
+            'boutique': 'boutique',
+            'souvenir': 'souvenirs',
+            'general': 'products'
+        }
+        folder = folder_map.get(module, 'products')
+        
+        # Upload to Supabase (with local fallback)
+        result = await upload_file_to_supabase(image, folder=folder)
+        
+        logger.info(f"[UPLOAD][{module}] Upload complete via {result['storage_type']}. URL: {result['public_url']}")
+        
+        return {
+            'image_url': result['public_url'],
+            'file_path': result['public_url'],  # Legacy compatibility
+            'message': 'Image uploaded successfully',
+            'file_name': result['file_name'],
+            'file_size': result['file_size'],
+            'storage_type': result['storage_type']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[UPLOAD][{module}] Upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 # ==================== FABRIC QUALITIES MANAGEMENT ====================
 @api_router.get("/fabric-qualities")
