@@ -2466,8 +2466,8 @@ async def create_boutique_product(product: NewBoutiqueProduct, request: Request)
 
 
 @api_router.post("/admin/boutique/products/upload-image")
-async def upload_product_image(file: UploadFile = File(...), request: Request = None):
-    """Admin: Upload product image"""
+async def upload_boutique_product_image(file: UploadFile = File(...), request: Request = None):
+    """Admin: Upload boutique product image to Supabase Cloud Storage"""
     session_id = request.cookies.get('session_id')
     if not session_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -2480,36 +2480,20 @@ async def upload_product_image(file: UploadFile = File(...), request: Request = 
     if not user or (not user.get('is_admin') and not user.get('is_super_admin')):
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    # Validate file type
-    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-    if file.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid file type. Allowed types: {', '.join(allowed_types)}"
-        )
-    
-    # Validate file size (max 5MB)
-    contents = await file.read()
-    if len(contents) > 5 * 1024 * 1024:  # 5MB
-        raise HTTPException(status_code=400, detail="File size too large. Maximum 5MB allowed.")
-    
-    # Generate unique filename
-    file_ext = file.filename.split('.')[-1]
-    filename = f"product_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{file_ext}"
-    file_path = UPLOAD_DIR / filename
-    
-    # Save file
-    with open(file_path, 'wb') as f:
-        f.write(contents)
-    
-    # Return URL - use /api/uploads to match the static files mount
-    image_url = f"/api/uploads/{filename}"
-    
-    return {
-        'message': 'Image uploaded successfully',
-        'image_url': image_url,
-        'filename': filename
-    }
+    try:
+        # Upload to Supabase
+        result = await upload_file_to_supabase(file, folder="boutique")
+        return {
+            'message': 'Image uploaded successfully',
+            'image_url': result['public_url'],
+            'filename': result['file_name'],
+            'storage_path': result['storage_path']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Boutique image upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 # ==================== FABRICS ====================
