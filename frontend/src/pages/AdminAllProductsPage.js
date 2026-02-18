@@ -228,6 +228,19 @@ const AdminAllProductsPage = () => {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => { 
+              setEditingProduct(null); 
+              setProductForm({ name: '', price: '', description: '', category: '', image_url: '', is_active: true, type: 'fabric' }); 
+              setImagePreview(null);
+              setShowProductModal(true); 
+            }}
+            className="btn-primary flex items-center gap-2"
+            data-testid="add-product-btn"
+          >
+            <Plus size={18} />
+            Add Product
+          </button>
+          <button
             onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', type: 'boutique', description: '' }); setShowCategoryModal(true); }}
             className="btn-outline flex items-center gap-2"
             data-testid="add-category-btn"
