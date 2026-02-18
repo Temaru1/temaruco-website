@@ -8938,7 +8938,28 @@ async def update_pod_print_area(
 
 @api_router.delete("/admin/pod/clothing-items/{item_id}")
 async def delete_pod_clothing_item(item_id: str, admin_user: Dict = Depends(get_admin_user)):
-    """Admin: Delete POD clothing item"""
+    """Admin: Delete POD clothing item and its image"""
+    
+    # Get item to find image URL before deleting
+    item = await db.pod_clothing_items.find_one({'id': item_id})
+    if item:
+        # Delete image from storage if exists
+        image_url = item.get('image_url') or item.get('base_image_url', '')
+        if image_url:
+            if is_supabase_url(image_url):
+                storage_path = extract_storage_path_from_url(image_url)
+                if storage_path:
+                    await delete_file_from_supabase(storage_path)
+                    logger.info(f"Deleted POD clothing item image from Supabase: {storage_path}")
+            elif image_url.startswith('/api/uploads/'):
+                filename = image_url.split('/')[-1]
+                file_path = UPLOAD_DIR / filename
+                if file_path.exists():
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"Deleted POD clothing item image: {filename}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete POD clothing item image: {e}")
     
     result = await db.pod_clothing_items.delete_one({'id': item_id})
     
