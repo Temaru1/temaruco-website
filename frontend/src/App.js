@@ -279,6 +279,16 @@ function AppRouter() {
           }
         />
 
+        {/* Admin System Configuration - Super Admin only */}
+        <Route
+          path="/admin/system-config"
+          element={
+            <ProtectedRoute requireAuth={true} requireAdmin={true}>
+              <AdminSystemConfigPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Products (Fabrics & Souvenirs) - auth required */}
         <Route
           path="/admin/products"
