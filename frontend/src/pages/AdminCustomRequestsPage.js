@@ -148,15 +148,15 @@ const AdminCustomRequestsPage = () => {
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
               placeholder="ENQ-0225-000001"
-              className="flex-1 px-4 py-2 border border-zinc-300 rounded-lg"
+              className="w-3/4 px-4 py-2 border border-zinc-300 rounded-lg"
               data-testid="search-enquiry-code"
             />
             <button
               onClick={handleSearch}
-              className="btn-primary px-6"
+              className="btn-primary w-1/4 min-w-fit px-4"
               data-testid="search-btn"
             >
-              <Search size={18} className="inline mr-2" />
+              <Search size={18} className="inline mr-1" />
               Search
             </button>
             {searchCode && (
@@ -166,7 +166,7 @@ const AdminCustomRequestsPage = () => {
                   setLoading(true);
                   setTimeout(() => loadRequests(), 100);
                 }}
-                className="btn-outline px-6"
+                className="btn-outline px-4"
                 data-testid="clear-search-btn"
               >
                 Clear
