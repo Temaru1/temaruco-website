@@ -14,7 +14,6 @@ const CartPage = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [previousPage, setPreviousPage] = useState('/boutique');
   const [orderId, setOrderId] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('card');
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
