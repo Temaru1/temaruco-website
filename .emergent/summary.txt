@@ -1,221 +1,225 @@
-<analysis>**original_problem_statement**: The user's goal in this session was to overhaul and fix the entire product image system, enhance the Print-on-Demand (POD) feature, and improve guest data handling.
+<analysis>**original_problem_statement**: The user's initial goals were to build a full-stack e-commerce application. Over the course of development, numerous large-scale features and fixes have been requested and implemented. The most recent user requests included:
 
-The session began with a series of requests to update specific product images (T-Shirt, Polo, etc.) and create a new 'Shorts' product. This led to the user reporting a critical bug where uploaded images were not showing up correctly on their live production site.
-
-The agent then undertook a major fix of the image system across all modules (Bulk, POD, Boutique, etc.), addressing three core problems:
-1.  **Persistence:** Images uploaded but didn't save correctly.
-2.  **Cropping:** Product images were being cut off.
-3.  **Preview Size:** Variation preview images were too small.
-
-Following this, the user requested a significant enhancement of the POD design feature, requiring:
-1.  **Dual-file storage:** Saving both the original uploaded design and the generated mockup.
-2.  **Dynamic resizing:** Allowing guests to select print sizes (Badge, A4, A3, A2) without re-uploading.
-3.  **Data pipeline:** Automatically creating guest contact records and linking them to their uploaded designs.
-4.  **Admin visibility:** Creating a new admin dashboard to view, preview, and download all guest designs.
-
-Finally, the user mandated a move to a stateless guest tracking system using a UUID, making the feature work even if browser cookies are disabled.
+1.  **PRINT-ON-DEMAND IMAGE REUSE SYSTEM**: Ensure the exact same product image from a product card is used on the design page, with no new image generation. This involves layering the guest's design on top of a persistent  for each product.
+2.  **DATABASE-DRIVEN ARCHITECTURE**: All system-critical behavior (feature flags, product settings, admin edits) must be stored in the database to persist across redeployments, eliminating hardcoded values in the frontend or backend.
+3.  **UI & FUNCTIONALITY CORRECTIONS (BATCH 1 & 2)**: A comprehensive list of 15+ specific fixes and improvements across the application, including:
+    *   Adding timestamps to orders.
+    *   Adding image uploads for Fabrics & Souvenirs.
+    *   Fixing various UI layouts (e.g., custom order search).
+    *   Making all static text editable from the admin dashboard (a request that was already completed via the CMS).
+    *   Adding scrolling to the guest designs table.
+    *   Removing the Add Text tool from the POD designer.
+    *   Cleaning up the Design Services page.
+    *   Adding manual color input fields for bulk and POD orders.
+    *   Restructuring the Boutique page (renaming categories, adding sections, adding a search bar).
+    *   Fixing cart persistence logic on payment cancellation.
+    *   Removing manual payment options, leaving only Flutterwave.
+    *   Ensuring the Admin Boutique order breakdown is detailed.
+    *   Adding validation for custom order quantities.
+4.  **SYSTEM CONFIG ADMIN PAGE**: A dedicated page in the admin dashboard for managing all the new database-driven feature flags and system settings.
+5.  **IMAGE UPLOAD FOR FABRICS & SOUVENIRS**: A robust image upload feature for the Fabrics and Souvenirs sections in the admin panel, allowing admins to upload images from their local device.
+6.  **SUPABASE CLOUD STORAGE INTEGRATION**: Migrate all product image uploads from local server storage to Supabase Cloud Storage to ensure images persist after redeployment.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB e-commerce platform.
-
-In this session, the agent completed a full overhaul of the product image system, ensuring images are stored reliably, displayed without cropping (), and have large, clear previews on variation selection pages. This fix was applied site-wide.
-
-The Print-on-Demand (POD) designer was significantly rebuilt. It now supports dual file storage (original design + mockup), dynamic print size selection, position controls, and links uploaded designs to an automatically created guest contact record in the database.
-
-A new admin module was created at . This page allows administrators to view a table of all guest designs, see previews of the original and mockup files, and includes buttons to download the full-resolution files securely.
-
-The backend  file has been heavily modified to support these new features, including a unified image upload service, new database schemas for designs and contacts, and new API endpoints for the admin dashboard.
-
-The implementation of a stateless guest tracking system (using a UUID) is currently in progress. The backend has been partially updated, but the frontend has not been touched yet for this specific task.
+The application is a feature-rich, full-stack e-commerce platform. During this session, the agent successfully implemented:
+-   A complete, persistent email marketing and transactional system with a full-featured admin management UI.
+-   A fully database-driven system configuration, managed via a new System Config admin page, which controls feature flags and critical settings.
+-   The Print-On-Demand Image Reuse system, which uses a backend image proxy to ensure the correct base product image is always loaded on the design canvas, avoiding CORS issues.
+-   A large batch of UI and functionality fixes as requested by the user, including order timestamps, a search bar for the Boutique, manual color inputs, and improved admin tables.
+-   A functional image upload system for Fabrics and Souvenirs in the admin panel (using local storage, which is now being migrated).
+-   The backend  file has been partially refactored, with the email system extracted into its own service and route modules, setting a pattern for future refactoring.
+-   Two full regression tests were run using the testing agent, both passing with 100% success and helping to identify and fix a critical bug.
 
 **Last working item**:
--   **Last item agent was working:** Implementing a stateless guest tracking system for Print-On-Demand (POD) designs. The goal is to track guest uploads using a UUID () stored in the frontend's local storage and a hidden form field, eliminating reliance on browser sessions or cookies. The agent was in the process of rewriting the backend logic.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** testing agent v3 fork. This is a critical data pipeline change affecting both frontend and backend. The test should verify the end-to-end flow: 1. Guest uploads a design, receives a , and the design is saved as unassigned. 2. Simulate clearing cache/cookies. 3. Guest fills contact form, sending the . 4. Verify the design is updated to assigned and linked to the new contact record. 5. Check the admin dashboard to confirm the design moved from the unassigned to the assigned view.
--   **User Testing Done:** N
+-   Last item agent was working: The agent received Supabase credentials from the user and was about to begin the implementation of migrating all product image storage from the local filesystem to Supabase Cloud Storage.
+-   Status: IN PROGRESS
+-   Agent Testing Done: N
+-   Which testing method agent to use? both. The backend requires testing of the new Supabase service functions (upload, delete) via  or a test script. The frontend requires the  to verify the end-to-end image upload, display, and deletion flows for all product types (Fabrics, Souvenirs, Boutique, POD).
+-   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Complete the stateless guest tracking implementation for POD. (P0)
--   **Issue 2:** Implement pending landing page and admin UI changes. (P1)
--   **Issue 3:** Execute a full, critical site test. (P2)
--   **Issue 4:** Complete the backend refactoring from . (P3)
+-   Issue 1: Complete the Supabase Cloud Storage integration. (P0)
+-   Issue 2: Complete the backend refactoring from . (P1)
 
 **Issues Detail:**
--   **Issue 1:** Complete the stateless guest tracking implementation for POD.
-    -   **Attempted fixes:** The agent started rewriting the backend endpoints (, ) to use a  and a  field.
+-   **Issue 1:** Complete the Supabase Cloud Storage integration.
+    -   **Attempted fixes:** The agent has received the integration playbook and user credentials. No code has been written yet.
     -   **Next debug checklist:**
-        1.  Finalize the backend logic in  for  to save the design as unassigned and return a .
-        2.  Finalize the  endpoint to find the design by  and assign it to the created contact.
-        3.  Update the  endpoint to filter by  (unassigned or assigned).
-        4.  Modify :
-            -   On design upload, store the returned  in both local storage and a hidden form field.
-            -   When the contact form is submitted, send the  along with the guest's details.
-        5.  Update  to include tabs or filters for Assigned and Unassigned designs.
-    -   **Why fix this issue and what will be achieved with the fix?** To create a robust guest data pipeline that doesn't lose user work if they clear their cache, switch devices, or have cookies disabled.
+        1.  Add the  and  to the  file.
+        2.  Install the  Python library: Looking in indexes: https://pypi.org/simple, https://d33sy5i8bnduwe.cloudfront.net/simple/
+Requirement already satisfied: supabase in /root/.venv/lib/python3.11/site-packages (2.3.5)
+Requirement already satisfied: gotrue<3.0,>=1.3 in /root/.venv/lib/python3.11/site-packages (from supabase) (2.9.1)
+Requirement already satisfied: httpx<0.26,>=0.24 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.25.2)
+Requirement already satisfied: postgrest<0.16.0,>=0.10.8 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.15.1)
+Requirement already satisfied: realtime<2.0.0,>=1.0.0 in /root/.venv/lib/python3.11/site-packages (from supabase) (1.0.6)
+Requirement already satisfied: storage3<0.8.0,>=0.5.3 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.7.7)
+Requirement already satisfied: supafunc<0.4.0,>=0.3.1 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.3.3)
+Requirement already satisfied: pydantic<3,>=1.10 in /root/.venv/lib/python3.11/site-packages (from gotrue<3.0,>=1.3->supabase) (2.12.5)
+Requirement already satisfied: anyio in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (4.12.1)
+Requirement already satisfied: certifi in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (2026.1.4)
+Requirement already satisfied: httpcore==1.* in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (1.0.9)
+Requirement already satisfied: idna in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (3.11)
+Requirement already satisfied: sniffio in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (1.3.1)
+Requirement already satisfied: h11>=0.16 in /root/.venv/lib/python3.11/site-packages (from httpcore==1.*->httpx<0.26,>=0.24->supabase) (0.16.0)
+Requirement already satisfied: h2<5,>=3 in /root/.venv/lib/python3.11/site-packages (from httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (4.3.0)
+Requirement already satisfied: hyperframe<7,>=6.1 in /root/.venv/lib/python3.11/site-packages (from h2<5,>=3->httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (6.1.0)
+Requirement already satisfied: hpack<5,>=4.1 in /root/.venv/lib/python3.11/site-packages (from h2<5,>=3->httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (4.1.0)
+Requirement already satisfied: deprecation<3.0.0,>=2.1.0 in /root/.venv/lib/python3.11/site-packages (from postgrest<0.16.0,>=0.10.8->supabase) (2.1.0)
+Requirement already satisfied: strenum<0.5.0,>=0.4.9 in /root/.venv/lib/python3.11/site-packages (from postgrest<0.16.0,>=0.10.8->supabase) (0.4.15)
+Requirement already satisfied: packaging in /root/.venv/lib/python3.11/site-packages (from deprecation<3.0.0,>=2.1.0->postgrest<0.16.0,>=0.10.8->supabase) (26.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.5 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (2.41.5)
+Requirement already satisfied: typing-extensions>=4.14.1 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.2 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (0.4.2)
+Requirement already satisfied: python-dateutil<3.0.0,>=2.8.1 in /root/.venv/lib/python3.11/site-packages (from realtime<2.0.0,>=1.0.0->supabase) (2.9.0.post0)
+Requirement already satisfied: websockets<13,>=11 in /root/.venv/lib/python3.11/site-packages (from realtime<2.0.0,>=1.0.0->supabase) (12.0)
+Requirement already satisfied: six>=1.5 in /root/.venv/lib/python3.11/site-packages (from python-dateutil<3.0.0,>=2.8.1->realtime<2.0.0,>=1.0.0->supabase) (1.17.0).
+        3.  Create a new service module, , to encapsulate all Supabase interactions (init client, upload file, delete file).
+        4.  Update the existing image upload endpoint () to use the new  instead of saving files locally.
+        5.  Update the product deletion endpoints (for fabrics, souvenirs, etc.) to call the  to delete the corresponding image from the Supabase bucket.
+        6.  Verify that all frontend components correctly display images using the new Supabase public URLs.
+    -   **Why fix this issue and what will be achieved with the fix?** To prevent product images from being deleted on every redeployment, ensuring data persistence and application stability. This moves the application towards a scalable, production-ready architecture.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** No
+    -   **Blocked on other issue:** None.
 
--   **Issue 2:** Implement pending landing page and admin UI changes.
-    -   **Attempted fixes:** None in this session; deferred from start.
+-   **Issue 2:** Complete the backend refactoring.
+    -   **Attempted fixes:** The agent successfully extracted the email system into  and . However, new endpoints (image proxy, system config) were still added to .
     -   **Next debug checklist:**
-        1.  Edit  to replace the hero image and add a Quick Price Calculator section.
-        2.  Edit the track order page to auto-format the Order ID input.
-        3.  Edit  and  to add a route and link for .
-    -   **Why fix this issue and what will be achieved with the fix?** To complete the user's outstanding requests from the previous session.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** No
-
--   **Issue 3:** Execute the user-requested full, critical site test.
-    -   **Attempted fixes:** None. Deferred due to higher priority feature work.
-    -   **Next debug checklist:** Call  with a comprehensive plan covering all major user flows, especially payments (Flutterwave), tiered pricing, the overhauled image system, and the entire POD design pipeline.
-    -   **Why fix this issue and what will be achieved with the fix?** To ensure application stability and catch regressions after numerous major architectural changes.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** No
-
--   **Issue 4:** Complete the backend refactoring.
-    -   **Attempted fixes:** A modular structure exists, but all new logic in this session was added to , increasing technical debt.
-    -   **Next debug checklist:** Systematically move endpoints (especially the new POD and admin logic) from  into the  and new service files.
-    -   **Why fix this issue and what will be achieved with the fix?** To improve backend maintainability, scalability, and safety for future development.
+        1.  Create new route files in  for logical modules like , , , etc.
+        2.  Systematically move related endpoints and their logic from  into these new modules.
+        3.  Refactor business logic into corresponding service files under .
+        4.  Update  to import and include the new routers, progressively shrinking it until it primarily handles startup, middleware, and router includes.
+    -   **Why fix this issue and what will be achieved with the fix?** The  file is over 10,000 lines long, making it a critical bottleneck for development, debugging, and stability. Refactoring is essential for maintainability.
     -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Backend
-    -   **Blocked on other issue:** No
+    -   **Blocked on other issue:** None, but it is recommended to do this after the Supabase integration.
 
 **In progress Task List**:
--   **Task 1:** Complete stateless guest tracking implementation.
-    -   **Where to resume:** Finish implementing the backend logic in , then move to the frontend  to manage the .
-    -   **What will be achieved with this?** A persistent, stateless POD design flow that works without cookies.
+-   **Task 1:** Implement Supabase Cloud Storage.
+    -   **Where to resume:** Start by adding the Supabase credentials to the  file and installing the required Python package.
+    -   **What will be achieved with this?** A persistent, scalable, and robust solution for storing all product images, completely decoupled from the application's local filesystem.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** No
+    -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   Implement UI changes on the Landing Page and Track Order Page. (P1)
-    -   Run a full, critical site-wide test using the testing agent. (P2)
-    -   Build the Admin Inventory Page UI. (P2)
+    -   **Landing Page UI Changes (P1):** Replace hero image and add a Quick Price Calculator.
+    -   **Admin Mockup Editor (P1):** Create a UI for admins to visually define the  on POD product base images, instead of manually inputting coordinates.
 -   **Future Tasks:**
+    -   Newsletter signup form in the website footer.
     -   Integrate with a shipping provider.
     -   Enhance the design tool to support multiple print areas (front, back, sleeves).
     -   Implement browser push notifications for admins.
+    -   Build a File Manager in the admin dashboard.
 
 **Completed work in this session**
--   **Product Image Updates:** Updated images for T-Shirt, Polo, Joggers, Hoodie, and Varsity Jacket.
--   **New 'Shorts' Product:** Created the 'Shorts' product for both Bulk and POD.
--   **Site-Wide Image System Overhaul:**
-    -   Fixed image persistence by creating a unified backend upload service and correcting URL paths to .
-    -   Fixed image cropping on all product cards by applying  CSS.
-    -   Enlarged the product preview on variation selection pages for Bulk and POD for better visibility.
--   **Enhanced Print-On-Demand (POD) Feature:**
-    -   Implemented dual-file storage (original design and generated mockup).
-    -   Added dynamic print size selection (Badge, A4, A3, A2).
-    -   Automated guest contact creation and linked them to their designs.
--   **New Admin Dashboard Module:**
-    -   Created a Guest Designs page () for admins.
-    -   Implemented functionality to preview and download both original and mockup files for each guest design.
--   **Full POD Flow Test:** Manually tested the entire POD flow from product selection to cart, verifying backend data creation with .
+-   **Full Persistent Email System:** Implemented and tested a complete email marketing and transactional system, fully manageable from the admin dashboard.
+-   **Database-Driven System Architecture:** Created a  collection in MongoDB to store all feature flags and settings, making them persistent and editable via a new admin page.
+-   **POD Image Reuse System:** Implemented a backend image proxy to ensure the correct  is always used on the POD design canvas, fixing CORS issues and enforcing the one product, one image rule.
+-   **Admin System Config Page:** Created a new frontend page () for Superadmins to manage all system settings and feature flags.
+-   **Extensive UI & Logic Fixes:** Completed a large batch of over 15 user-requested fixes, including adding order timestamps, a boutique search bar, manual color inputs, improved admin tables, and enhanced cart persistence.
+-   **Image Upload for Fabrics & Souvenirs:** Added a complete image upload feature (local storage) to the  for managing fabric and souvenir images. This is the system now being migrated to Supabase.
+-   **Backend Refactoring (Email Module):** Successfully extracted the entire email system from  into dedicated service and route files, establishing a pattern for future refactoring.
+-   **Full Site Regression Testing:** Conducted two comprehensive regression tests using the testing agent, both passing with 100% and validating the stability of the application after major changes.
 
 **Earlier issues found/mentioned but not fixed**
--   **Production Deployment:** The user's initial report of images not showing on their live site () was due to changes being in the preview environment only. The agent fixed the underlying bug (incorrect upload path), but the user still needs to redeploy the application for the fix to take effect on their production site. This needs to be communicated clearly.
+-   The core issue of the monolithic  file remains, though progress has been made by extracting the email system. This is the highest priority technical debt item.
 
 **Known issue recurrence from previous fork**
--   None.
+-   The habit of adding new endpoints to the main  file recurred. The image proxy and system config APIs were added directly to  instead of new modular files.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Stateless Tracking:** Moving from session-based tracking to a UUID () stored in frontend local storage and a database record to persist guest activity.
--   **Secure File Downloads:** Using FastAPI's  behind an authenticated endpoint to allow admins to download files without exposing public URLs.
--   **Unified File Upload Service:** Centralizing file upload logic into a single, robust backend service with validation and logging.
--   **Dynamic Frontend:** Using React and  to create a dynamic design canvas that responds to user input (resizing, positioning) without page reloads.
+-   **Supabase Storage:** The new target for all file uploads, providing persistent, scalable, and CDN-delivered files.
+-   **Database-Driven Configuration:** Using a dedicated  MongoDB collection to manage feature flags and application settings, which are editable via an admin UI. This eliminates hardcoded configurations.
+-   **Backend Image Proxy:** An API endpoint () that fetches external images and serves them with the correct CORS headers, preventing canvas-tainting issues on the frontend.
+-   **Modular Backend Refactoring:** The process of breaking down the monolithic  into smaller, maintainable route and service files.
 
 **key DB schema**
--   **pod_designs:** 
--   **clients:** 
-
-**changes in tech stack**
--   None.
+-   **system_configs**: 
+-   **pod_clothing_items**: 
+-   **fabrics**: 
+-   **souvenirs**: 
 
 **All files of reference**
 -   **Created:**
-    -   : New admin dashboard for viewing guest designs.
-    -   : Shared frontend functions for handling image URLs.
+    -   
+    -   
+    -   
+    -   
 -   **Updated (Major):**
-    -   : Added all logic for the image system overhaul, the enhanced POD designer, the new admin module, and the start of the stateless tracking system.
-    -   : Completely rewritten to support the new design features (canvas, resizing, dual-file upload, contact form).
-    -   : Updated CSS and layout for image display and large variation previews.
-    -   : Updated CSS for product image display.
-    -   : Updated CSS for image previews.
-    -   : Added sidebar link to the new Guest Designs page.
-    -   : Added the route for the new admin page.
--   **Multiple other pages were updated with CSS fixes:** , , , .
+    -   : Email logic removed, but new endpoints for image proxy and system config were added. Seeding logic for configs added. File deletion logic added to product delete endpoints.
+    -   : Completely refactored to remove hardcoded products, fetch data from the backend, and use the new image proxy for the canvas background.
+    -   : Rewritten to include a full-featured image upload component instead of a simple text input for the URL.
+    -   : Added a search bar and filtering logic; updated category structure.
+    -   : Updated sidebar navigation; added formatted date/time to order views.
+    -   : Added new routes for the admin pages.
+    -   : Added Other Color input and quantity validation logic.
 
 **Areas that need refactoring**:
--    is critically monolithic. The large amount of new logic for images, POD, and admin functions should be extracted into separate route and service files.
--    is now a very large and complex component that manages state for the canvas, product data, guest info, and API calls. It should be broken down into smaller, more manageable components (e.g., , , ).
+-   **:** This remains the highest priority. It is still over 10,000 lines long and contains the logic for dozens of features. It must be broken down into a modular structure following the pattern set by the  module.
 
 **key api endpoints**
--   : (POST) Handles initial design upload, saves files, creates an unassigned design record, and returns a .
--   : (POST) Creates a guest contact and updates the design record from unassigned to assigned.
--   : (GET) Fetches guest designs, filterable by status.
--   : (GET) Securely downloads the original uploaded design file for an admin.
--   : (GET) Securely downloads the generated mockup file for an admin.
+-   **/api/admin/upload/product-image**: (POST) General endpoint for uploading product images (to be updated for Supabase).
+-   **/api/proxy/image**: (GET) Fetches and serves an external image with proper CORS headers.
+-   **/api/admin/system-config**: (GET/PUT) Manages system-wide feature flags and settings.
+-   **/api/pod/clothing-items**: (GET) Now fully database-driven, reads from the  collection.
 
 **Critical Info for New Agent**
--   **PRIORITY 0:** Your immediate task is to complete the stateless guest tracking implementation. The backend work is started, but the frontend  needs to be updated to handle the  (store in local storage, send with contact form).
--   **Stateless is the Rule:** The POD flow must function without relying on browser sessions or cookies. The  is the key to linking an anonymous upload to a guest's contact info.
--   **Production Deployment:** The user is viewing their site on a live domain. Remember to inform the user that all fixes and features (including the critical image path fix) will only be visible on their live site after they redeploy the application.
--   **Admin Testing:** Testing admin pages with the screenshot tool is unreliable due to stateless sessions. Use  with an auth token to test admin API endpoints directly, or perform a manual multi-step test that includes logging in.
+-   **PRIORITY 0: Supabase Integration.** Your immediate task is to implement Supabase storage. The user has provided credentials in the chat history, and you have the integration playbook. This is a critical step for application stability.
+-   **Refactor :** After the Supabase migration, tackling the  monolith is the next most important task. Propose a plan to the user to continue breaking it down module by module.
+-   **Use the Playbook:** Follow the  response for the Supabase implementation. Do not deviate.
+-   **Test Thoroughly:** Any change to file handling is critical. After implementing Supabase, you must run a full test of all product creation, editing (replacing/deleting images), and deletion flows to ensure there are no regressions or orphan files.
 
 **documents and test reports created in this job**
--   : Updated with the new features and fixes.
+-   : Successful regression test report after email system implementation.
+-   : Successful UI verification test report after implementing a large batch of fixes.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Test full POD flow**: User requested a complete, step-by-step test of the POD feature. (Completed manually by agent).
-2.  **Add download capability**: User requested download buttons for original and mockup files in the admin dashboard. (Completed).
-3.  **Fix guest data pipeline**: User requested a new admin module to view guest designs and link them to contact records. (Completed).
-4.  **Use product image for mockup**: User clarified that the canvas background should be the actual product image. (Fixed).
-5.  **Fix POD design feature**: User detailed requirements for a major POD enhancement (dual-file storage, dynamic resizing, etc.). (Completed).
-6.  **Fix the product image system**: User provided a detailed 3-part requirement to fix image persistence, cropping, and preview sizes across the entire app. (Completed).
-7.  **What I am seeing is not what you are showing me**: User reported a discrepancy between the preview environment and their live production site. (Diagnosed as a deployment issue).
-8.  **Some images are showing and others are not**: User reported the initial critical bug with image uploads on their production site. (Root cause fixed).
-9.  **Confirm that the backend db is synced**: User asked for verification of image updates in the database. (Completed).
-10. **Create shorts product...**: User requested a new product with a specific image. (Completed).
+1.  **User:** Requests migration to Supabase Cloud Storage for all product images to ensure persistence. (IN PROGRESS)
+2.  **Agent:** Asks for Supabase credentials. (RESOLVED)
+3.  **User:** Provides Supabase URL and service role key. (RESOLVED)
+4.  **User:** Requests image upload functionality for Fabrics and Souvenirs admin pages. (COMPLETED)
+5.  **User:** Requests an admin page to manage system configurations and feature flags. (COMPLETED)
+6.  **Agent:** Finishes implementation and asks for the next task. (RESOLVED)
+7.  **User:** Asks agent to run needed tests. (COMPLETED)
+8.  **Agent:** Runs tests via , which pass 100%. (COMPLETED)
+9.  **User:** Requests implementation of a large batch of 15+ UI and logic corrections. (COMPLETED)
+10. **User:** Requests a database-driven architecture where all configurations persist. (COMPLETED)
 
 **Project Health Check:**
--   **Broken:** The guest design data pipeline is currently broken mid-implementation. It will not function correctly until the stateless UUID tracking is fully implemented on both the frontend and backend.
--   **Mocked:** Flutterwave payment integration is live.
--   **At Risk:** The monolithic  file is a significant technical debt and stability risk. The lack of an automated regression test after substantial changes also puts the application at risk of undiscovered bugs.
+-   **Broken:** None.
+-   **Mocked:** None.
+-   **At Risk:**
+    -   The monolithic  file remains a critical risk to stability and development velocity.
+    -   The current local image storage is not persistent and will be wiped on redeploy. This is what the current Supabase migration task is fixing.
 
 **3rd Party Integrations**
--   **Flutterwave (Payments):** Live and operational.
--   **ip-api.com:** Geolocation for currency.
+-   **Flutterwave:** Payments.
+-   **ip-api.com:** Geolocation.
+-   **exchangerate-api.com:** Currency rates.
 -   **MongoDB:** Database.
--   **Recharts:** Analytics dashboard charts.
--   **Konva.js / react-konva:** Mockup builder canvas.
--   **APScheduler:** Backend background jobs.
--   **exchangerate-api.com:** Live currency rates.
+-   **APScheduler:** Background jobs.
+-   **cryptography:** Credential encryption.
+-   **Supabase (requires User API Key):** New integration for cloud object storage. In progress.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO. All testing was done manually with screenshots and , which is insufficient for the scale of changes made. A full regression test is highly recommended.
+-   **Testing agent used after significant changes:** YES (twice in this session).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** Unknown. A full site test is needed to identify any.
+-   **Known regressions:** None. The last two major test runs passed completely.
 
 **Credentials to test flow:**
 -   **Admin Login:**  / 
+-   **Supabase Credentials:** Provided by the user in the chat history ( and service key).
 
 **What agent forgot to execute**
--   The agent correctly prioritized the user's immediate feature requests and bug fixes over the initial plan. The deferred tasks that are still pending are:
-    -   Implementing the landing page UI changes.
-    -   Running a comprehensive, automated, full-site test.</analysis>
+-   All user requests from this session have been addressed or are in progress. The only pending items are long-standing backlog tasks from the original problem statement, such as the landing page UI updates (hero image, price calculator), which have not been prioritized by the user recently.</analysis>

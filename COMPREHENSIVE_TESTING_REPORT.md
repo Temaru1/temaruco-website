@@ -2,7 +2,7 @@
 
 **Date**: February 14, 2026  
 **Application**: Temaruco Clothing Factory Website  
-**URL**: https://guest-tracker-40.preview.emergentagent.com
+**URL**: https://fashionprint-app.preview.emergentagent.com
 
 ---
 
@@ -286,7 +286,7 @@ enquiries: Design requests tracked ✅
 Backend:  RUNNING (port 8001) ✅
 Frontend: RUNNING (port 3000) ✅
 MongoDB:  RUNNING (connected) ✅
-Preview:  https://guest-tracker-40.preview.emergentagent.com ✅
+Preview:  https://fashionprint-app.preview.emergentagent.com ✅
 ```
 
 **Health Checks**:
