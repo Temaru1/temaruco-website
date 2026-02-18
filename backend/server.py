@@ -2938,6 +2938,28 @@ async def delete_any_product(product_type: str, product_id: str, admin_user: Dic
         raise HTTPException(status_code=400, detail="Invalid product type")
     
     collection = db[collection_map[product_type]]
+    
+    # Get product to find image URL before deleting
+    product = await collection.find_one({'id': product_id})
+    if product:
+        # Delete image from storage if exists
+        image_url = product.get('image_url') or product.get('base_image_url', '')
+        if image_url:
+            if is_supabase_url(image_url):
+                storage_path = extract_storage_path_from_url(image_url)
+                if storage_path:
+                    await delete_file_from_supabase(storage_path)
+                    logger.info(f"Deleted {product_type} image from Supabase: {storage_path}")
+            elif image_url.startswith('/api/uploads/'):
+                filename = image_url.split('/')[-1]
+                file_path = UPLOAD_DIR / filename
+                if file_path.exists():
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"Deleted {product_type} image: {filename}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete {product_type} image: {e}")
+    
     result = await collection.delete_one({'id': product_id})
     
     if result.deleted_count == 0:
