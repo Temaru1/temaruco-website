@@ -112,13 +112,22 @@ const CartPage = () => {
   const handlePaymentSuccess = () => {
     toast.success('Payment successful! Your order is being processed.');
     localStorage.removeItem('cart');
+    localStorage.removeItem('cartBackup'); // Clear backup on success
     setCart([]);
     setShowCheckoutModal(false);
     navigate(`/order-summary/${orderId}`);
   };
 
+  // Handle payment close/cancel - restore cart from backup
+  const handlePaymentCancel = () => {
+    // Cart is already in localStorage, so nothing to restore
+    toast.info('Payment cancelled. Your cart has been preserved.');
+  };
+
   const handlePayLater = () => {
     toast.info('Order saved. You can pay later from your order summary.');
+    // Keep cart backup for later
+    localStorage.setItem('cartBackup', JSON.stringify(cart));
     localStorage.removeItem('cart');
     setCart([]);
     setShowCheckoutModal(false);
