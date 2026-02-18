@@ -25,32 +25,11 @@ const DESIGN_SERVICES = [
     color: 'bg-red-500'
   },
   {
-    id: 'brand_identity',
-    name: 'Brand Identity',
-    description: 'Complete brand package including logo, colors, typography, and brand guidelines.',
-    icon: Palette,
-    color: 'bg-purple-500'
-  },
-  {
-    id: 'social_media',
-    name: 'Social Media Graphics',
-    description: 'Eye-catching graphics for Instagram, Facebook, Twitter, and other social platforms.',
-    icon: Instagram,
-    color: 'bg-pink-500'
-  },
-  {
     id: 'event_flyers',
     name: 'Event Flyers',
     description: 'Professional flyers and posters for events, promotions, and announcements.',
     icon: Calendar,
     color: 'bg-orange-500'
-  },
-  {
-    id: 'custom_illustration',
-    name: 'Custom Illustrations',
-    description: 'Unique hand-drawn or digital illustrations tailored to your specific needs.',
-    icon: PenTool,
-    color: 'bg-teal-500'
   }
 ];
 
