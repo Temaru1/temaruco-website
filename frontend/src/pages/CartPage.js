@@ -9,7 +9,19 @@ import { getImageUrl } from '../utils/imageUtils';
 const CartPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart') || '[]'));
+  const [cart, setCart] = useState(() => {
+    // Try to restore from backup if main cart is empty
+    const mainCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (mainCart.length === 0) {
+      const backup = JSON.parse(localStorage.getItem('cartBackup') || '[]');
+      if (backup.length > 0) {
+        localStorage.setItem('cart', JSON.stringify(backup));
+        localStorage.removeItem('cartBackup');
+        return backup;
+      }
+    }
+    return mainCart;
+  });
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [previousPage, setPreviousPage] = useState('/boutique');
