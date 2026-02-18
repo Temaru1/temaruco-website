@@ -1,111 +1,50 @@
 <analysis>**original_problem_statement**: The user's initial goals were to build a full-stack e-commerce application. Over the course of development, numerous large-scale features and fixes have been requested and implemented. The most recent user requests included:
 
-1.  **PRINT-ON-DEMAND IMAGE REUSE SYSTEM**: Ensure the exact same product image from a product card is used on the design page, with no new image generation. This involves layering the guest's design on top of a persistent  for each product.
-2.  **DATABASE-DRIVEN ARCHITECTURE**: All system-critical behavior (feature flags, product settings, admin edits) must be stored in the database to persist across redeployments, eliminating hardcoded values in the frontend or backend.
-3.  **UI & FUNCTIONALITY CORRECTIONS (BATCH 1 & 2)**: A comprehensive list of 15+ specific fixes and improvements across the application, including:
-    *   Adding timestamps to orders.
-    *   Adding image uploads for Fabrics & Souvenirs.
-    *   Fixing various UI layouts (e.g., custom order search).
-    *   Making all static text editable from the admin dashboard (a request that was already completed via the CMS).
-    *   Adding scrolling to the guest designs table.
-    *   Removing the Add Text tool from the POD designer.
-    *   Cleaning up the Design Services page.
-    *   Adding manual color input fields for bulk and POD orders.
-    *   Restructuring the Boutique page (renaming categories, adding sections, adding a search bar).
-    *   Fixing cart persistence logic on payment cancellation.
-    *   Removing manual payment options, leaving only Flutterwave.
-    *   Ensuring the Admin Boutique order breakdown is detailed.
-    *   Adding validation for custom order quantities.
+1.  **PRINT-ON-DEMAND IMAGE REUSE SYSTEM**: Ensure the exact same product image from a product card is used on the design page, with no new image generation.
+2.  **DATABASE-DRIVEN ARCHITECTURE**: All system-critical behavior (feature flags, product settings) must be stored in the database to persist across redeployments.
+3.  **UI & FUNCTIONALITY CORRECTIONS**: A comprehensive list of 15+ specific fixes and improvements across the application.
 4.  **SYSTEM CONFIG ADMIN PAGE**: A dedicated page in the admin dashboard for managing all the new database-driven feature flags and system settings.
-5.  **IMAGE UPLOAD FOR FABRICS & SOUVENIRS**: A robust image upload feature for the Fabrics and Souvenirs sections in the admin panel, allowing admins to upload images from their local device.
+5.  **IMAGE UPLOAD FOR FABRICS & SOUVENIRS**: A robust image upload feature for the Fabrics and Souvenirs sections in the admin panel.
 6.  **SUPABASE CLOUD STORAGE INTEGRATION**: Migrate all product image uploads from local server storage to Supabase Cloud Storage to ensure images persist after redeployment.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a feature-rich, full-stack e-commerce platform. During this session, the agent successfully implemented:
--   A complete, persistent email marketing and transactional system with a full-featured admin management UI.
--   A fully database-driven system configuration, managed via a new System Config admin page, which controls feature flags and critical settings.
--   The Print-On-Demand Image Reuse system, which uses a backend image proxy to ensure the correct base product image is always loaded on the design canvas, avoiding CORS issues.
--   A large batch of UI and functionality fixes as requested by the user, including order timestamps, a search bar for the Boutique, manual color inputs, and improved admin tables.
--   A functional image upload system for Fabrics and Souvenirs in the admin panel (using local storage, which is now being migrated).
--   The backend  file has been partially refactored, with the email system extracted into its own service and route modules, setting a pattern for future refactoring.
--   Two full regression tests were run using the testing agent, both passing with 100% success and helping to identify and fix a critical bug.
+The application is a feature-rich, full-stack e-commerce platform. During the last session, the agent successfully migrated the entire application's image storage system from the local filesystem to Supabase Cloud Storage. This involved:
+-   Creating a new  to handle all interactions with Supabase (upload, delete, URL generation).
+-   Implementing a robust fallback mechanism that reverts to local storage if Supabase credentials fail, preventing application downtime.
+-   Updating all relevant backend endpoints (for Boutique products, Fabrics, Souvenirs, POD items) to use the new storage service for both image uploads and deletions.
+-   Updating the image proxy to correctly handle Supabase URLs.
+-   Adding a startup function to ensure the Supabase bucket exists.
+-   Successfully debugging an authentication issue by working with the user to obtain a new, valid service key.
+The integration was validated by a comprehensive test suite run by the testing agent, which passed with a 100% success rate. The backend  file has been partially refactored, but a significant portion of logic remains to be modularized.
 
 **Last working item**:
--   Last item agent was working: The agent received Supabase credentials from the user and was about to begin the implementation of migrating all product image storage from the local filesystem to Supabase Cloud Storage.
--   Status: IN PROGRESS
--   Agent Testing Done: N
--   Which testing method agent to use? both. The backend requires testing of the new Supabase service functions (upload, delete) via  or a test script. The frontend requires the  to verify the end-to-end image upload, display, and deletion flows for all product types (Fabrics, Souvenirs, Boutique, POD).
+-   Last item agent was working: The agent completed the full implementation and testing of the Supabase Cloud Storage migration. After an initial authentication failure due to an invalid key, the user provided a new key, which resolved the issue. The agent then ran a full regression test using the testing agent.
+-   Status: USER VERIFICATION PENDING
+-   Agent Testing Done: Y
+-   Which testing method agent to use? NA
 -   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   Issue 1: Complete the Supabase Cloud Storage integration. (P0)
--   Issue 2: Complete the backend refactoring from . (P1)
+-   Issue 1: Complete the backend refactoring from . (P0)
 
 **Issues Detail:**
--   **Issue 1:** Complete the Supabase Cloud Storage integration.
-    -   **Attempted fixes:** The agent has received the integration playbook and user credentials. No code has been written yet.
-    -   **Next debug checklist:**
-        1.  Add the  and  to the  file.
-        2.  Install the  Python library: Looking in indexes: https://pypi.org/simple, https://d33sy5i8bnduwe.cloudfront.net/simple/
-Requirement already satisfied: supabase in /root/.venv/lib/python3.11/site-packages (2.3.5)
-Requirement already satisfied: gotrue<3.0,>=1.3 in /root/.venv/lib/python3.11/site-packages (from supabase) (2.9.1)
-Requirement already satisfied: httpx<0.26,>=0.24 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.25.2)
-Requirement already satisfied: postgrest<0.16.0,>=0.10.8 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.15.1)
-Requirement already satisfied: realtime<2.0.0,>=1.0.0 in /root/.venv/lib/python3.11/site-packages (from supabase) (1.0.6)
-Requirement already satisfied: storage3<0.8.0,>=0.5.3 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.7.7)
-Requirement already satisfied: supafunc<0.4.0,>=0.3.1 in /root/.venv/lib/python3.11/site-packages (from supabase) (0.3.3)
-Requirement already satisfied: pydantic<3,>=1.10 in /root/.venv/lib/python3.11/site-packages (from gotrue<3.0,>=1.3->supabase) (2.12.5)
-Requirement already satisfied: anyio in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (4.12.1)
-Requirement already satisfied: certifi in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (2026.1.4)
-Requirement already satisfied: httpcore==1.* in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (1.0.9)
-Requirement already satisfied: idna in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (3.11)
-Requirement already satisfied: sniffio in /root/.venv/lib/python3.11/site-packages (from httpx<0.26,>=0.24->supabase) (1.3.1)
-Requirement already satisfied: h11>=0.16 in /root/.venv/lib/python3.11/site-packages (from httpcore==1.*->httpx<0.26,>=0.24->supabase) (0.16.0)
-Requirement already satisfied: h2<5,>=3 in /root/.venv/lib/python3.11/site-packages (from httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (4.3.0)
-Requirement already satisfied: hyperframe<7,>=6.1 in /root/.venv/lib/python3.11/site-packages (from h2<5,>=3->httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (6.1.0)
-Requirement already satisfied: hpack<5,>=4.1 in /root/.venv/lib/python3.11/site-packages (from h2<5,>=3->httpx[http2]<0.28,>=0.24->gotrue<3.0,>=1.3->supabase) (4.1.0)
-Requirement already satisfied: deprecation<3.0.0,>=2.1.0 in /root/.venv/lib/python3.11/site-packages (from postgrest<0.16.0,>=0.10.8->supabase) (2.1.0)
-Requirement already satisfied: strenum<0.5.0,>=0.4.9 in /root/.venv/lib/python3.11/site-packages (from postgrest<0.16.0,>=0.10.8->supabase) (0.4.15)
-Requirement already satisfied: packaging in /root/.venv/lib/python3.11/site-packages (from deprecation<3.0.0,>=2.1.0->postgrest<0.16.0,>=0.10.8->supabase) (26.0)
-Requirement already satisfied: annotated-types>=0.6.0 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (0.7.0)
-Requirement already satisfied: pydantic-core==2.41.5 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (2.41.5)
-Requirement already satisfied: typing-extensions>=4.14.1 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (4.15.0)
-Requirement already satisfied: typing-inspection>=0.4.2 in /root/.venv/lib/python3.11/site-packages (from pydantic<3,>=1.10->gotrue<3.0,>=1.3->supabase) (0.4.2)
-Requirement already satisfied: python-dateutil<3.0.0,>=2.8.1 in /root/.venv/lib/python3.11/site-packages (from realtime<2.0.0,>=1.0.0->supabase) (2.9.0.post0)
-Requirement already satisfied: websockets<13,>=11 in /root/.venv/lib/python3.11/site-packages (from realtime<2.0.0,>=1.0.0->supabase) (12.0)
-Requirement already satisfied: six>=1.5 in /root/.venv/lib/python3.11/site-packages (from python-dateutil<3.0.0,>=2.8.1->realtime<2.0.0,>=1.0.0->supabase) (1.17.0).
-        3.  Create a new service module, , to encapsulate all Supabase interactions (init client, upload file, delete file).
-        4.  Update the existing image upload endpoint () to use the new  instead of saving files locally.
-        5.  Update the product deletion endpoints (for fabrics, souvenirs, etc.) to call the  to delete the corresponding image from the Supabase bucket.
-        6.  Verify that all frontend components correctly display images using the new Supabase public URLs.
-    -   **Why fix this issue and what will be achieved with the fix?** To prevent product images from being deleted on every redeployment, ensuring data persistence and application stability. This moves the application towards a scalable, production-ready architecture.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** None.
-
--   **Issue 2:** Complete the backend refactoring.
-    -   **Attempted fixes:** The agent successfully extracted the email system into  and . However, new endpoints (image proxy, system config) were still added to .
+-   **Issue 1:** Complete the backend refactoring.
+    -   **Attempted fixes:** The agent successfully extracted the email system into  and . However, many other endpoints (image proxy, system config, products, etc.) still reside in the monolithic .
     -   **Next debug checklist:**
         1.  Create new route files in  for logical modules like , , , etc.
-        2.  Systematically move related endpoints and their logic from  into these new modules.
-        3.  Refactor business logic into corresponding service files under .
+        2.  Systematically move related endpoints and their business logic from  into these new modules.
+        3.  Refactor business logic from the routes into corresponding service files under .
         4.  Update  to import and include the new routers, progressively shrinking it until it primarily handles startup, middleware, and router includes.
-    -   **Why fix this issue and what will be achieved with the fix?** The  file is over 10,000 lines long, making it a critical bottleneck for development, debugging, and stability. Refactoring is essential for maintainability.
+    -   **Why fix this issue and what will be achieved with the fix?** The  file is over 10,000 lines long, making it a critical bottleneck for development, debugging, and stability. Refactoring is essential for maintainability and scalability.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Backend
-    -   **Blocked on other issue:** None, but it is recommended to do this after the Supabase integration.
+    -   **Blocked on other issue:** None. This is now the highest priority task.
 
 **In progress Task List**:
--   **Task 1:** Implement Supabase Cloud Storage.
-    -   **Where to resume:** Start by adding the Supabase credentials to the  file and installing the required Python package.
-    -   **What will be achieved with this?** A persistent, scalable, and robust solution for storing all product images, completely decoupled from the application's local filesystem.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** No.
+-   None. The Supabase task is complete.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
@@ -119,29 +58,29 @@ Requirement already satisfied: six>=1.5 in /root/.venv/lib/python3.11/site-packa
     -   Build a File Manager in the admin dashboard.
 
 **Completed work in this session**
--   **Full Persistent Email System:** Implemented and tested a complete email marketing and transactional system, fully manageable from the admin dashboard.
--   **Database-Driven System Architecture:** Created a  collection in MongoDB to store all feature flags and settings, making them persistent and editable via a new admin page.
--   **POD Image Reuse System:** Implemented a backend image proxy to ensure the correct  is always used on the POD design canvas, fixing CORS issues and enforcing the one product, one image rule.
--   **Admin System Config Page:** Created a new frontend page () for Superadmins to manage all system settings and feature flags.
--   **Extensive UI & Logic Fixes:** Completed a large batch of over 15 user-requested fixes, including adding order timestamps, a boutique search bar, manual color inputs, improved admin tables, and enhanced cart persistence.
--   **Image Upload for Fabrics & Souvenirs:** Added a complete image upload feature (local storage) to the  for managing fabric and souvenir images. This is the system now being migrated to Supabase.
--   **Backend Refactoring (Email Module):** Successfully extracted the entire email system from  into dedicated service and route files, establishing a pattern for future refactoring.
--   **Full Site Regression Testing:** Conducted two comprehensive regression tests using the testing agent, both passing with 100% and validating the stability of the application after major changes.
+-   **Supabase Cloud Storage Migration (DONE):** Successfully migrated all product image uploads from local storage to Supabase. This includes updating all create, update, and delete endpoints and implementing a graceful fallback to local storage in case of auth failure. The entire feature was verified by the testing agent.
+
+-   **Recently completed (from previous sessions):**
+    -   Full Persistent Email System (DONE)
+    -   Database-Driven System Architecture (DONE)
+    -   POD Image Reuse System (DONE)
+    -   Admin System Config Page (DONE)
+    -   Extensive UI & Logic Fixes (DONE)
+    -   Backend Refactoring (Email Module) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   The core issue of the monolithic  file remains, though progress has been made by extracting the email system. This is the highest priority technical debt item.
+-   The core issue of the monolithic  file remains. This is the highest priority technical debt item and is tracked as the main pending issue.
 
 **Known issue recurrence from previous fork**
--   The habit of adding new endpoints to the main  file recurred. The image proxy and system config APIs were added directly to  instead of new modular files.
+-   The habit of adding new endpoints to the main  file recurred in the past. The next task should focus on actively reversing this by modularizing the existing code.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Supabase Storage:** The new target for all file uploads, providing persistent, scalable, and CDN-delivered files.
--   **Database-Driven Configuration:** Using a dedicated  MongoDB collection to manage feature flags and application settings, which are editable via an admin UI. This eliminates hardcoded configurations.
--   **Backend Image Proxy:** An API endpoint () that fetches external images and serves them with the correct CORS headers, preventing canvas-tainting issues on the frontend.
--   **Modular Backend Refactoring:** The process of breaking down the monolithic  into smaller, maintainable route and service files.
+-   **Supabase Storage:** The primary system for all file uploads, providing persistent, scalable, and CDN-delivered files.
+-   **Resilient Storage Service:** The custom  was built to handle Supabase authentication failures by gracefully falling back to the local  directory, ensuring the application remains functional even if Supabase configuration is invalid.
+-   **Modular Backend Refactoring:** The process of breaking down the monolithic  into smaller, maintainable route and service files. This is the next major task.
 
 **key DB schema**
 -   **system_configs**: 
@@ -151,56 +90,46 @@ Requirement already satisfied: six>=1.5 in /root/.venv/lib/python3.11/site-packa
 
 **All files of reference**
 -   **Created:**
-    -   
-    -   
-    -   
-    -   
+    -   : Encapsulates all Supabase and local file storage logic.
 -   **Updated (Major):**
-    -   : Email logic removed, but new endpoints for image proxy and system config were added. Seeding logic for configs added. File deletion logic added to product delete endpoints.
-    -   : Completely refactored to remove hardcoded products, fetch data from the backend, and use the new image proxy for the canvas background.
-    -   : Rewritten to include a full-featured image upload component instead of a simple text input for the URL.
-    -   : Added a search bar and filtering logic; updated category structure.
-    -   : Updated sidebar navigation; added formatted date/time to order views.
-    -   : Added new routes for the admin pages.
-    -   : Added Other Color input and quantity validation logic.
+    -   : All image upload and deletion endpoints were refactored to use the new . The image proxy was updated. A startup event was added.
+    -   : Updated with , , and .
+    -   : Updated to expose the storage service.
 
 **Areas that need refactoring**:
--   **:** This remains the highest priority. It is still over 10,000 lines long and contains the logic for dozens of features. It must be broken down into a modular structure following the pattern set by the  module.
+-   **:** This remains the highest priority. It must be broken down into a modular structure following the pattern set by the  module.
 
 **key api endpoints**
--   **/api/admin/upload/product-image**: (POST) General endpoint for uploading product images (to be updated for Supabase).
--   **/api/proxy/image**: (GET) Fetches and serves an external image with proper CORS headers.
--   **/api/admin/system-config**: (GET/PUT) Manages system-wide feature flags and settings.
--   **/api/pod/clothing-items**: (GET) Now fully database-driven, reads from the  collection.
+-   **/api/admin/upload/product-image**: (POST) General endpoint for uploading product images (now uses Supabase).
+-   **/api/admin/boutique/products/upload-image**: (POST) Endpoint for boutique product images (now uses Supabase).
+-   **/api/admin/products/{product_type}/{product_id}**: (DELETE) Generic product deletion, now handles image removal from Supabase.
+-   **/api/proxy/image**: (GET) Fetches and serves an external image, now allows Supabase URLs.
 
 **Critical Info for New Agent**
--   **PRIORITY 0: Supabase Integration.** Your immediate task is to implement Supabase storage. The user has provided credentials in the chat history, and you have the integration playbook. This is a critical step for application stability.
--   **Refactor :** After the Supabase migration, tackling the  monolith is the next most important task. Propose a plan to the user to continue breaking it down module by module.
--   **Use the Playbook:** Follow the  response for the Supabase implementation. Do not deviate.
--   **Test Thoroughly:** Any change to file handling is critical. After implementing Supabase, you must run a full test of all product creation, editing (replacing/deleting images), and deletion flows to ensure there are no regressions or orphan files.
+-   **PRIORITY 0: Refactor **. The Supabase migration is complete and tested. Your immediate task is to tackle the  monolith. Propose a plan to the user to continue breaking it down module by module (e.g., products, admin, cms).
+-   **Supabase is Working:** The Supabase authentication issue was resolved with a new key from the user. The integration is stable and passed all tests. You can proceed with confidence.
+-   **Follow Refactoring Pattern:** Use the existing  and  as a template for how to structure new modules.
 
 **documents and test reports created in this job**
--   : Successful regression test report after email system implementation.
--   : Successful UI verification test report after implementing a large batch of fixes.
+-   : Successful regression test report verifying the complete Supabase storage migration.
+-   : (Previous session) Successful UI verification test report.
+-   : (Previous session) Successful regression test report.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests migration to Supabase Cloud Storage for all product images to ensure persistence. (IN PROGRESS)
-2.  **Agent:** Asks for Supabase credentials. (RESOLVED)
-3.  **User:** Provides Supabase URL and service role key. (RESOLVED)
-4.  **User:** Requests image upload functionality for Fabrics and Souvenirs admin pages. (COMPLETED)
-5.  **User:** Requests an admin page to manage system configurations and feature flags. (COMPLETED)
-6.  **Agent:** Finishes implementation and asks for the next task. (RESOLVED)
-7.  **User:** Asks agent to run needed tests. (COMPLETED)
-8.  **Agent:** Runs tests via , which pass 100%. (COMPLETED)
-9.  **User:** Requests implementation of a large batch of 15+ UI and logic corrections. (COMPLETED)
-10. **User:** Requests a database-driven architecture where all configurations persist. (COMPLETED)
+1.  **Agent:** Finished implementation of Supabase with a fallback to local storage due to an auth error, and asked for confirmation to proceed. (RESOLVED)
+2.  **User:** Try supabase again (IN PROGRESS)
+3.  **Agent:** Re-tested the connection, confirmed it was still failing, and asked the user to verify their service key. (RESOLVED)
+4.  **User:** Provided a new Supabase service key. (RESOLVED)
+5.  **Agent:** Updated the key, successfully tested the connection, and proceeded to finalize the integration. (COMPLETED)
+6.  **Agent:** Used the testing agent to run a comprehensive test of the image upload functionality. (COMPLETED)
+7.  **Agent:** Confirmed all tests passed and updated the PRD. (COMPLETED)
+8.  **Agent:** Finished the job with a final summary. (COMPLETED)
 
 **Project Health Check:**
 -   **Broken:** None.
 -   **Mocked:** None.
 -   **At Risk:**
     -   The monolithic  file remains a critical risk to stability and development velocity.
-    -   The current local image storage is not persistent and will be wiped on redeploy. This is what the current Supabase migration task is fixing.
 
 **3rd Party Integrations**
 -   **Flutterwave:** Payments.
@@ -209,17 +138,17 @@ Requirement already satisfied: six>=1.5 in /root/.venv/lib/python3.11/site-packa
 -   **MongoDB:** Database.
 -   **APScheduler:** Background jobs.
 -   **cryptography:** Credential encryption.
--   **Supabase (requires User API Key):** New integration for cloud object storage. In progress.
+-   **Supabase (User API Key):** Cloud object storage. **(Integration Complete)**
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (twice in this session).
+-   **Testing agent used after significant changes:** YES.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** None. The last two major test runs passed completely.
+-   **Known regressions:** None. The last major test run passed completely.
 
 **Credentials to test flow:**
 -   **Admin Login:**  / 
--   **Supabase Credentials:** Provided by the user in the chat history ( and service key).
+-   **Supabase Credentials:** Stored in . The key has been validated and is working.
 
 **What agent forgot to execute**
--   All user requests from this session have been addressed or are in progress. The only pending items are long-standing backlog tasks from the original problem statement, such as the landing page UI updates (hero image, price calculator), which have not been prioritized by the user recently.</analysis>
+-   Nothing was forgotten. The agent successfully debugged a critical blocker and completed the assigned task. All pending backlog items from the handoff summary remain for future prioritization.</analysis>
