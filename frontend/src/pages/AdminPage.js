@@ -594,20 +594,51 @@ const AdminOrders = () => {
                 </div>
               )}
 
-              {/* Boutique Order Specific */}
+              {/* Boutique Order Specific - Itemized Breakdown */}
               {selectedOrder.type === 'boutique' && selectedOrder.items && (
                 <div>
-                  <p className="text-sm text-zinc-600 mb-2">Boutique Items</p>
-                  <div className="bg-zinc-50 p-4 rounded-lg space-y-2">
-                    {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-2 border-b border-zinc-200 last:border-0">
-                        <div>
-                          <p className="font-semibold">{item.name}</p>
-                          <p className="text-sm text-zinc-600">Size: {item.size} • Qty: {item.quantity}</p>
-                        </div>
-                        <p className="font-semibold">₦{(item.price * item.quantity).toLocaleString()}</p>
-                      </div>
-                    ))}
+                  <p className="text-sm text-zinc-600 mb-2">Order Items Breakdown</p>
+                  <div className="bg-zinc-50 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-zinc-200">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold">Item</th>
+                          <th className="px-3 py-2 text-center font-semibold">Size</th>
+                          <th className="px-3 py-2 text-center font-semibold">Color</th>
+                          <th className="px-3 py-2 text-center font-semibold">Qty</th>
+                          <th className="px-3 py-2 text-right font-semibold">Price</th>
+                          <th className="px-3 py-2 text-right font-semibold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-200">
+                        {selectedOrder.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="px-3 py-2 font-medium">{item.name}</td>
+                            <td className="px-3 py-2 text-center">{item.size || '—'}</td>
+                            <td className="px-3 py-2 text-center">{item.color || '—'}</td>
+                            <td className="px-3 py-2 text-center">{item.quantity}</td>
+                            <td className="px-3 py-2 text-right">₦{item.price?.toLocaleString() || 0}</td>
+                            <td className="px-3 py-2 text-right font-semibold">₦{((item.price || 0) * item.quantity).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-zinc-100">
+                        <tr>
+                          <td colSpan="5" className="px-3 py-2 text-right font-semibold">Subtotal:</td>
+                          <td className="px-3 py-2 text-right font-bold">₦{selectedOrder.items.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0).toLocaleString()}</td>
+                        </tr>
+                        {selectedOrder.delivery_fee > 0 && (
+                          <tr>
+                            <td colSpan="5" className="px-3 py-2 text-right font-semibold">Delivery:</td>
+                            <td className="px-3 py-2 text-right">₦{selectedOrder.delivery_fee?.toLocaleString() || 0}</td>
+                          </tr>
+                        )}
+                        <tr className="bg-zinc-200">
+                          <td colSpan="5" className="px-3 py-2 text-right font-bold">Grand Total:</td>
+                          <td className="px-3 py-2 text-right font-bold text-primary">₦{selectedOrder.total_price?.toLocaleString()}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 </div>
               )}
