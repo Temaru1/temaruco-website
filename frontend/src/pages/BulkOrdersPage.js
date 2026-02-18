@@ -504,6 +504,13 @@ const BulkOrdersPage = () => {
               </CardContent>
             </Card>
 
+            {/* Validation message for sizes */}
+            {getTotalFromSizes() > 0 && getTotalFromSizes() !== orderData.quantity && orderData.quantity > 0 && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-700">
+                ⚠️ Total quantity must equal selected sizes. Current: {getTotalFromSizes()} pieces, Expected: {orderData.quantity} pieces.
+              </div>
+            )}
+
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
@@ -511,6 +518,7 @@ const BulkOrdersPage = () => {
               <Button 
                 onClick={() => setStep(3)}
                 className="bg-[#D90429] hover:bg-[#B90322]"
+                disabled={getTotalFromSizes() < 50}
               >
                 Continue <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
