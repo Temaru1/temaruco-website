@@ -118,6 +118,8 @@ async def upload_file_to_supabase(
     
     try:
         client = get_supabase_client()
+        config = get_supabase_config()
+        bucket_name = config['bucket']
         
         # Read file content
         contents = await file.read()
@@ -143,7 +145,7 @@ async def upload_file_to_supabase(
         logger.info(f"[SUPABASE] Uploading file to: {storage_path}")
         
         # Upload to Supabase
-        response = client.storage.from_(SUPABASE_BUCKET).upload(
+        response = client.storage.from_(bucket_name).upload(
             path=storage_path,
             file=contents,
             file_options={
@@ -154,7 +156,7 @@ async def upload_file_to_supabase(
         )
         
         # Get public URL
-        public_url = client.storage.from_(SUPABASE_BUCKET).get_public_url(storage_path)
+        public_url = client.storage.from_(bucket_name).get_public_url(storage_path)
         
         logger.info(f"[SUPABASE] File uploaded successfully: {storage_path}")
         logger.info(f"[SUPABASE] Public URL: {public_url}")
@@ -193,11 +195,13 @@ async def delete_file_from_supabase(storage_path: str) -> bool:
     
     try:
         client = get_supabase_client()
+        config = get_supabase_config()
+        bucket_name = config['bucket']
         
         logger.info(f"[SUPABASE] Deleting file: {storage_path}")
         
         # Delete the file
-        response = client.storage.from_(SUPABASE_BUCKET).remove([storage_path])
+        response = client.storage.from_(bucket_name).remove([storage_path])
         
         logger.info(f"[SUPABASE] File deleted successfully: {storage_path}")
         return True
@@ -222,6 +226,8 @@ async def delete_files_from_supabase(storage_paths: list) -> int:
     
     try:
         client = get_supabase_client()
+        config = get_supabase_config()
+        bucket_name = config['bucket']
         
         # Filter out empty paths
         valid_paths = [p for p in storage_paths if p]
@@ -237,7 +243,7 @@ async def delete_files_from_supabase(storage_paths: list) -> int:
         
         for i in range(0, len(valid_paths), chunk_size):
             chunk = valid_paths[i:i + chunk_size]
-            response = client.storage.from_(SUPABASE_BUCKET).remove(chunk)
+            response = client.storage.from_(bucket_name).remove(chunk)
             deleted_count += len(chunk)
         
         logger.info(f"[SUPABASE] Deleted {deleted_count} files successfully")
@@ -263,7 +269,8 @@ def get_public_url(storage_path: str) -> str:
     
     try:
         client = get_supabase_client()
-        return client.storage.from_(SUPABASE_BUCKET).get_public_url(storage_path)
+        config = get_supabase_config()
+        return client.storage.from_(config['bucket']).get_public_url(storage_path)
     except Exception as e:
         logger.error(f"[SUPABASE] Error getting public URL: {str(e)}")
         return ""
@@ -279,7 +286,8 @@ def extract_storage_path_from_url(url: str) -> Optional[str]:
     Returns:
         Storage path (e.g., "products/uuid.jpg") or None
     """
-    if not url or not SUPABASE_URL:
+    config = get_supabase_config()
+    if not url or not config['url']:
         return None
     
     try:
@@ -287,7 +295,7 @@ def extract_storage_path_from_url(url: str) -> Optional[str]:
         # https://xxx.supabase.co/storage/v1/object/public/bucket-name/folder/filename.ext
         if '/storage/v1/object/public/' in url:
             # Extract everything after the bucket name
-            parts = url.split(f'/storage/v1/object/public/{SUPABASE_BUCKET}/')
+            parts = url.split(f'/storage/v1/object/public/{config["bucket"]}/')
             if len(parts) == 2:
                 return parts[1]
         
@@ -299,7 +307,8 @@ def extract_storage_path_from_url(url: str) -> Optional[str]:
 
 def is_supabase_url(url: str) -> bool:
     """Check if a URL is a Supabase storage URL"""
-    if not url or not SUPABASE_URL:
+    config = get_supabase_config()
+    if not url or not config['url']:
         return False
     
-    return SUPABASE_URL.replace('https://', '').split('.')[0] in url
+    return config['url'].replace('https://', '').split('.')[0] in url
