@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, CreditCard, Building } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { createBoutiqueOrder } from '../utils/api';
 import PaymentSelector from '../components/PaymentSelector';
