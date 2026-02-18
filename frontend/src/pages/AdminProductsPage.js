@@ -126,6 +126,63 @@ const AdminProductsPage = () => {
   const resetForm = () => {
     setFormData({ name: '', price: '', branded_price: '', image_url: '', description: '', is_active: true });
     setEditingItem(null);
+    setImagePreview(null);
+  };
+
+  // Handle image file selection
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload JPG, PNG, or WebP image only');
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File exceeds maximum size of 5MB');
+      return;
+    }
+
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    // Upload file
+    setUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await axios.post(
+        `${API_URL}/api/admin/upload/product-image`,
+        uploadFormData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      );
+
+      setFormData(prev => ({ ...prev, image_url: response.data.image_url }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error('Image upload failed. Please try again.');
+      setImagePreview(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Remove/clear image
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const currentItems = activeTab === 'fabrics' ? fabrics : souvenirs;
