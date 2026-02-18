@@ -297,7 +297,7 @@ const AdminOrders = () => {
       ) : (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-zinc-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Order ID</th>
@@ -305,6 +305,7 @@ const AdminOrders = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Quantity</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Date & Time</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Actions</th>
                 </tr>
@@ -321,6 +322,9 @@ const AdminOrders = () => {
                     <td className="px-6 py-4 text-sm capitalize">{order.type}</td>
                     <td className="px-6 py-4 text-sm">{order.quantity}</td>
                     <td className="px-6 py-4 text-sm font-semibold">₦{order.total_price.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-zinc-500">
+                      {order.created_at ? new Date(order.created_at).toLocaleString() : '-'}
+                    </td>
                     <td className="px-6 py-4">
                       <select
                         value={order.status}
