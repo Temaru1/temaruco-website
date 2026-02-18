@@ -12,11 +12,6 @@ from fastapi import UploadFile, HTTPException
 
 logger = logging.getLogger(__name__)
 
-# Supabase configuration from environment
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
-SUPABASE_BUCKET = os.environ.get('SUPABASE_BUCKET', 'product-images')
-
 # Initialize Supabase client (lazy initialization)
 _supabase_client: Optional[Client] = None
 
@@ -26,15 +21,25 @@ ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
+def get_supabase_config():
+    """Get Supabase configuration from environment (lazy loading)"""
+    return {
+        'url': os.environ.get('SUPABASE_URL'),
+        'key': os.environ.get('SUPABASE_KEY'),
+        'bucket': os.environ.get('SUPABASE_BUCKET', 'product-images')
+    }
+
+
 def get_supabase_client() -> Client:
     """Get or create Supabase client (lazy initialization)"""
     global _supabase_client
     
     if _supabase_client is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
+        config = get_supabase_config()
+        if not config['url'] or not config['key']:
             raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in environment")
         
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        _supabase_client = create_client(config['url'], config['key'])
         logger.info("Supabase client initialized successfully")
     
     return _supabase_client
