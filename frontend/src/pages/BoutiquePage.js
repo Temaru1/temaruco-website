@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag, ArrowRight, X, ZoomIn, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ShoppingBag, ArrowRight, X, ZoomIn, ArrowLeft, Search } from 'lucide-react';
 import { getBoutiqueProducts, createBoutiqueOrder } from '../utils/api';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
@@ -18,6 +18,7 @@ const BoutiquePage = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [customerInfo, setCustomerInfo] = useState({
     name: '', email: '', phone: '',
     delivery_address: '', delivery_city: '', delivery_state: '', delivery_notes: ''
