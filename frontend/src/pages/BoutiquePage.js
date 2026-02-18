@@ -30,8 +30,9 @@ const BoutiquePage = () => {
 
   const CATEGORIES = [
     { value: 'all', label: 'All Items' },
-    { value: 'traditional', label: 'Nigerian Traditional Wear' },
+    { value: 'traditional', label: 'Cultural Wears' },
     { value: 'modern', label: 'Modern Wear' },
+    { value: 'blanks', label: 'Blanks' },
   ];
 
   const AUDIENCES = [
