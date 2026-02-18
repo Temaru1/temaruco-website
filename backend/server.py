@@ -636,20 +636,6 @@ async def save_upload_file(file: UploadFile, allowed_extensions: set = None, mod
     }
 
 
-@api_router.post("/admin/upload/product-image")
-async def upload_product_image(
-    file: UploadFile = File(...),
-    admin_user: Dict = Depends(get_admin_user)
-):
-    """Admin: Upload product image for Fabrics, Souvenirs, or Boutique"""
-    result = await save_uploaded_file(file, 'products')
-    return {
-        'message': 'Image uploaded successfully',
-        'image_url': result['file_path'],
-        'file_name': result['file_name']
-    }
-
-
 async def generate_enquiry_code() -> str:
     """Generate unique enquiry code in format ENQ-MMYY-DDXXXX"""
     now = datetime.now(timezone.utc)
