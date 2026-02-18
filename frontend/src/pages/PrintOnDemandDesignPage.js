@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Stage, Layer, Image as KonvaImage, Text, Transformer, Rect } from 'react-konva';
-import { ArrowLeft, Upload, Type, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, ShoppingCart, Check, Star, Crown, Gem, Move, Maximize2, RotateCw } from 'lucide-react';
+import { ArrowLeft, Upload, Download, Trash2, RotateCcw, ZoomIn, ZoomOut, ShoppingCart, Check, Star, Crown, Gem, Move, Maximize2, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import SEO from '../components/SEO';
