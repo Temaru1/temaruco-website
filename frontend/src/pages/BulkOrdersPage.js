@@ -388,7 +388,7 @@ const BulkOrdersPage = () => {
                   <label className="block text-sm font-medium text-zinc-700 mb-2">
                     Select Colors (click to toggle)
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {COLORS.map((color) => (
                       <button
                         key={color}
@@ -403,6 +403,26 @@ const BulkOrdersPage = () => {
                         {orderData.colors.includes(color) && '✓ '}{color}
                       </button>
                     ))}
+                  </div>
+                  {/* Other Color Input */}
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={customColor}
+                      onChange={(e) => setCustomColor(e.target.value)}
+                      placeholder="Other color..."
+                      className="flex-1 px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomColor()}
+                      data-testid="custom-color-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomColor}
+                      disabled={!customColor.trim()}
+                      className="px-4 py-2 text-sm bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 disabled:opacity-50"
+                    >
+                      Add
+                    </button>
                   </div>
                   {orderData.colors.length > 0 && (
                     <p className="text-sm text-zinc-500 mt-2">
