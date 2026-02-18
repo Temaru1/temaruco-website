@@ -22,7 +22,7 @@ const AdminAllProductsPage = () => {
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
-    name: '', price: '', description: '', category: '', image_url: '', is_active: true
+    name: '', price: '', description: '', category: '', image_url: '', is_active: true, type: 'fabric'
   });
 
   const productTypes = [
