@@ -8983,7 +8983,8 @@ async def proxy_image(url: str):
         'images.unsplash.com',
         'customer-assets.emergentagent.com',
         'placehold.co',
-        'via.placeholder.com'
+        'via.placeholder.com',
+        'wkltyoesqjixpvjxjham.supabase.co'  # Supabase storage
     ]
     
     from urllib.parse import urlparse
