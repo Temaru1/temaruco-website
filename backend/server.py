@@ -2631,10 +2631,25 @@ async def update_souvenir(souvenir_id: str, souvenir_data: Dict[str, Any], admin
 
 @api_router.delete("/admin/souvenirs/{souvenir_id}")
 async def delete_souvenir(souvenir_id: str, admin_user: Dict = Depends(get_admin_user)):
-    """Delete a souvenir product"""
-    result = await db.souvenirs.delete_one({'id': souvenir_id})
-    if result.deleted_count == 0:
+    """Delete a souvenir product and its image file"""
+    # Get souvenir to find image path
+    souvenir = await db.souvenirs.find_one({'id': souvenir_id})
+    if not souvenir:
         raise HTTPException(status_code=404, detail="Souvenir not found")
+    
+    # Delete image file if it exists locally
+    image_url = souvenir.get('image_url', '')
+    if image_url and image_url.startswith('/api/uploads/'):
+        filename = image_url.split('/')[-1]
+        file_path = UPLOAD_DIR / filename
+        if file_path.exists():
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted souvenir image: {filename}")
+            except Exception as e:
+                logger.error(f"Failed to delete souvenir image: {e}")
+    
+    result = await db.souvenirs.delete_one({'id': souvenir_id})
     return {'message': 'Souvenir deleted'}
 
 @api_router.post("/orders/souvenir")
