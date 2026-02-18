@@ -1,24 +1,30 @@
 """
-Supabase Cloud Storage Service
+Supabase Cloud Storage Service with Local Fallback
 Handles file uploads, deletions, and public URL generation for product images.
+Falls back to local storage if Supabase is not configured or authentication fails.
 """
 
 import os
 import uuid
 import logging
+from pathlib import Path
 from typing import Optional, Tuple
-from supabase import create_client, Client
 from fastapi import UploadFile, HTTPException
 
 logger = logging.getLogger(__name__)
 
 # Initialize Supabase client (lazy initialization)
-_supabase_client: Optional[Client] = None
+_supabase_client = None
+_supabase_available = None  # None = not checked, True/False = result
 
 # Allowed image types
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Local upload directory
+LOCAL_UPLOAD_DIR = Path('/app/backend/uploads')
+LOCAL_UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 def get_supabase_config():
@@ -30,49 +36,83 @@ def get_supabase_config():
     }
 
 
-def get_supabase_client() -> Client:
+def get_supabase_client():
     """Get or create Supabase client (lazy initialization)"""
-    global _supabase_client
+    global _supabase_client, _supabase_available
+    
+    if _supabase_available is False:
+        return None
     
     if _supabase_client is None:
         config = get_supabase_config()
         if not config['url'] or not config['key']:
-            raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in environment")
+            logger.warning("Supabase credentials not configured - using local storage")
+            _supabase_available = False
+            return None
         
-        _supabase_client = create_client(config['url'], config['key'])
-        logger.info("Supabase client initialized successfully")
+        try:
+            from supabase import create_client
+            _supabase_client = create_client(config['url'], config['key'])
+            logger.info("Supabase client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Supabase client: {e}")
+            _supabase_available = False
+            return None
     
     return _supabase_client
 
 
 async def ensure_bucket_exists() -> bool:
-    """Ensure the storage bucket exists, create if needed"""
+    """Ensure the storage bucket exists - skip if using local storage"""
+    global _supabase_available
+    
+    client = get_supabase_client()
+    if client is None:
+        logger.info("Using local storage - skipping bucket check")
+        return True
+    
     try:
-        client = get_supabase_client()
         config = get_supabase_config()
         bucket_name = config['bucket']
         
-        # List existing buckets
-        buckets = client.storage.list_buckets()
-        bucket_names = [b.name for b in buckets]
-        
-        if bucket_name not in bucket_names:
-            # Create the bucket with public access
-            client.storage.create_bucket(
-                bucket_name,
-                options={
-                    'public': True,
-                    'file_size_limit': MAX_FILE_SIZE
-                }
-            )
-            logger.info(f"Created Supabase bucket: {bucket_name}")
-        else:
-            logger.info(f"Supabase bucket exists: {bucket_name}")
-        
-        return True
+        # Try a simple operation to verify authentication
+        # Try to get bucket info instead of listing all buckets
+        try:
+            result = client.storage.from_(bucket_name).list()
+            logger.info(f"Supabase bucket '{bucket_name}' is accessible")
+            _supabase_available = True
+            return True
+        except Exception as list_error:
+            # Bucket might not exist or auth failed
+            error_msg = str(list_error)
+            if 'signature verification failed' in error_msg.lower() or 'unauthorized' in error_msg.lower():
+                logger.warning(f"Supabase authentication failed: {error_msg}")
+                logger.warning("Falling back to local storage. Please verify your Supabase service role key.")
+                _supabase_available = False
+                return True  # Return true to not fail startup, will use local storage
+            elif 'not found' in error_msg.lower():
+                # Try to create the bucket
+                try:
+                    client.storage.create_bucket(
+                        bucket_name,
+                        options={'public': True, 'file_size_limit': MAX_FILE_SIZE}
+                    )
+                    logger.info(f"Created Supabase bucket: {bucket_name}")
+                    _supabase_available = True
+                    return True
+                except Exception as create_error:
+                    logger.error(f"Failed to create bucket: {create_error}")
+                    _supabase_available = False
+                    return True
+            else:
+                logger.error(f"Supabase error: {error_msg}")
+                _supabase_available = False
+                return True
+                
     except Exception as e:
-        logger.error(f"Error ensuring bucket exists: {str(e)}")
-        return False
+        logger.error(f"Error checking bucket: {str(e)}")
+        _supabase_available = False
+        return True  # Don't fail startup
 
 
 def validate_image_file(file: UploadFile) -> Tuple[bool, str]:
@@ -101,7 +141,7 @@ async def upload_file_to_supabase(
     custom_filename: Optional[str] = None
 ) -> dict:
     """
-    Upload a file to Supabase Storage.
+    Upload a file to Supabase Storage (or local storage as fallback).
     
     Args:
         file: FastAPI UploadFile object
@@ -117,10 +157,6 @@ async def upload_file_to_supabase(
         raise HTTPException(status_code=400, detail=error_msg)
     
     try:
-        client = get_supabase_client()
-        config = get_supabase_config()
-        bucket_name = config['bucket']
-        
         # Read file content
         contents = await file.read()
         file_size = len(contents)
@@ -139,40 +175,69 @@ async def upload_file_to_supabase(
         else:
             unique_filename = f"{uuid.uuid4()}{ext}"
         
-        # Storage path: folder/filename
-        storage_path = f"{folder}/{unique_filename}"
+        # Try Supabase upload first
+        client = get_supabase_client()
+        if client is not None and _supabase_available is not False:
+            try:
+                config = get_supabase_config()
+                bucket_name = config['bucket']
+                storage_path = f"{folder}/{unique_filename}"
+                
+                logger.info(f"[SUPABASE] Uploading file to: {storage_path}")
+                
+                # Upload to Supabase
+                response = client.storage.from_(bucket_name).upload(
+                    path=storage_path,
+                    file=contents,
+                    file_options={
+                        "cache-control": "3600",
+                        "content-type": file.content_type or "image/jpeg",
+                        "upsert": "true"
+                    }
+                )
+                
+                # Get public URL
+                public_url = client.storage.from_(bucket_name).get_public_url(storage_path)
+                
+                logger.info(f"[SUPABASE] File uploaded successfully: {storage_path}")
+                
+                return {
+                    'file_name': unique_filename,
+                    'public_url': public_url,
+                    'storage_path': storage_path,
+                    'file_size': file_size,
+                    'original_name': file.filename,
+                    'storage_type': 'supabase'
+                }
+            except Exception as supabase_error:
+                logger.warning(f"[SUPABASE] Upload failed, falling back to local: {supabase_error}")
+                # Fall through to local storage
         
-        logger.info(f"[SUPABASE] Uploading file to: {storage_path}")
+        # Fallback to local storage
+        logger.info(f"[LOCAL] Uploading file locally: {unique_filename}")
         
-        # Upload to Supabase
-        response = client.storage.from_(bucket_name).upload(
-            path=storage_path,
-            file=contents,
-            file_options={
-                "cache-control": "3600",
-                "content-type": file.content_type or "image/jpeg",
-                "upsert": "true"  # Allow overwriting if same name
-            }
-        )
+        file_path = LOCAL_UPLOAD_DIR / unique_filename
+        with open(file_path, 'wb') as f:
+            f.write(contents)
         
-        # Get public URL
-        public_url = client.storage.from_(bucket_name).get_public_url(storage_path)
+        # Generate local URL
+        public_url = f"/api/uploads/{unique_filename}"
         
-        logger.info(f"[SUPABASE] File uploaded successfully: {storage_path}")
-        logger.info(f"[SUPABASE] Public URL: {public_url}")
+        logger.info(f"[LOCAL] File saved successfully: {file_path}")
         
         return {
             'file_name': unique_filename,
             'public_url': public_url,
-            'storage_path': storage_path,
+            'storage_path': str(file_path),
             'file_size': file_size,
-            'original_name': file.filename
+            'original_name': file.filename,
+            'storage_type': 'local'
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[SUPABASE] Upload error: {str(e)}")
+        logger.error(f"Upload error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
     finally:
         # Reset file position for potential re-reads
@@ -181,33 +246,44 @@ async def upload_file_to_supabase(
 
 async def delete_file_from_supabase(storage_path: str) -> bool:
     """
-    Delete a file from Supabase Storage.
+    Delete a file from Supabase Storage (or local storage).
     
     Args:
-        storage_path: Full path within the bucket (e.g., "products/uuid.jpg")
+        storage_path: Full path within the bucket (e.g., "products/uuid.jpg") or local path
     
     Returns:
         True if deletion was successful
     """
     if not storage_path:
-        logger.warning("[SUPABASE] No storage path provided for deletion")
+        logger.warning("No storage path provided for deletion")
         return False
     
     try:
+        # Check if it's a local file
+        if storage_path.startswith('/app/backend/uploads/') or not '/' in storage_path:
+            # Local file
+            filename = storage_path.split('/')[-1] if '/' in storage_path else storage_path
+            file_path = LOCAL_UPLOAD_DIR / filename
+            if file_path.exists():
+                os.remove(file_path)
+                logger.info(f"[LOCAL] Deleted file: {file_path}")
+            return True
+        
+        # Try Supabase deletion
         client = get_supabase_client()
-        config = get_supabase_config()
-        bucket_name = config['bucket']
+        if client is not None and _supabase_available is not False:
+            config = get_supabase_config()
+            bucket_name = config['bucket']
+            
+            logger.info(f"[SUPABASE] Deleting file: {storage_path}")
+            response = client.storage.from_(bucket_name).remove([storage_path])
+            logger.info(f"[SUPABASE] File deleted successfully: {storage_path}")
+            return True
         
-        logger.info(f"[SUPABASE] Deleting file: {storage_path}")
-        
-        # Delete the file
-        response = client.storage.from_(bucket_name).remove([storage_path])
-        
-        logger.info(f"[SUPABASE] File deleted successfully: {storage_path}")
-        return True
+        return False
         
     except Exception as e:
-        logger.error(f"[SUPABASE] Delete error for {storage_path}: {str(e)}")
+        logger.error(f"Delete error for {storage_path}: {str(e)}")
         return False
 
 
@@ -224,34 +300,12 @@ async def delete_files_from_supabase(storage_paths: list) -> int:
     if not storage_paths:
         return 0
     
-    try:
-        client = get_supabase_client()
-        config = get_supabase_config()
-        bucket_name = config['bucket']
-        
-        # Filter out empty paths
-        valid_paths = [p for p in storage_paths if p]
-        
-        if not valid_paths:
-            return 0
-        
-        logger.info(f"[SUPABASE] Deleting {len(valid_paths)} files")
-        
-        # Delete in chunks of 100 to avoid API limits
-        deleted_count = 0
-        chunk_size = 100
-        
-        for i in range(0, len(valid_paths), chunk_size):
-            chunk = valid_paths[i:i + chunk_size]
-            response = client.storage.from_(bucket_name).remove(chunk)
-            deleted_count += len(chunk)
-        
-        logger.info(f"[SUPABASE] Deleted {deleted_count} files successfully")
-        return deleted_count
-        
-    except Exception as e:
-        logger.error(f"[SUPABASE] Bulk delete error: {str(e)}")
-        return 0
+    deleted_count = 0
+    for path in storage_paths:
+        if await delete_file_from_supabase(path):
+            deleted_count += 1
+    
+    return deleted_count
 
 
 def get_public_url(storage_path: str) -> str:
@@ -267,13 +321,20 @@ def get_public_url(storage_path: str) -> str:
     if not storage_path:
         return ""
     
+    # Check if it's a local file
+    if storage_path.startswith('/app/backend/uploads/'):
+        filename = storage_path.split('/')[-1]
+        return f"/api/uploads/{filename}"
+    
     try:
         client = get_supabase_client()
-        config = get_supabase_config()
-        return client.storage.from_(config['bucket']).get_public_url(storage_path)
+        if client is not None and _supabase_available is not False:
+            config = get_supabase_config()
+            return client.storage.from_(config['bucket']).get_public_url(storage_path)
     except Exception as e:
-        logger.error(f"[SUPABASE] Error getting public URL: {str(e)}")
-        return ""
+        logger.error(f"Error getting public URL: {str(e)}")
+    
+    return ""
 
 
 def extract_storage_path_from_url(url: str) -> Optional[str]:
@@ -286,29 +347,40 @@ def extract_storage_path_from_url(url: str) -> Optional[str]:
     Returns:
         Storage path (e.g., "products/uuid.jpg") or None
     """
+    if not url:
+        return None
+    
+    # Check if it's a local URL
+    if '/api/uploads/' in url:
+        return url.split('/api/uploads/')[-1]
+    
     config = get_supabase_config()
-    if not url or not config['url']:
+    if not config['url']:
         return None
     
     try:
         # Supabase URLs look like:
         # https://xxx.supabase.co/storage/v1/object/public/bucket-name/folder/filename.ext
         if '/storage/v1/object/public/' in url:
-            # Extract everything after the bucket name
             parts = url.split(f'/storage/v1/object/public/{config["bucket"]}/')
             if len(parts) == 2:
                 return parts[1]
         
         return None
     except Exception as e:
-        logger.error(f"[SUPABASE] Error extracting storage path: {str(e)}")
+        logger.error(f"Error extracting storage path: {str(e)}")
         return None
 
 
 def is_supabase_url(url: str) -> bool:
     """Check if a URL is a Supabase storage URL"""
-    config = get_supabase_config()
-    if not url or not config['url']:
+    if not url:
         return False
     
-    return config['url'].replace('https://', '').split('.')[0] in url
+    config = get_supabase_config()
+    if not config['url']:
+        return False
+    
+    # Extract domain from Supabase URL
+    supabase_domain = config['url'].replace('https://', '').split('.')[0]
+    return supabase_domain in url
