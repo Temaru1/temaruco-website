@@ -108,6 +108,76 @@ const AdminAllProductsPage = () => {
     }
   };
 
+  // Image upload handler for products
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Please upload JPG, PNG, or WebP image');
+      return;
+    }
+
+    // Show preview
+    setImagePreview(URL.createObjectURL(file));
+    setUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post(`${API_URL}/api/admin/upload/product-image`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setProductForm({ ...productForm, image_url: response.data.image_url });
+      toast.success('Image uploaded');
+    } catch (error) {
+      toast.error('Failed to upload image');
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    if (!productForm.name || !productForm.price) {
+      toast.error('Name and price are required');
+      return;
+    }
+
+    try {
+      const productType = productForm.type || 'fabric';
+      const endpoint = productType === 'souvenir' ? '/api/admin/souvenirs' : '/api/admin/fabrics';
+      
+      if (editingProduct) {
+        await axios.put(`${API_URL}${endpoint.replace('/admin/', `/admin/${productType}s/`)}${editingProduct.id}`, productForm, {
+          withCredentials: true
+        });
+        toast.success('Product updated');
+      } else {
+        await axios.post(`${API_URL}${endpoint}`, productForm, {
+          withCredentials: true
+        });
+        toast.success('Product created');
+      }
+      
+      setShowProductModal(false);
+      setEditingProduct(null);
+      setProductForm({ name: '', price: '', description: '', category: '', image_url: '', is_active: true, type: 'fabric' });
+      setImagePreview(null);
+      loadProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save product');
+    }
+  };
+
   const handleDeleteCategory = async (categoryId, categoryName) => {
     if (!window.confirm(`Delete category "${categoryName}"? Products using this category must be moved first.`)) return;
     
