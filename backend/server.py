@@ -27,6 +27,15 @@ import json
 # Flutterwave Configuration (replaces Stripe/Paystack)
 # Flutterwave routes are in routes/payments.py
 
+# Import storage service for Supabase uploads
+from services.storage_service import (
+    upload_file_to_supabase,
+    delete_file_from_supabase,
+    extract_storage_path_from_url,
+    is_supabase_url,
+    ensure_bucket_exists
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
