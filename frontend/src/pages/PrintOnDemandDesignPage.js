@@ -852,12 +852,40 @@ const PrintOnDemandDesignPage = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Color</h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {(activeProduct.colors || ['White', 'Black']).map((color) => (
                     <button key={color} onClick={() => setSelectedColor(color)}
                       className={`w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color ? 'border-[#D90429] ring-2 ring-[#D90429]/30' : 'border-zinc-300'}`}
                       style={{ backgroundColor: COLOR_HEX[color] || '#ccc' }} title={color} />
                   ))}
+                </div>
+                {/* Manual color input */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Other color..."
+                    className="flex-1 px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        setSelectedColor(e.target.value.trim());
+                        e.target.value = '';
+                      }
+                    }}
+                    data-testid="pod-custom-color-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const input = e.target.previousElementSibling;
+                      if (input && input.value.trim()) {
+                        setSelectedColor(input.value.trim());
+                        input.value = '';
+                      }
+                    }}
+                    className="px-3 py-2 text-sm bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200"
+                  >
+                    Set
+                  </button>
                 </div>
                 <p className="text-sm text-zinc-500 mt-2">Selected: {selectedColor}</p>
               </CardContent>
