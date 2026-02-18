@@ -384,67 +384,39 @@ const CartPage = () => {
                 <h2 className="font-oswald text-3xl font-bold mb-2">Complete Payment</h2>
                 <p className="text-zinc-600 mb-6">Order ID: <span className="font-mono font-semibold">{orderId}</span></p>
                 
-                {/* Payment Method Selection */}
-                <div className="flex gap-4 mb-6">
-                  <button
-                    onClick={() => setPaymentMethod('card')}
-                    className={`flex-1 py-4 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-colors ${
-                      paymentMethod === 'card' 
-                        ? 'border-primary bg-primary/5 text-primary' 
-                        : 'border-zinc-200 hover:border-zinc-300'
-                    }`}
-                    data-testid="card-payment-method"
-                  >
-                    <CreditCard size={20} />
-                    Pay Online
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod('bank')}
-                    className={`flex-1 py-4 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-colors ${
-                      paymentMethod === 'bank' 
-                        ? 'border-primary bg-primary/5 text-primary' 
-                        : 'border-zinc-200 hover:border-zinc-300'
-                    }`}
-                    data-testid="bank-payment-method"
-                  >
-                    <Building size={20} />
-                    Bank Transfer
-                  </button>
+                {/* Online Payment Only - Flutterwave */}
+                <div className="bg-zinc-50 p-4 rounded-lg mb-4">
+                  <div className="flex items-center gap-2 text-zinc-700">
+                    <CreditCard size={20} className="text-primary" />
+                    <span className="font-medium">Secure Online Payment</span>
+                  </div>
+                  <p className="text-sm text-zinc-500 mt-1">Pay securely with card, bank transfer, or mobile money via Flutterwave</p>
                 </div>
 
-                {paymentMethod === 'card' ? (
-                  <PaymentSelector
-                    orderId={orderId}
-                    orderType="boutique"
-                    amount={getTotalPrice()}
-                    email={customerInfo.email}
-                    customerName={customerInfo.name}
-                    phone={customerInfo.phone}
-                    onSuccess={handlePaymentSuccess}
-                    onClose={() => {}}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-zinc-50 p-4 rounded-lg text-center">
-                      <p className="text-zinc-600 mb-2">You will be redirected to view bank details and upload payment proof.</p>
-                      <p className="text-sm text-zinc-500">Order ID: {orderId}</p>
-                    </div>
-                    <button
-                      onClick={handlePayLater}
-                      className="btn-primary w-full"
-                      data-testid="view-bank-details-btn"
-                    >
-                      View Bank Details
-                    </button>
-                  </div>
-                )}
+                <PaymentSelector
+                  orderId={orderId}
+                  orderType="boutique"
+                  amount={getTotalPrice()}
+                  email={customerInfo.email}
+                  customerName={customerInfo.name}
+                  phone={customerInfo.phone}
+                  onSuccess={handlePaymentSuccess}
+                  onClose={handlePaymentCancel}
+                />
 
-                <div className="mt-6 pt-4 border-t">
+                <div className="mt-6 pt-4 border-t flex justify-between items-center">
                   <button
                     onClick={() => { setOrderId(null); setCheckoutLoading(false); }}
                     className="text-sm text-zinc-500 hover:text-zinc-700"
                   >
                     ← Back to delivery info
+                  </button>
+                  <button
+                    onClick={handlePayLater}
+                    className="text-sm text-primary hover:underline"
+                    data-testid="pay-later-btn"
+                  >
+                    Pay Later
                   </button>
                 </div>
               </>
