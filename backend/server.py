@@ -11083,6 +11083,16 @@ async def startup_db_client():
         await client.admin.command('ping')
         logger.info(f"Successfully connected to MongoDB: {os.environ.get('DB_NAME', 'unknown')}")
         
+        # Initialize Supabase storage bucket
+        try:
+            bucket_ready = await ensure_bucket_exists()
+            if bucket_ready:
+                logger.info("Supabase storage bucket initialized successfully")
+            else:
+                logger.warning("Supabase storage bucket initialization failed - uploads may not work")
+        except Exception as e:
+            logger.warning(f"Supabase initialization skipped: {str(e)}")
+        
         # Initialize system configuration and seed defaults
         await initialize_system_config()
         await seed_database_defaults()
