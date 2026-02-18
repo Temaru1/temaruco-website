@@ -201,6 +201,8 @@ const AdminClothingItemsPage = () => {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('image', selectedImageFile);
+      // Pass the module type for proper folder organization in Supabase
+      formDataUpload.append('module', activeTab); // 'pod' or 'bulk'
 
       const response = await axios.post(
         `${API_URL}/api/admin/upload-image`,
