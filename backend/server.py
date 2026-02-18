@@ -913,17 +913,26 @@ AVAILABLE_PERMISSIONS = {
 
 # Product image upload endpoint (must be after get_admin_user is defined)
 @api_router.post("/admin/upload/product-image")
-async def upload_product_image(
+async def upload_product_image_endpoint(
     file: UploadFile = File(...),
+    folder: str = Form(default="products"),
     admin_user: Dict = Depends(get_admin_user)
 ):
-    """Admin: Upload product image for Fabrics, Souvenirs, or Boutique"""
-    result = await save_uploaded_file(file, 'products')
-    return {
-        'message': 'Image uploaded successfully',
-        'image_url': result['file_path'],
-        'file_name': result['file_name']
-    }
+    """Admin: Upload product image for Fabrics, Souvenirs, or Boutique to Supabase Cloud Storage"""
+    try:
+        # Upload to Supabase
+        result = await upload_file_to_supabase(file, folder=folder)
+        return {
+            'message': 'Image uploaded successfully',
+            'image_url': result['public_url'],
+            'file_name': result['file_name'],
+            'storage_path': result['storage_path']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Product image upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 async def send_email_mock(to: str, subject: str, body: str):
     """Mock email sending function"""
