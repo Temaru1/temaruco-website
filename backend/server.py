@@ -2538,17 +2538,25 @@ async def delete_fabric(fabric_id: str, admin_user: Dict = Depends(get_admin_use
     if not fabric:
         raise HTTPException(status_code=404, detail="Fabric not found")
     
-    # Delete image file if it exists locally
+    # Delete image from storage (Supabase or local)
     image_url = fabric.get('image_url', '')
-    if image_url and image_url.startswith('/api/uploads/'):
-        filename = image_url.split('/')[-1]
-        file_path = UPLOAD_DIR / filename
-        if file_path.exists():
-            try:
-                os.remove(file_path)
-                logger.info(f"Deleted fabric image: {filename}")
-            except Exception as e:
-                logger.error(f"Failed to delete fabric image: {e}")
+    if image_url:
+        if is_supabase_url(image_url):
+            # Delete from Supabase
+            storage_path = extract_storage_path_from_url(image_url)
+            if storage_path:
+                await delete_file_from_supabase(storage_path)
+                logger.info(f"Deleted fabric image from Supabase: {storage_path}")
+        elif image_url.startswith('/api/uploads/'):
+            # Delete from local storage (legacy)
+            filename = image_url.split('/')[-1]
+            file_path = UPLOAD_DIR / filename
+            if file_path.exists():
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Deleted fabric image: {filename}")
+                except Exception as e:
+                    logger.error(f"Failed to delete fabric image: {e}")
     
     result = await db.fabrics.delete_one({'id': fabric_id})
     return {'message': 'Fabric deleted'}
