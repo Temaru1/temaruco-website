@@ -2087,7 +2087,7 @@ async def upload_pod_mockup(
     mockup_file: UploadFile = File(...)
 ):
     """
-    Upload generated mockup for a POD design.
+    Upload generated mockup for a POD design using Supabase storage.
     Called after client-side mockup generation.
     """
     logger.info(f"[POD MOCKUP] Upload started: design_id={design_id}")
@@ -2097,27 +2097,26 @@ async def upload_pod_mockup(
     if not design:
         raise HTTPException(status_code=404, detail="Design not found")
     
-    # Validate file
-    is_valid, message = await validate_file_upload(mockup_file, ALLOWED_IMAGE_EXTENSIONS)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=message)
-    
-    # Save mockup file
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    mockup_filename = f"{design['product_id']}_{timestamp}_{design_id}_mockup.png"
-    mockup_path = POD_MOCKUPS_DIR / mockup_filename
-    
     try:
-        contents = await mockup_file.read()
-        with open(mockup_path, 'wb') as f:
-            f.write(contents)
+        # Upload to Supabase with custom filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        custom_filename = f"{design['product_id']}_{timestamp}_{design_id}_mockup"
+        result = await upload_file_to_supabase(
+            mockup_file,
+            folder="pod-designs/mockups",
+            custom_filename=custom_filename
+        )
         
-        logger.info(f"[POD MOCKUP] Saved: {mockup_filename} ({len(contents)} bytes)")
+        mockup_url = result['public_url']
+        mockup_storage_path = result.get('storage_path', '')
+        storage_type = result['storage_type']
+        
+        logger.info(f"[POD MOCKUP] Saved via {storage_type}: {result['file_name']} ({result['file_size']} bytes)")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[POD MOCKUP] Save failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save mockup file")
-    
-    mockup_url = f"/api/uploads/designs/mockups/{mockup_filename}"
     
     # Update design record
     await db.pod_designs.update_one(
@@ -2125,6 +2124,7 @@ async def upload_pod_mockup(
         {
             '$set': {
                 'mockup_file_url': mockup_url,
+                'mockup_storage_path': mockup_storage_path,
                 'updated_at': datetime.now(timezone.utc).isoformat()
             }
         }
