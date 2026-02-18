@@ -902,6 +902,20 @@ AVAILABLE_PERMISSIONS = {
     },
 }
 
+# Product image upload endpoint (must be after get_admin_user is defined)
+@api_router.post("/admin/upload/product-image")
+async def upload_product_image(
+    file: UploadFile = File(...),
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Upload product image for Fabrics, Souvenirs, or Boutique"""
+    result = await save_uploaded_file(file, 'products')
+    return {
+        'message': 'Image uploaded successfully',
+        'image_url': result['file_path'],
+        'file_name': result['file_name']
+    }
+
 async def send_email_mock(to: str, subject: str, body: str):
     """Mock email sending function"""
     logger.info(f"[MOCK EMAIL] To: {to}, Subject: {subject}, Body: {body[:100]}...")
