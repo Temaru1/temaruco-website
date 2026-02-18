@@ -1836,7 +1836,7 @@ async def upload_pod_design(
     item_type: str = Form("")
 ):
     """
-    Upload POD design - STATELESS implementation.
+    Upload POD design - STATELESS implementation using Supabase storage.
     Immediately saves design with status='unassigned'.
     Returns temp_design_id for frontend to store in localStorage.
     
@@ -1847,35 +1847,30 @@ async def upload_pod_design(
     """
     logger.info(f"[POD DESIGN] Stateless upload started: product={product_id}")
     
-    # Validate file
-    is_valid, message = await validate_file_upload(design_file, ALLOWED_IMAGE_EXTENSIONS)
-    if not is_valid:
-        logger.error(f"[POD DESIGN] Validation failed: {message}")
-        raise HTTPException(status_code=400, detail=message)
-    
     # Generate unique temp_design_id (UUID-based, primary key)
     temp_design_id = f"design_{uuid.uuid4().hex}"
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    # Save original design file
-    file_ext = os.path.splitext(design_file.filename)[1].lower()
-    original_filename = f"{product_id}_{timestamp}_{temp_design_id}{file_ext}"
-    original_path = POD_ORIGINALS_DIR / original_filename
-    
     try:
-        contents = await design_file.read()
-        with open(original_path, 'wb') as f:
-            f.write(contents)
+        # Upload to Supabase with custom filename
+        custom_filename = f"{product_id}_{timestamp}_{temp_design_id}"
+        result = await upload_file_to_supabase(
+            design_file, 
+            folder="pod-designs/original",
+            custom_filename=custom_filename
+        )
         
-        if not original_path.exists():
-            raise Exception("File save verification failed")
+        original_url = result['public_url']
+        file_size = result['file_size']
+        storage_type = result['storage_type']
+        storage_path = result.get('storage_path', '')
         
-        logger.info(f"[POD DESIGN] Original saved: {original_filename} ({len(contents)} bytes)")
+        logger.info(f"[POD DESIGN] Original saved via {storage_type}: {result['file_name']} ({file_size} bytes)")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[POD DESIGN] Save failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save design file")
-    
-    original_url = f"/api/uploads/designs/original/{original_filename}"
     
     # Create design record with status='unassigned' (STATELESS - no contact required)
     design_record = {
@@ -1891,6 +1886,8 @@ async def upload_pod_design(
         'item_type': item_type or product_id,
         'original_file_url': original_url,
         'original_filename': design_file.filename,
+        'storage_path': storage_path,  # For Supabase deletion
+        'storage_type': storage_type,
         'mockup_file_url': None,
         'mockup_filename': None,
         'print_size': 'a4',
@@ -1898,14 +1895,14 @@ async def upload_pod_design(
         'position_x': 0,
         'position_y': 0,
         'rotation': 0,
-        'file_size': len(contents),
+        'file_size': file_size,
         'status': 'unassigned',  # Key: starts as unassigned
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
     
-    result = await db.pod_designs.insert_one(design_record)
-    if not result.inserted_id:
+    result_db = await db.pod_designs.insert_one(design_record)
+    if not result_db.inserted_id:
         logger.error(f"[POD DESIGN] DB insert failed for design {temp_design_id}")
         raise HTTPException(status_code=500, detail="Failed to save design record")
     
