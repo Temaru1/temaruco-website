@@ -2647,17 +2647,25 @@ async def delete_souvenir(souvenir_id: str, admin_user: Dict = Depends(get_admin
     if not souvenir:
         raise HTTPException(status_code=404, detail="Souvenir not found")
     
-    # Delete image file if it exists locally
+    # Delete image from storage (Supabase or local)
     image_url = souvenir.get('image_url', '')
-    if image_url and image_url.startswith('/api/uploads/'):
-        filename = image_url.split('/')[-1]
-        file_path = UPLOAD_DIR / filename
-        if file_path.exists():
-            try:
-                os.remove(file_path)
-                logger.info(f"Deleted souvenir image: {filename}")
-            except Exception as e:
-                logger.error(f"Failed to delete souvenir image: {e}")
+    if image_url:
+        if is_supabase_url(image_url):
+            # Delete from Supabase
+            storage_path = extract_storage_path_from_url(image_url)
+            if storage_path:
+                await delete_file_from_supabase(storage_path)
+                logger.info(f"Deleted souvenir image from Supabase: {storage_path}")
+        elif image_url.startswith('/api/uploads/'):
+            # Delete from local storage (legacy)
+            filename = image_url.split('/')[-1]
+            file_path = UPLOAD_DIR / filename
+            if file_path.exists():
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Deleted souvenir image: {filename}")
+                except Exception as e:
+                    logger.error(f"Failed to delete souvenir image: {e}")
     
     result = await db.souvenirs.delete_one({'id': souvenir_id})
     return {'message': 'Souvenir deleted'}
