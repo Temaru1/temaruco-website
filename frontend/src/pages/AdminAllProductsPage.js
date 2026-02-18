@@ -504,6 +504,113 @@ const AdminAllProductsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+            <form onSubmit={handleSaveProduct} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Type</label>
+                <select
+                  value={productForm.type}
+                  onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  required
+                >
+                  <option value="fabric">Fabric</option>
+                  <option value="souvenir">Souvenir</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Price (₦) *</label>
+                <input
+                  type="number"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  rows="2"
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Image</label>
+                <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4">
+                  {(imagePreview || productForm.image_url) && (
+                    <div className="mb-3 flex justify-center">
+                      <img 
+                        src={imagePreview || productForm.image_url} 
+                        alt="Preview" 
+                        className="h-32 w-32 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageUpload}
+                    className="w-full text-sm"
+                    disabled={uploadingImage}
+                  />
+                  {uploadingImage && <p className="text-sm text-zinc-500 mt-2">Uploading...</p>}
+                  <p className="text-xs text-zinc-400 mt-1">JPG, PNG, or WebP • Max 5MB</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={productForm.is_active}
+                  onChange={(e) => setProductForm({ ...productForm, is_active: e.target.checked })}
+                  id="product-active"
+                />
+                <label htmlFor="product-active" className="text-sm">Active (visible to customers)</label>
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowProductModal(false); setImagePreview(null); }}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-[#D90429] text-white rounded-lg hover:bg-[#B90322]"
+                  disabled={uploadingImage}
+                >
+                  {editingProduct ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
