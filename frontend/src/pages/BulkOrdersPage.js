@@ -44,6 +44,7 @@ const BulkOrdersPage = () => {
   const [clothingItems, setClothingItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState('standard');
+  const [customColor, setCustomColor] = useState('');
 
   const [orderData, setOrderData] = useState({
     quantity: 50,
@@ -68,6 +69,15 @@ const BulkOrdersPage = () => {
 
   const COLORS = ['Black', 'White', 'Navy', 'Red', 'Grey', 'Blue', 'Green', 'Yellow'];
   const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
+
+  // Add custom color
+  const addCustomColor = () => {
+    const color = customColor.trim();
+    if (color && !orderData.colors.includes(color)) {
+      setOrderData({...orderData, colors: [...orderData.colors, color]});
+      setCustomColor('');
+    }
+  };
 
   useEffect(() => {
     loadClothingItems();
