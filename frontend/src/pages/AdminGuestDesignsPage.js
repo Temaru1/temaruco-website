@@ -265,10 +265,10 @@ const AdminGuestDesignsPage = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D90429]"></div>
         </div>
       ) : activeTab === 'designs' ? (
-        /* Designs Table */
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-zinc-50">
+        /* Designs Table with horizontal/vertical scroll */
+        <div className="bg-white rounded-lg shadow overflow-auto max-h-[70vh]">
+          <table className="w-full min-w-[900px]">
+            <thead className="bg-zinc-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Client</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Email</th>
