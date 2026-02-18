@@ -49,23 +49,25 @@ async def ensure_bucket_exists() -> bool:
     """Ensure the storage bucket exists, create if needed"""
     try:
         client = get_supabase_client()
+        config = get_supabase_config()
+        bucket_name = config['bucket']
         
         # List existing buckets
         buckets = client.storage.list_buckets()
         bucket_names = [b.name for b in buckets]
         
-        if SUPABASE_BUCKET not in bucket_names:
+        if bucket_name not in bucket_names:
             # Create the bucket with public access
             client.storage.create_bucket(
-                SUPABASE_BUCKET,
+                bucket_name,
                 options={
                     'public': True,
                     'file_size_limit': MAX_FILE_SIZE
                 }
             )
-            logger.info(f"Created Supabase bucket: {SUPABASE_BUCKET}")
+            logger.info(f"Created Supabase bucket: {bucket_name}")
         else:
-            logger.info(f"Supabase bucket exists: {SUPABASE_BUCKET}")
+            logger.info(f"Supabase bucket exists: {bucket_name}")
         
         return True
     except Exception as e:
