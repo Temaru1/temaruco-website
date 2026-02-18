@@ -227,7 +227,7 @@ const AdminProductsPage = () => {
         {currentItems.map((item) => (
           <Card key={item.id} className="overflow-hidden">
             <img 
-              src={item.image_url} 
+              src={getImageUrl(item.image_url)} 
               alt={item.name}
               className="w-full h-40 object-cover bg-zinc-100"
               onError={(e) => { e.target.src = `https://placehold.co/400x300/e2e8f0/64748b?text=${encodeURIComponent(item.name)}`; }}
