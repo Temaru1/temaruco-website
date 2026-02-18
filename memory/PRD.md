@@ -17,11 +17,21 @@ Clone and enhance the Temaruco website with:
 - **Backend:** FastAPI, Motor (async MongoDB driver), JWT authentication
 - **Database:** MongoDB
 - **Payments:** Flutterwave (Live integration)
+- **Cloud Storage:** Supabase Cloud Storage (product images)
 - **Services:** Supervisor for process management
 - **Fonts:** Syne (headings), Manrope (body)
 - **Brand Color:** #D90429
 
 ## Key Features Implemented
+
+### Supabase Cloud Storage Integration (Feb 18, 2026) ✅
+- **Persistent Image Storage**: All product images now stored in Supabase Cloud Storage
+- **CDN Delivery**: Images served via Supabase CDN for fast global access
+- **Automatic Cleanup**: Product deletion automatically removes associated images from Supabase
+- **Fallback System**: Graceful fallback to local storage if Supabase is unavailable
+- **Supported Products**: Fabrics, Souvenirs, Boutique, POD Clothing Items
+- **Storage Service**: `/app/backend/services/storage_service.py`
+- **Image URLs**: Format: `https://wkltyoesqjixpvjxjham.supabase.co/storage/v1/object/public/product-images/{folder}/{uuid}.{ext}`
 
 ### Customer-Facing
 - Landing page with hero section, services grid, and trust indicators
