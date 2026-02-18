@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Package } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Edit, Trash2, Save, X, Package, Upload, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { getImageUrl } from '../utils/imageUtils';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const AdminProductsPage = () => {
   const [fabrics, setFabrics] = useState([]);
@@ -14,6 +16,9 @@ const AdminProductsPage = () => {
   const [activeTab, setActiveTab] = useState('fabrics');
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     name: '',
