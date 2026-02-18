@@ -633,7 +633,6 @@ const PrintOnDemandDesignPage = () => {
                   <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                     <Upload className="w-4 h-4 mr-1" />{isUploading ? 'Uploading...' : 'Upload Design'}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={addText}><Type className="w-4 h-4 mr-1" />Add Text</Button>
                   <Button variant="outline" size="sm" onClick={deleteSelected} disabled={!selectedId}><Trash2 className="w-4 h-4 mr-1" />Delete</Button>
                   <Button variant="outline" size="sm" onClick={centerDesign} disabled={!selectedId}><Move className="w-4 h-4 mr-1" />Center</Button>
                   <Button variant="outline" size="sm" onClick={resetDesign} disabled={elements.length === 0}><RotateCcw className="w-4 h-4 mr-1" />Reset</Button>
