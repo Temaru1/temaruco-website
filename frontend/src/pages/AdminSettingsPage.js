@@ -82,6 +82,10 @@ const AdminSettingsPage = () => {
     setUploadingImage(itemType);
     const formData = new FormData();
     formData.append('image', file);
+    
+    // Determine module type for proper folder organization in Supabase
+    const moduleType = itemType.includes('bulk') ? 'bulk' : itemType.includes('pod') ? 'pod' : 'general';
+    formData.append('module', moduleType);
 
     try {
       const response = await axios.post(`${API_URL}/api/admin/upload-image`, formData, {
