@@ -58,6 +58,7 @@ import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import BulkOrderDetailsPage from './pages/BulkOrderDetailsPage';
 import AdminSiteTextsPage from './pages/AdminSiteTextsPage';
 import AdminEmailPage from './pages/AdminEmailPage';
+import AdminSystemConfigPage from './pages/AdminSystemConfigPage';
 
 // Components
 import WhatsAppButton from './components/WhatsAppButton';
