@@ -66,13 +66,24 @@ const BoutiquePage = () => {
     }
   };
 
-  // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchCategory = selectedCategory === 'all' || product.style === selectedCategory;
-    const matchAudience = selectedAudience === 'all' || product.audience === selectedAudience;
-    const matchGender = selectedGender === 'all' || product.gender === selectedGender;
-    return matchCategory && matchAudience && matchGender;
-  });
+  // Filter products with search
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchCategory = selectedCategory === 'all' || product.style === selectedCategory;
+      const matchAudience = selectedAudience === 'all' || product.audience === selectedAudience;
+      const matchGender = selectedGender === 'all' || product.gender === selectedGender;
+      
+      // Search filter (case insensitive, partial match)
+      const searchLower = searchQuery.toLowerCase().trim();
+      const matchSearch = !searchLower || 
+        product.name?.toLowerCase().includes(searchLower) ||
+        product.style?.toLowerCase().includes(searchLower) ||
+        product.color?.toLowerCase().includes(searchLower) ||
+        product.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+      
+      return matchCategory && matchAudience && matchGender && matchSearch;
+    });
+  }, [products, selectedCategory, selectedAudience, selectedGender, searchQuery]);
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
