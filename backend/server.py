@@ -9919,7 +9919,28 @@ async def update_bulk_clothing_item(
 
 @api_router.delete("/admin/bulk/clothing-items/{item_id}")
 async def delete_bulk_clothing_item(item_id: str, admin_user: Dict = Depends(get_admin_user)):
-    """Admin: Delete bulk order clothing item"""
+    """Admin: Delete bulk order clothing item and its image from storage"""
+    
+    # Get item to find image URL before deleting
+    item = await db.bulk_clothing_items.find_one({'id': item_id})
+    if item:
+        # Delete image from storage if exists
+        image_url = item.get('image_url', '')
+        if image_url:
+            if is_supabase_url(image_url):
+                storage_path = extract_storage_path_from_url(image_url)
+                if storage_path:
+                    await delete_file_from_supabase(storage_path)
+                    logger.info(f"Deleted bulk clothing item image from Supabase: {storage_path}")
+            elif image_url.startswith('/api/uploads/'):
+                filename = image_url.split('/')[-1]
+                file_path = UPLOAD_DIR / filename
+                if file_path.exists():
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"Deleted bulk clothing item image: {filename}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete bulk clothing item image: {e}")
     
     result = await db.bulk_clothing_items.delete_one({'id': item_id})
     
