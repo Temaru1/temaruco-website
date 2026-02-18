@@ -120,6 +120,12 @@ const AdminProductsPage = () => {
       description: item.description || '',
       is_active: item.is_active !== false
     });
+    // Set preview from existing image
+    if (item.image_url) {
+      setImagePreview(getImageUrl(item.image_url));
+    } else {
+      setImagePreview(null);
+    }
     setShowModal(true);
   };
 
