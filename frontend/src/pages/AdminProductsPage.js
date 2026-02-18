@@ -305,15 +305,56 @@ const AdminProductsPage = () => {
                 </div>
               </div>
               
+              {/* Image Upload Section */}
               <div>
-                <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="Leave empty for placeholder"
-                />
+                <label className="block text-sm font-medium mb-1">Product Image</label>
+                <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4 text-center">
+                  {/* Preview */}
+                  {(imagePreview || formData.image_url) && (
+                    <div className="relative inline-block mb-3">
+                      <img 
+                        src={imagePreview || getImageUrl(formData.image_url)} 
+                        alt="Preview" 
+                        className="h-32 w-32 object-cover rounded-lg mx-auto"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Upload Button */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="product-image-upload"
+                  />
+                  <label
+                    htmlFor="product-image-upload"
+                    className={`inline-flex items-center gap-2 px-4 py-2 border border-zinc-300 rounded-lg cursor-pointer hover:bg-zinc-50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {uploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-400 border-t-transparent"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        {(imagePreview || formData.image_url) ? 'Replace Image' : 'Choose File'}
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-zinc-400 mt-2">JPG, PNG, WebP • Max 5MB</p>
+                </div>
               </div>
               
               <div>
