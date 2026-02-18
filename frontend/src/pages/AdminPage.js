@@ -796,6 +796,7 @@ const AdminPage = () => {
         { label: 'Suppliers', path: '/admin/dashboard/suppliers', icon: Users },
         { label: 'Website Text', path: '/admin/site-texts', icon: FileText },
         { label: 'Email Marketing', path: '/admin/email', icon: Mail },
+        ...(isSuperAdmin ? [{ label: 'System Config', path: '/admin/system-config', icon: Shield }] : []),
         ...(isSuperAdmin || userRole.can_manage_cms ? [{ label: 'Website CMS', path: '/admin/dashboard/cms', icon: Settings }] : []),
         ...(isSuperAdmin ? [{ label: 'Quote Reminders', path: '/admin/dashboard/reminder-settings', icon: Bell }] : []),
         ...(isSuperAdmin ? [{ label: 'Manage Admins', path: '/admin/dashboard/super-admin', icon: Shield }] : []),
