@@ -29,9 +29,17 @@ Clone and enhance the Temaruco website with:
 - **CDN Delivery**: Images served via Supabase CDN for fast global access
 - **Automatic Cleanup**: Product deletion automatically removes associated images from Supabase
 - **Fallback System**: Graceful fallback to local storage if Supabase is unavailable
-- **Supported Products**: Fabrics, Souvenirs, Boutique, POD Clothing Items
+- **Supported Products**: Fabrics, Souvenirs, Boutique, POD Clothing Items, **Bulk Order Items**, **POD Designs**
 - **Storage Service**: `/app/backend/services/storage_service.py`
 - **Image URLs**: Format: `https://wkltyoesqjixpvjxjham.supabase.co/storage/v1/object/public/product-images/{folder}/{uuid}.{ext}`
+- **Folder Structure**:
+  - `bulk-products/` - Bulk order clothing item images
+  - `pod-products/` - POD clothing item images  
+  - `pod-designs/original/` - Customer uploaded POD design files
+  - `pod-designs/mockups/` - Generated mockup previews
+  - `fabrics/` - Fabric product images
+  - `souvenirs/` - Souvenir product images
+  - `boutique/` - Boutique product images
 
 ### Customer-Facing
 - Landing page with hero section, services grid, and trust indicators
