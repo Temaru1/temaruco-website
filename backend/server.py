@@ -2530,10 +2530,25 @@ async def update_fabric(fabric_id: str, fabric_data: Dict[str, Any], admin_user:
 
 @api_router.delete("/admin/fabrics/{fabric_id}")
 async def delete_fabric(fabric_id: str, admin_user: Dict = Depends(get_admin_user)):
-    """Delete a fabric product"""
-    result = await db.fabrics.delete_one({'id': fabric_id})
-    if result.deleted_count == 0:
+    """Delete a fabric product and its image file"""
+    # Get fabric to find image path
+    fabric = await db.fabrics.find_one({'id': fabric_id})
+    if not fabric:
         raise HTTPException(status_code=404, detail="Fabric not found")
+    
+    # Delete image file if it exists locally
+    image_url = fabric.get('image_url', '')
+    if image_url and image_url.startswith('/api/uploads/'):
+        filename = image_url.split('/')[-1]
+        file_path = UPLOAD_DIR / filename
+        if file_path.exists():
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted fabric image: {filename}")
+            except Exception as e:
+                logger.error(f"Failed to delete fabric image: {e}")
+    
+    result = await db.fabrics.delete_one({'id': fabric_id})
     return {'message': 'Fabric deleted'}
 
 @api_router.post("/orders/fabric")
