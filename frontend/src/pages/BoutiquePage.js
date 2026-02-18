@@ -203,6 +203,29 @@ const BoutiquePage = () => {
           </Link>
         </div>
 
+        {/* Search Bar */}
+        <div className="flex justify-center mb-6">
+          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search boutique items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-10 py-3 border border-zinc-200 rounded-full focus:ring-2 focus:ring-[#D90429] focus:border-transparent bg-white shadow-sm"
+              data-testid="boutique-search"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Filter Bar */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-8">
           <div className="flex flex-wrap gap-4 items-center">
@@ -275,6 +298,19 @@ const BoutiquePage = () => {
             </div>
           </div>
         </div>
+
+        {/* No Results Message */}
+        {filteredProducts.length === 0 && !loading && (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm mb-8">
+            <p className="text-zinc-500 text-lg">No items found. Try another keyword.</p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+              className="mt-4 text-[#D90429] hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
 
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
