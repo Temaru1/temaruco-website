@@ -1648,6 +1648,12 @@ async def create_bulk_order(
         order_id=order_id
     )
     
+    # Send push notification to admins
+    try:
+        await notify_new_order(db, order_id, 'bulk', customer_name)
+    except Exception as e:
+        logger.error(f"Failed to send push notification for bulk order: {e}")
+    
     del bulk_order['_id']
     return bulk_order
 
