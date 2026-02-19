@@ -142,8 +142,8 @@ const BoutiquePage = () => {
     handleAddToCart(product);
   };
 
-  const removeFromCart = (productId) => {
-    const newCart = cart.filter(item => item.id !== productId);
+  const removeFromCart = (cartItemId) => {
+    const newCart = cart.filter(item => (item.cartItemId || item.id) !== cartItemId);
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
     toast.success('Removed from cart');
