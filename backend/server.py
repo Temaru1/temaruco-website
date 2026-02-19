@@ -2851,6 +2851,15 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
     except Exception as e:
         logger.error(f"Failed to send confirmation email: {str(e)}")
     
+    # Send push notification to admins
+    try:
+        if contains_branded_items and design_source == 'temaruco_design':
+            await notify_design_request(db, order_id, order['customer_name'])
+        else:
+            await notify_new_order(db, order_id, 'souvenir', order['customer_name'])
+    except Exception as e:
+        logger.error(f"Failed to send push notification for souvenir order: {e}")
+    
     return {
         'message': 'Souvenir order created successfully',
         'order_id': order_id,
