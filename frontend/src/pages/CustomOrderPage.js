@@ -167,8 +167,10 @@ const CustomOrderPage = () => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
+      // Get the order_id from response (new format)
+      const orderId = response.data.order_id;
       const enquiryCode = response.data.enquiry_code;
-      navigate('/custom-order-confirmation', { state: { enquiryCode } });
+      navigate('/custom-order-confirmation', { state: { order_id: orderId, enquiryCode } });
     } catch (error) {
       console.error('Submission error:', error);
       toast.error(error.response?.data?.detail || 'Failed to submit enquiry');
