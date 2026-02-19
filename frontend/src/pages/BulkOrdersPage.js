@@ -536,19 +536,43 @@ const BulkOrdersPage = () => {
                           {/* Male Sizes */}
                           <div className="mb-4">
                             <label className="block text-sm font-medium text-zinc-700 mb-2">Male Sizes</label>
-                            <div className="grid grid-cols-5 gap-2">
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                               {MALE_SIZES.map(size => (
                                 <div key={`male-${size}`} className="text-center">
                                   <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={orderData.sizes[color]?.male?.[size] || ''}
-                                    onChange={(e) => updateSizeQty(color, 'male', size, parseInt(e.target.value) || 0)}
-                                    placeholder="0"
-                                    className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
-                                    data-testid={`${color}-male-${size}`}
-                                  />
+                                  {size === 'Other' ? (
+                                    <div className="space-y-1">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={orderData.sizes[color]?.male?.[size] || ''}
+                                        onChange={(e) => updateSizeQty(color, 'male', size, parseInt(e.target.value) || 0)}
+                                        placeholder="Qty"
+                                        className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                        data-testid={`${color}-male-${size}`}
+                                      />
+                                      {(orderData.sizes[color]?.male?.[size] || 0) > 0 && (
+                                        <input
+                                          type="text"
+                                          value={customMaleSizes[color] || ''}
+                                          onChange={(e) => setCustomMaleSizes({...customMaleSizes, [color]: e.target.value})}
+                                          placeholder="Custom size"
+                                          className="w-full px-2 py-1 text-center border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-xs bg-amber-50"
+                                          data-testid={`${color}-male-custom-size`}
+                                        />
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={orderData.sizes[color]?.male?.[size] || ''}
+                                      onChange={(e) => updateSizeQty(color, 'male', size, parseInt(e.target.value) || 0)}
+                                      placeholder="0"
+                                      className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                      data-testid={`${color}-male-${size}`}
+                                    />
+                                  )}
                                 </div>
                               ))}
                             </div>
