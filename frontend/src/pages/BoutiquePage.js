@@ -434,9 +434,7 @@ const BoutiquePage = () => {
                         <div>
                           <p className="font-semibold text-zinc-900">{item.name}</p>
                           {item.size && (
-                            <p className="text-xs text-zinc-500">
-                              Size: {item.size === 'Other' ? `Custom (${item.custom_size})` : item.size}
-                            </p>
+                            <p className="text-xs text-zinc-500">Size: {item.size}</p>
                           )}
                           <p className="text-sm text-zinc-500">Qty: {item.quantity}</p>
                         </div>
