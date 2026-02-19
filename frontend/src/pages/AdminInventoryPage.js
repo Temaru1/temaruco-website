@@ -686,21 +686,72 @@ const AdminInventoryPage = () => {
                   data-testid="product-colors-input"
                 />
               </div>
-
-              {/* Available Sizes */}
+              
+              {/* Gender Selection */}
               <div>
-                <label className="block text-sm font-semibold mb-2">Available Sizes (comma-separated)</label>
-                <input
-                  type="text"
-                  value={newProductData.sizes.join(', ')}
-                  onChange={(e) => setNewProductData({
-                    ...newProductData, 
-                    sizes: e.target.value.split(',').map(s => s.trim()).filter(s => s)
-                  })}
-                  placeholder="e.g., S, M, L, XL, XXL"
-                  className="input-field"
-                  data-testid="product-sizes-input"
-                />
+                <label className="block text-sm font-semibold mb-2">Product Gender *</label>
+                <div className="flex gap-3">
+                  {['male', 'female', 'child'].map((gender) => (
+                    <button
+                      key={gender}
+                      type="button"
+                      onClick={() => setNewProductData({
+                        ...newProductData, 
+                        gender,
+                        available_sizes: []  // Reset sizes when gender changes
+                      })}
+                      className={`flex-1 px-4 py-2 rounded-lg border-2 font-semibold capitalize transition-all ${
+                        newProductData.gender === gender 
+                          ? 'bg-[#D90429] text-white border-[#D90429]' 
+                          : 'border-zinc-300 hover:border-zinc-400'
+                      }`}
+                      data-testid={`gender-${gender}`}
+                    >
+                      {gender}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Sizes - Checkbox Selection */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">Available Sizes *</label>
+                <p className="text-xs text-zinc-500 mb-2">Select which sizes are available for this product (guests cannot add custom sizes)</p>
+                <div className="flex flex-wrap gap-2">
+                  {getGenderSizes(newProductData.gender).map((size) => (
+                    <label
+                      key={size}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
+                        newProductData.available_sizes.includes(size)
+                          ? 'bg-green-50 border-green-500 text-green-700'
+                          : 'border-zinc-300 hover:border-zinc-400'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newProductData.available_sizes.includes(size)}
+                        onChange={(e) => {
+                          const newSizes = e.target.checked
+                            ? [...newProductData.available_sizes, size]
+                            : newProductData.available_sizes.filter(s => s !== size);
+                          setNewProductData({
+                            ...newProductData,
+                            available_sizes: newSizes,
+                            sizes: newSizes  // Also update sizes array for backward compatibility
+                          });
+                        }}
+                        className="sr-only"
+                      />
+                      <span className="font-medium">{size}</span>
+                      {newProductData.available_sizes.includes(size) && (
+                        <span className="text-green-600">✓</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+                {newProductData.available_sizes.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">Please select at least one size</p>
+                )}
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
