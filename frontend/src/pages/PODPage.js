@@ -39,7 +39,14 @@ const PODPage = () => {
   ];
 
   const COLORS = ['White', 'Black', 'Navy', 'Grey', 'Red', 'Blue'];
-  const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const MALE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
+  const GENDERS = ['Male', 'Female'];
+  
+  // Get sizes based on selected gender
+  const getSizesForGender = () => {
+    return orderData.gender === 'Female' ? FEMALE_SIZES : MALE_SIZES;
+  };
 
   useEffect(() => {
     loadClothingItems();
