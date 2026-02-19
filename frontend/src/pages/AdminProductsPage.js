@@ -324,6 +324,24 @@ const AdminProductsPage = () => {
                   />
                 </div>
               </div>
+
+              {/* Has Branding Toggle - Only for Souvenirs */}
+              {activeTab === 'souvenirs' && (
+                <div className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="has-branding"
+                    checked={formData.has_branding}
+                    onChange={(e) => setFormData({...formData, has_branding: e.target.checked})}
+                    className="w-4 h-4 rounded border-zinc-300 text-[#D90429] focus:ring-[#D90429]"
+                    data-testid="has-branding-toggle"
+                  />
+                  <label htmlFor="has-branding" className="text-sm">
+                    <span className="font-medium">Enable Branding Option</span>
+                    <p className="text-xs text-zinc-500">Customers can choose between unbranded (regular price) and branded (branded price)</p>
+                  </label>
+                </div>
+              )}
               
               {/* MOQ Field - Below Price, Above Image */}
               <div>
