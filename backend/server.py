@@ -6050,6 +6050,161 @@ async def update_reminder_settings(
     
     return {'message': 'Reminder settings updated successfully', 'settings': update_data}
 
+# ==================== PUSH NOTIFICATIONS ====================
+from services.push_notification_service import (
+    get_vapid_public_key,
+    send_push_notification,
+    send_push_to_admins,
+    NOTIFICATION_EVENTS,
+    notify_new_order,
+    notify_new_enquiry,
+    notify_design_request,
+    notify_payment_received
+)
+
+@api_router.get("/push/vapid-public-key")
+async def get_push_public_key():
+    """Get VAPID public key for client subscription"""
+    return {'publicKey': get_vapid_public_key()}
+
+@api_router.get("/admin/push/settings")
+async def get_push_settings(admin_user: Dict = Depends(get_admin_user)):
+    """Get push notification settings for current admin"""
+    admin_id = admin_user.get('id')
+    
+    # Get existing subscription
+    subscription = await db.push_subscriptions.find_one(
+        {'admin_id': admin_id},
+        {'_id': 0}
+    )
+    
+    if not subscription:
+        # Return default settings
+        return {
+            'is_subscribed': False,
+            'enabled_events': {event: True for event in NOTIFICATION_EVENTS.keys()},
+            'available_events': NOTIFICATION_EVENTS
+        }
+    
+    return {
+        'is_subscribed': subscription.get('is_active', False),
+        'enabled_events': subscription.get('enabled_events', {event: True for event in NOTIFICATION_EVENTS.keys()}),
+        'available_events': NOTIFICATION_EVENTS,
+        'subscribed_at': subscription.get('created_at')
+    }
+
+@api_router.post("/admin/push/subscribe")
+async def subscribe_to_push(
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Subscribe admin to push notifications"""
+    admin_id = admin_user.get('id')
+    subscription_info = data.get('subscription')
+    
+    if not subscription_info:
+        raise HTTPException(status_code=400, detail="Subscription info is required")
+    
+    # Validate subscription structure
+    if not subscription_info.get('endpoint') or not subscription_info.get('keys'):
+        raise HTTPException(status_code=400, detail="Invalid subscription format")
+    
+    # Default: enable all notification types
+    enabled_events = data.get('enabled_events', {event: True for event in NOTIFICATION_EVENTS.keys()})
+    
+    subscription_doc = {
+        'admin_id': admin_id,
+        'admin_email': admin_user.get('email'),
+        'subscription': subscription_info,
+        'enabled_events': enabled_events,
+        'is_active': True,
+        'error_count': 0,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert subscription
+    await db.push_subscriptions.update_one(
+        {'admin_id': admin_id},
+        {'$set': subscription_doc},
+        upsert=True
+    )
+    
+    logger.info(f"Push subscription created for admin: {admin_user.get('email')}")
+    
+    # Send a test notification
+    try:
+        await send_push_notification(
+            subscription_info=subscription_info,
+            title='🔔 Notifications Enabled',
+            body='You will now receive push notifications for admin events.',
+            url='/admin/dashboard'
+        )
+    except Exception as e:
+        logger.error(f"Failed to send test notification: {e}")
+    
+    return {'message': 'Successfully subscribed to push notifications'}
+
+@api_router.post("/admin/push/unsubscribe")
+async def unsubscribe_from_push(admin_user: Dict = Depends(get_admin_user)):
+    """Unsubscribe admin from push notifications"""
+    admin_id = admin_user.get('id')
+    
+    await db.push_subscriptions.update_one(
+        {'admin_id': admin_id},
+        {'$set': {'is_active': False, 'updated_at': datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    logger.info(f"Push subscription deactivated for admin: {admin_user.get('email')}")
+    return {'message': 'Successfully unsubscribed from push notifications'}
+
+@api_router.put("/admin/push/settings")
+async def update_push_settings(
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Update push notification event preferences"""
+    admin_id = admin_user.get('id')
+    enabled_events = data.get('enabled_events', {})
+    
+    # Validate event types
+    for event_type in enabled_events.keys():
+        if event_type not in NOTIFICATION_EVENTS:
+            raise HTTPException(status_code=400, detail=f"Invalid event type: {event_type}")
+    
+    await db.push_subscriptions.update_one(
+        {'admin_id': admin_id},
+        {
+            '$set': {
+                'enabled_events': enabled_events,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {'message': 'Push notification settings updated'}
+
+@api_router.post("/admin/push/test")
+async def send_test_push(admin_user: Dict = Depends(get_admin_user)):
+    """Send a test push notification to current admin"""
+    admin_id = admin_user.get('id')
+    
+    subscription = await db.push_subscriptions.find_one({'admin_id': admin_id, 'is_active': True})
+    if not subscription:
+        raise HTTPException(status_code=400, detail="No active push subscription found")
+    
+    success = await send_push_notification(
+        subscription_info=subscription.get('subscription'),
+        title='🧪 Test Notification',
+        body='This is a test notification from TEMARUCO Admin.',
+        url='/admin/dashboard'
+    )
+    
+    if success:
+        return {'message': 'Test notification sent successfully'}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send test notification")
+
 @api_router.get("/admin/quotes/{quote_id}")
 async def get_manual_quote(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
     quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
