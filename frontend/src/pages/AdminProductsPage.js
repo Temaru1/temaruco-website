@@ -251,6 +251,9 @@ const AdminProductsPage = () => {
               {item.branded_price && (
                 <p className="text-xs text-zinc-500">Branded: ₦{item.branded_price?.toLocaleString()}</p>
               )}
+              <p className="text-xs text-zinc-500 mt-1">
+                MOQ: {item.moq_value || 1} {item.unit_type === 'yard' ? 'Yards' : 'Pieces'}
+              </p>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" variant="outline" onClick={() => startEdit(item)}>
                   <Edit className="w-3 h-3 mr-1" /> Edit
