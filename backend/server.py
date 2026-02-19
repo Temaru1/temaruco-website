@@ -11204,6 +11204,302 @@ async def get_receipt(receipt_id: str):
         raise HTTPException(status_code=404, detail="Receipt not found")
     return receipt
 
+# ==================== SOUVENIR SUPPLIERS MANAGEMENT ====================
+
+async def generate_supplier_id() -> str:
+    """Generate unique supplier ID in format SUP-YYYYMMDD-XXX"""
+    now = datetime.now(timezone.utc)
+    date_part = now.strftime('%Y%m%d')
+    day_key = f"supplier_{date_part}"
+    
+    counter_doc = await db.supplier_counters.find_one_and_update(
+        {'day_key': day_key},
+        {'$inc': {'counter': 1}},
+        upsert=True,
+        return_document=True
+    )
+    
+    counter = counter_doc.get('counter', 1) if counter_doc else 1
+    return f"SUP-{date_part}-{str(counter).zfill(3)}"
+
+class SouvenirSupplierCreate(BaseModel):
+    company_name: str
+    contact_person: Optional[str] = None
+    phone_number: str
+    whatsapp_number: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = "Nigeria"
+    products_supplied: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = "active"
+
+@api_router.get("/admin/souvenir-suppliers")
+async def get_souvenir_suppliers(
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get all souvenir suppliers with search and filter"""
+    query = {}
+    
+    if status and status != 'all':
+        query['status'] = status
+    
+    if search:
+        search_regex = {'$regex': search, '$options': 'i'}
+        query['$or'] = [
+            {'supplier_id': search_regex},
+            {'company_name': search_regex},
+            {'contact_person': search_regex},
+            {'phone_number': search_regex},
+            {'email': search_regex},
+            {'products_supplied': search_regex}
+        ]
+    
+    suppliers = await db.souvenir_suppliers.find(query, {'_id': 0}).sort('created_at', -1).to_list(500)
+    
+    # Get counts
+    all_count = await db.souvenir_suppliers.count_documents({})
+    active_count = await db.souvenir_suppliers.count_documents({'status': 'active'})
+    inactive_count = all_count - active_count
+    
+    return {
+        'suppliers': suppliers,
+        'counts': {
+            'all': all_count,
+            'active': active_count,
+            'inactive': inactive_count
+        }
+    }
+
+@api_router.get("/admin/souvenir-suppliers/{supplier_id}")
+async def get_souvenir_supplier(supplier_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Get single souvenir supplier details"""
+    supplier = await db.souvenir_suppliers.find_one(
+        {'$or': [{'id': supplier_id}, {'supplier_id': supplier_id}]},
+        {'_id': 0}
+    )
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    return supplier
+
+@api_router.post("/admin/souvenir-suppliers")
+async def create_souvenir_supplier(supplier: SouvenirSupplierCreate, admin_user: Dict = Depends(get_admin_user)):
+    """Create new souvenir supplier"""
+    supplier_id = await generate_supplier_id()
+    
+    supplier_doc = {
+        'id': str(uuid.uuid4()),
+        'supplier_id': supplier_id,
+        'company_name': supplier.company_name,
+        'contact_person': supplier.contact_person,
+        'phone_number': supplier.phone_number,
+        'whatsapp_number': supplier.whatsapp_number,
+        'email': supplier.email,
+        'address': supplier.address,
+        'city': supplier.city,
+        'state': supplier.state,
+        'country': supplier.country,
+        'products_supplied': supplier.products_supplied,
+        'notes': supplier.notes,
+        'status': supplier.status or 'active',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': admin_user.get('email')
+    }
+    
+    await db.souvenir_suppliers.insert_one(supplier_doc)
+    del supplier_doc['_id']
+    
+    return {'message': 'Supplier created successfully', 'supplier': supplier_doc}
+
+@api_router.put("/admin/souvenir-suppliers/{supplier_id}")
+async def update_souvenir_supplier(supplier_id: str, data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
+    """Update souvenir supplier"""
+    existing = await db.souvenir_suppliers.find_one(
+        {'$or': [{'id': supplier_id}, {'supplier_id': supplier_id}]}
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    update_data = {k: v for k, v in data.items() if k not in ['id', 'supplier_id', 'created_at', 'created_by']}
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    update_data['updated_by'] = admin_user.get('email')
+    
+    await db.souvenir_suppliers.update_one(
+        {'$or': [{'id': supplier_id}, {'supplier_id': supplier_id}]},
+        {'$set': update_data}
+    )
+    
+    return {'message': 'Supplier updated successfully'}
+
+@api_router.delete("/admin/souvenir-suppliers/{supplier_id}")
+async def delete_souvenir_supplier(supplier_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Soft delete supplier (set status to inactive)"""
+    existing = await db.souvenir_suppliers.find_one(
+        {'$or': [{'id': supplier_id}, {'supplier_id': supplier_id}]}
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    await db.souvenir_suppliers.update_one(
+        {'$or': [{'id': supplier_id}, {'supplier_id': supplier_id}]},
+        {'$set': {
+            'status': 'inactive',
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'deleted_by': admin_user.get('email')
+        }}
+    )
+    
+    return {'message': 'Supplier deactivated successfully'}
+
+# ==================== FILE MANAGER ====================
+
+@api_router.get("/admin/files")
+async def get_all_files(
+    file_type: Optional[str] = None,
+    source: Optional[str] = None,
+    search: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get all uploaded files from local storage and database references"""
+    files = []
+    
+    # Get files from uploads directory
+    uploads_base = Path("/app/backend/uploads")
+    if uploads_base.exists():
+        for folder in ['designs', 'products', 'images', 'enquiries', 'mockups']:
+            folder_path = uploads_base / folder
+            if folder_path.exists():
+                for file_path in folder_path.rglob('*'):
+                    if file_path.is_file():
+                        stat = file_path.stat()
+                        ext = file_path.suffix.lower()
+                        file_type_detected = 'image' if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'] else 'document'
+                        
+                        files.append({
+                            'id': str(hash(str(file_path))),
+                            'name': file_path.name,
+                            'path': f"/uploads/{file_path.relative_to(uploads_base)}",
+                            'folder': folder,
+                            'size': stat.st_size,
+                            'size_formatted': f"{stat.st_size / 1024:.1f} KB" if stat.st_size < 1024*1024 else f"{stat.st_size / (1024*1024):.2f} MB",
+                            'type': file_type_detected,
+                            'extension': ext,
+                            'source': 'local',
+                            'created_at': datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                            'modified_at': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                        })
+    
+    # Get Supabase files from database references
+    collections_to_check = [
+        ('fabrics', 'image', 'fabrics'),
+        ('souvenirs', 'image', 'souvenirs'),
+        ('boutique_products', 'images', 'boutique'),
+        ('pod_designs', 'original_file_url', 'pod-designs'),
+        ('pod_designs', 'mockup_url', 'pod-mockups'),
+        ('bulk_clothing_items', 'image_url', 'bulk-products'),
+        ('pod_clothing_items', 'image_url', 'pod-products')
+    ]
+    
+    supabase_files = set()
+    for collection, field, category in collections_to_check:
+        try:
+            docs = await db[collection].find({}, {field: 1}).to_list(500)
+            for doc in docs:
+                url = doc.get(field)
+                if url and isinstance(url, str) and 'supabase' in url:
+                    if url not in supabase_files:
+                        supabase_files.add(url)
+                        files.append({
+                            'id': str(hash(url)),
+                            'name': url.split('/')[-1] if '/' in url else url,
+                            'path': url,
+                            'folder': category,
+                            'size': 0,
+                            'size_formatted': 'N/A',
+                            'type': 'image',
+                            'extension': '.' + url.split('.')[-1] if '.' in url else '',
+                            'source': 'supabase',
+                            'created_at': None,
+                            'modified_at': None
+                        })
+                elif url and isinstance(url, list):
+                    for u in url:
+                        if u and 'supabase' in str(u) and u not in supabase_files:
+                            supabase_files.add(u)
+                            files.append({
+                                'id': str(hash(u)),
+                                'name': u.split('/')[-1] if '/' in u else u,
+                                'path': u,
+                                'folder': category,
+                                'size': 0,
+                                'size_formatted': 'N/A',
+                                'type': 'image',
+                                'extension': '.' + u.split('.')[-1] if '.' in u else '',
+                                'source': 'supabase',
+                                'created_at': None,
+                                'modified_at': None
+                            })
+        except Exception:
+            pass
+    
+    # Apply filters
+    if file_type and file_type != 'all':
+        files = [f for f in files if f['type'] == file_type]
+    
+    if source and source != 'all':
+        files = [f for f in files if f['source'] == source]
+    
+    if search:
+        search_lower = search.lower()
+        files = [f for f in files if search_lower in f['name'].lower() or search_lower in f.get('folder', '').lower()]
+    
+    # Sort by modified date (newest first)
+    files.sort(key=lambda x: x.get('modified_at') or x.get('created_at') or '', reverse=True)
+    
+    # Calculate stats
+    total_size = sum(f['size'] for f in files)
+    local_count = len([f for f in files if f['source'] == 'local'])
+    supabase_count = len([f for f in files if f['source'] == 'supabase'])
+    image_count = len([f for f in files if f['type'] == 'image'])
+    document_count = len([f for f in files if f['type'] == 'document'])
+    
+    return {
+        'files': files,
+        'stats': {
+            'total': len(files),
+            'total_size': total_size,
+            'total_size_formatted': f"{total_size / (1024*1024):.2f} MB" if total_size > 0 else '0 MB',
+            'local': local_count,
+            'supabase': supabase_count,
+            'images': image_count,
+            'documents': document_count
+        }
+    }
+
+@api_router.delete("/admin/files")
+async def delete_file(file_path: str, admin_user: Dict = Depends(get_admin_user)):
+    """Delete a file from local storage"""
+    if not file_path.startswith('/uploads/'):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    
+    full_path = Path(f"/app/backend{file_path}")
+    if not full_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    if not full_path.is_file():
+        raise HTTPException(status_code=400, detail="Path is not a file")
+    
+    try:
+        full_path.unlink()
+        return {'message': 'File deleted successfully'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+
 # ==================== GENERAL ====================
 @api_router.get("/")
 async def root():
