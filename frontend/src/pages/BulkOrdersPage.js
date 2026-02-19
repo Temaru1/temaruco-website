@@ -571,8 +571,8 @@ const BulkOrdersPage = () => {
 
                           {/* Child Sizes */}
                           <div>
-                            <label className="block text-sm font-medium text-zinc-700 mb-2">Child Sizes</label>
-                            <div className="grid grid-cols-4 gap-2">
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Child Sizes (Age)</label>
+                            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
                               {CHILD_SIZES.map(size => (
                                 <div key={`child-${size}`} className="text-center">
                                   <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
