@@ -71,8 +71,11 @@ const BulkOrdersPage = () => {
   
   // Size definitions for each category
   const MALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
-  const FEMALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+  const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
   const CHILD_SIZES = ['2-3 yrs', '3-4 yrs', '4-5 yrs', '5-6 yrs', '6-7 yrs', '7-8 yrs', '8-9 yrs', '9-10 yrs', '10-11 yrs', '11-12 yrs'];
+  
+  // Custom size entries for "Other" option
+  const [customFemaleSizes, setCustomFemaleSizes] = useState({});
 
   // Add custom color
   const addCustomColor = () => {
