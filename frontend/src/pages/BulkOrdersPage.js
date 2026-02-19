@@ -670,7 +670,7 @@ const BulkOrdersPage = () => {
               <Button 
                 onClick={() => setStep(3)}
                 className="bg-[#D90429] hover:bg-[#B90322]"
-                disabled={getTotalFromSizes() < 50}
+                disabled={orderData.colors.length === 0 || validateColorMinimums().length > 0}
               >
                 Continue <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
