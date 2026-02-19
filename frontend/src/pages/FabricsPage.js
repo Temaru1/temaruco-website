@@ -167,10 +167,28 @@ const FabricsPage = () => {
                   {formatPrice(fabric.price)}
                   <span className="text-zinc-400 text-sm font-normal">/yard</span>
                 </p>
+                {/* MOQ Display */}
+                <p className="text-xs text-zinc-500 mt-1" data-testid={`moq-display-${fabric.id}`}>
+                  Minimum Order: {fabric.moq_value || 1} Yards
+                </p>
+                {/* Quantity Selector */}
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-xs text-zinc-600">Qty (yards):</label>
+                  <input
+                    type="number"
+                    min={fabric.moq_value || 1}
+                    step="0.5"
+                    value={selectedQuantities[fabric.id] || fabric.moq_value || 1}
+                    onChange={(e) => updateSelectedQuantity(fabric.id, e.target.value)}
+                    className="w-20 px-2 py-1 text-sm border rounded"
+                    data-testid={`qty-input-${fabric.id}`}
+                  />
+                </div>
                 <Button
                   onClick={() => addToCart(fabric)}
                   className="w-full mt-3 bg-zinc-900 hover:bg-zinc-800"
                   size="sm"
+                  data-testid={`add-to-cart-${fabric.id}`}
                 >
                   <Plus className="w-4 h-4 mr-2" /> Add to Cart
                 </Button>
