@@ -26,7 +26,8 @@ const AdminProductsPage = () => {
     branded_price: '',
     image_url: '',
     description: '',
-    is_active: true
+    is_active: true,
+    moq_value: '1'
   });
 
   const token = localStorage.getItem('token');
@@ -67,13 +68,22 @@ const AdminProductsPage = () => {
       ? `${API_URL}/api/admin/fabrics`
       : `${API_URL}/api/admin/souvenirs`;
 
+    // Prepare MOQ value based on product type
+    const moqValue = activeTab === 'fabrics' 
+      ? parseFloat(formData.moq_value) || 1 
+      : parseInt(formData.moq_value) || 1;
+    
+    const unitType = activeTab === 'fabrics' ? 'yard' : 'piece';
+
     try {
       if (editingItem) {
         await axios.put(`${endpoint}/${editingItem.id}`, {
           ...formData,
           price: parseFloat(formData.price),
           branded_price: formData.branded_price ? parseFloat(formData.branded_price) : null,
-          image_url: imageUrl
+          image_url: imageUrl,
+          moq_value: moqValue,
+          unit_type: unitType
         }, { headers });
         toast.success('Product updated!');
       } else {
@@ -81,7 +91,9 @@ const AdminProductsPage = () => {
           ...formData,
           price: parseFloat(formData.price),
           branded_price: formData.branded_price ? parseFloat(formData.branded_price) : null,
-          image_url: imageUrl
+          image_url: imageUrl,
+          moq_value: moqValue,
+          unit_type: unitType
         }, { headers });
         toast.success('Product added!');
       }
@@ -118,7 +130,8 @@ const AdminProductsPage = () => {
       branded_price: item.branded_price?.toString() || '',
       image_url: item.image_url || '',
       description: item.description || '',
-      is_active: item.is_active !== false
+      is_active: item.is_active !== false,
+      moq_value: item.moq_value?.toString() || '1'
     });
     // Set preview from existing image
     if (item.image_url) {
@@ -130,7 +143,7 @@ const AdminProductsPage = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', price: '', branded_price: '', image_url: '', description: '', is_active: true });
+    setFormData({ name: '', price: '', branded_price: '', image_url: '', description: '', is_active: true, moq_value: '1' });
     setEditingItem(null);
     setImagePreview(null);
   };
