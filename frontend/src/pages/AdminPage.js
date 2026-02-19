@@ -802,6 +802,7 @@ const AdminPage = () => {
         { label: 'Suppliers', path: '/admin/dashboard/suppliers', icon: Users },
         { label: 'Souvenir Suppliers', path: '/admin/dashboard/souvenir-suppliers', icon: Building2 },
         { label: 'File Manager', path: '/admin/dashboard/file-manager', icon: FolderOpen },
+        { label: 'Push Notifications', path: '/admin/dashboard/push-notifications', icon: BellRing },
         { label: 'Website Text', path: '/admin/site-texts', icon: FileText },
         { label: 'Email Marketing', path: '/admin/email', icon: Mail },
         ...(isSuperAdmin ? [{ label: 'System Config', path: '/admin/system-config', icon: Shield }] : []),
