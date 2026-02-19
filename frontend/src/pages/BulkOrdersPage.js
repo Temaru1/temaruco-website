@@ -68,7 +68,11 @@ const BulkOrdersPage = () => {
   ];
 
   const COLORS = ['Black', 'White', 'Navy', 'Red', 'Grey', 'Blue', 'Green', 'Yellow'];
-  const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
+  
+  // Size definitions for each category
+  const MALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+  const FEMALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+  const CHILD_SIZES = ['XS', 'S', 'M', 'L'];
 
   // Add custom color
   const addCustomColor = () => {
