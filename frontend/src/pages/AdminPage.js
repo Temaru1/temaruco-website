@@ -825,13 +825,13 @@ const AdminPage = () => {
           fixed lg:sticky top-0 h-screen
           w-64 bg-zinc-900 text-white
           transition-transform duration-300 ease-in-out
-          z-50 lg:z-auto overflow-y-auto
+          z-50 lg:z-auto flex flex-col
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         data-testid="admin-sidebar"
       >
         {/* Header */}
-        <div className="p-6 border-b border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(false)}
             className="absolute top-4 right-4 lg:hidden text-white hover:text-zinc-300"
@@ -845,8 +845,8 @@ const AdminPage = () => {
           <p className="text-xs text-zinc-500 mt-1">Temaruco Control Panel</p>
         </div>
         
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        {/* Navigation - Scrollable */}
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
           {navGroups.map((group) => (
             <div key={group.id} className="mb-2">
               <button
@@ -887,8 +887,8 @@ const AdminPage = () => {
           ))}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-zinc-800 bg-zinc-900">
+        {/* Bottom Actions - Fixed at bottom */}
+        <div className="p-4 border-t border-zinc-800 bg-zinc-900 flex-shrink-0">
           <Link
             to="/"
             className="flex items-center gap-3 py-2 px-4 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors text-sm"
