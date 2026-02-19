@@ -926,12 +926,12 @@ const PrintOnDemandDesignPage = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Gender</h3>
                 <div className="flex gap-2">
-                  {['Male', 'Female'].map((gender) => (
+                  {GENDERS.map((gender) => (
                     <button 
                       key={gender} 
                       onClick={() => {
                         setSelectedGender(gender);
-                        setSelectedSize(gender === 'Female' ? '8' : 'M');
+                        setSelectedSize(getDefaultSizeForGender(gender));
                         setCustomSize('');
                       }}
                       className={`flex-1 px-4 py-2 rounded border transition-all ${selectedGender === gender ? 'bg-[#D90429] text-white border-[#D90429]' : 'border-zinc-300 hover:border-zinc-400'}`}
