@@ -625,20 +625,44 @@ const BulkOrdersPage = () => {
 
                           {/* Child Sizes */}
                           <div>
-                            <label className="block text-sm font-medium text-zinc-700 mb-2">Child Sizes (Age)</label>
-                            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Child Sizes</label>
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                               {CHILD_SIZES.map(size => (
                                 <div key={`child-${size}`} className="text-center">
                                   <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={orderData.sizes[color]?.child?.[size] || ''}
-                                    onChange={(e) => updateSizeQty(color, 'child', size, parseInt(e.target.value) || 0)}
-                                    placeholder="0"
-                                    className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
-                                    data-testid={`${color}-child-${size}`}
-                                  />
+                                  {size === 'Other' ? (
+                                    <div className="space-y-1">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={orderData.sizes[color]?.child?.[size] || ''}
+                                        onChange={(e) => updateSizeQty(color, 'child', size, parseInt(e.target.value) || 0)}
+                                        placeholder="Qty"
+                                        className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                        data-testid={`${color}-child-${size}`}
+                                      />
+                                      {(orderData.sizes[color]?.child?.[size] || 0) > 0 && (
+                                        <input
+                                          type="text"
+                                          value={customChildSizes[color] || ''}
+                                          onChange={(e) => setCustomChildSizes({...customChildSizes, [color]: e.target.value})}
+                                          placeholder="Custom size"
+                                          className="w-full px-2 py-1 text-center border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-xs bg-amber-50"
+                                          data-testid={`${color}-child-custom-size`}
+                                        />
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={orderData.sizes[color]?.child?.[size] || ''}
+                                      onChange={(e) => updateSizeQty(color, 'child', size, parseInt(e.target.value) || 0)}
+                                      placeholder="0"
+                                      className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                      data-testid={`${color}-child-${size}`}
+                                    />
+                                  )}
                                 </div>
                               ))}
                             </div>
