@@ -415,19 +415,24 @@ const BoutiquePage = () => {
               <>
                 <div className="space-y-4 mb-6">
                   {cart.map(item => (
-                    <div key={item.id} className="flex justify-between items-center border-b pb-4" data-testid="cart-item">
+                    <div key={item.cartItemId || item.id} className="flex justify-between items-center border-b pb-4" data-testid="cart-item">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
                           <img src={getImageUrl(item.image_url)} alt={item.name} className="max-w-full max-h-full object-contain" />
                         </div>
                         <div>
                           <p className="font-semibold text-zinc-900">{item.name}</p>
+                          {item.size && (
+                            <p className="text-xs text-zinc-500">
+                              Size: {item.size === 'Other' ? `Custom (${item.custom_size})` : item.size}
+                            </p>
+                          )}
                           <p className="text-sm text-zinc-500">Qty: {item.quantity}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-[#D90429]">{formatPrice(item.price * item.quantity)}</p>
-                        <button onClick={() => removeFromCart(item.id)} className="text-sm text-red-500 hover:underline" data-testid={`remove-from-cart-${item.id}`}>Remove</button>
+                        <button onClick={() => removeFromCart(item.cartItemId || item.id)} className="text-sm text-red-500 hover:underline" data-testid={`remove-from-cart-${item.id}`}>Remove</button>
                       </div>
                     </div>
                   ))}
