@@ -2504,6 +2504,11 @@ async def get_fabrics():
 @api_router.post("/admin/fabrics")
 async def create_fabric(fabric_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
     """Create a new fabric product"""
+    # MOQ: default to 1 yard if not set, ensure greater than 0
+    moq_value = fabric_data.get('moq_value', 1)
+    if moq_value is None or moq_value <= 0:
+        moq_value = 1
+    
     fabric = {
         'id': str(uuid.uuid4()),
         'name': fabric_data.get('name'),
@@ -2512,6 +2517,8 @@ async def create_fabric(fabric_data: Dict[str, Any], admin_user: Dict = Depends(
         'image_url': fabric_data.get('image_url', ''),
         'description': fabric_data.get('description', ''),
         'is_active': fabric_data.get('is_active', True),
+        'moq_value': float(moq_value),  # Allow decimals for yards
+        'unit_type': fabric_data.get('unit_type', 'yard'),
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     await db.fabrics.insert_one(fabric)
@@ -2521,6 +2528,15 @@ async def create_fabric(fabric_data: Dict[str, Any], admin_user: Dict = Depends(
 async def update_fabric(fabric_id: str, fabric_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
     """Update a fabric product"""
     update_data = {k: v for k, v in fabric_data.items() if k not in ['id', '_id', 'created_at']}
+    
+    # Ensure MOQ is valid if provided
+    if 'moq_value' in update_data:
+        moq_value = update_data['moq_value']
+        if moq_value is None or moq_value <= 0:
+            update_data['moq_value'] = 1
+        else:
+            update_data['moq_value'] = float(moq_value)
+    
     update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     result = await db.fabrics.update_one({'id': fabric_id}, {'$set': update_data})
     if result.modified_count == 0:
@@ -2613,6 +2629,11 @@ async def get_souvenirs():
 @api_router.post("/admin/souvenirs")
 async def create_souvenir(souvenir_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
     """Create a new souvenir product"""
+    # MOQ: default to 1 piece if not set, ensure greater than 0
+    moq_value = souvenir_data.get('moq_value', 1)
+    if moq_value is None or moq_value <= 0:
+        moq_value = 1
+    
     souvenir = {
         'id': str(uuid.uuid4()),
         'name': souvenir_data.get('name'),
@@ -2621,6 +2642,8 @@ async def create_souvenir(souvenir_data: Dict[str, Any], admin_user: Dict = Depe
         'image_url': souvenir_data.get('image_url', ''),
         'description': souvenir_data.get('description', ''),
         'is_active': souvenir_data.get('is_active', True),
+        'moq_value': int(moq_value),  # Whole numbers only for pieces
+        'unit_type': souvenir_data.get('unit_type', 'piece'),
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     await db.souvenirs.insert_one(souvenir)
@@ -2630,6 +2653,15 @@ async def create_souvenir(souvenir_data: Dict[str, Any], admin_user: Dict = Depe
 async def update_souvenir(souvenir_id: str, souvenir_data: Dict[str, Any], admin_user: Dict = Depends(get_admin_user)):
     """Update a souvenir product"""
     update_data = {k: v for k, v in souvenir_data.items() if k not in ['id', '_id', 'created_at']}
+    
+    # Ensure MOQ is valid if provided
+    if 'moq_value' in update_data:
+        moq_value = update_data['moq_value']
+        if moq_value is None or moq_value <= 0:
+            update_data['moq_value'] = 1
+        else:
+            update_data['moq_value'] = int(moq_value)
+    
     update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     result = await db.souvenirs.update_one({'id': souvenir_id}, {'$set': update_data})
     if result.modified_count == 0:
