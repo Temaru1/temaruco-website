@@ -2846,6 +2846,173 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
         'requires_design_quote': design_negotiation_status == 'pending_design_quote'
     }
 
+# ==================== BRANDING DESIGN ENDPOINTS ====================
+@api_router.post("/branding/upload-design")
+async def upload_branding_design(file: UploadFile = File(...)):
+    """Upload a branding design file for souvenir orders (JPG/PNG, max 2MB)"""
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Only JPG and PNG files are allowed")
+    
+    # Read file and check size (max 2MB)
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:  # 2MB
+        raise HTTPException(status_code=400, detail="File size must be less than 2MB")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'
+    unique_filename = f"branding_{uuid.uuid4()}.{ext}"
+    
+    # Try to upload to Supabase first
+    try:
+        supabase_url = await upload_file_to_supabase(
+            file_content=contents,
+            filename=unique_filename,
+            folder="branding-designs",
+            content_type=file.content_type
+        )
+        if supabase_url:
+            return {'url': supabase_url, 'storage': 'supabase'}
+    except Exception as e:
+        logger.error(f"Supabase upload failed for branding design: {e}")
+    
+    # Fallback to local storage
+    branding_dir = Path(UPLOAD_DIR) / "branding"
+    branding_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = branding_dir / unique_filename
+    with open(file_path, 'wb') as f:
+        f.write(contents)
+    
+    local_url = f"/api/uploads/branding/{unique_filename}"
+    return {'url': local_url, 'storage': 'local'}
+
+@api_router.get("/admin/branded-orders")
+async def get_branded_orders(
+    status: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Get all orders with branded items"""
+    query = {'contains_branded_items': True}
+    if status:
+        query['design_negotiation_status'] = status
+    
+    orders = await db.orders.find(query, {'_id': 0}).sort('created_at', -1).to_list(100)
+    
+    # Count by status
+    counts = {
+        'all': await db.orders.count_documents({'contains_branded_items': True}),
+        'pending_design_quote': await db.orders.count_documents({'design_negotiation_status': 'pending_design_quote'}),
+        'design_received': await db.orders.count_documents({'design_negotiation_status': 'design_received'}),
+        'quote_sent': await db.orders.count_documents({'design_negotiation_status': 'quote_sent'}),
+        'design_approved': await db.orders.count_documents({'design_negotiation_status': 'design_approved'})
+    }
+    
+    return {'orders': orders, 'counts': counts}
+
+@api_router.put("/admin/branded-orders/{order_id}/design-fee")
+async def update_design_fee(
+    order_id: str,
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Set design fee for TEMARUCO design orders and notify customer"""
+    order = await db.orders.find_one({'order_id': order_id, 'contains_branded_items': True})
+    if not order:
+        raise HTTPException(status_code=404, detail="Branded order not found")
+    
+    design_fee = data.get('design_fee')
+    if design_fee is None or design_fee < 0:
+        raise HTTPException(status_code=400, detail="Valid design fee is required")
+    
+    notes = data.get('notes', '')
+    
+    await db.orders.update_one(
+        {'order_id': order_id},
+        {
+            '$set': {
+                'design_fee': design_fee,
+                'design_fee_notes': notes,
+                'design_negotiation_status': 'quote_sent',
+                'design_fee_sent_at': datetime.now(timezone.utc).isoformat(),
+                'design_fee_sent_by': admin_user.get('email'),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Send email to customer with design fee quote
+    try:
+        email_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #D90429; padding: 20px; text-align: center;">
+                <h1 style="color: white; margin: 0;">TEMARUCO</h1>
+            </div>
+            <div style="padding: 30px; background: #f9f9f9;">
+                <h2 style="color: #333;">Design Fee Quote</h2>
+                <p>Dear {order.get('customer_name')},</p>
+                <p>Thank you for your branded souvenir order (ID: <strong>{order_id}</strong>).</p>
+                <p>Our design team has reviewed your design brief and we're pleased to provide a quote for creating your custom design:</p>
+                <div style="background: white; border: 2px solid #D90429; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">Design Fee</p>
+                    <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #D90429;">₦{design_fee:,.0f}</p>
+                </div>
+                {f'<p><strong>Notes:</strong> {notes}</p>' if notes else ''}
+                <p>To proceed with your order:</p>
+                <ol>
+                    <li>Reply to this email to confirm the design fee</li>
+                    <li>We'll send you payment instructions</li>
+                    <li>Once paid, our design team will create your design within 2-3 business days</li>
+                    <li>You'll receive the design for approval before production begins</li>
+                </ol>
+                <p>If you have any questions, please don't hesitate to contact us.</p>
+                <p>Best regards,<br>The TEMARUCO Design Team</p>
+            </div>
+        </body>
+        </html>
+        """
+        await send_email_notification(
+            to_email=order.get('customer_email'),
+            subject=f'Design Fee Quote for Order {order_id} - TEMARUCO',
+            html_content=email_html
+        )
+    except Exception as e:
+        logger.error(f"Failed to send design fee email: {e}")
+    
+    return {'message': 'Design fee updated and customer notified', 'design_fee': design_fee}
+
+@api_router.put("/admin/branded-orders/{order_id}/status")
+async def update_branded_order_status(
+    order_id: str,
+    data: Dict[str, Any],
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Admin: Update branded order design negotiation status"""
+    valid_statuses = ['pending_design_quote', 'design_received', 'quote_sent', 'design_approved', 'production_locked']
+    new_status = data.get('status')
+    
+    if new_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+    
+    order = await db.orders.find_one({'order_id': order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    update_data = {
+        'design_negotiation_status': new_status,
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    if new_status == 'design_approved':
+        update_data['design_fee_approved'] = True
+        update_data['design_approved_at'] = datetime.now(timezone.utc).isoformat()
+    
+    await db.orders.update_one({'order_id': order_id}, {'$set': update_data})
+    
+    return {'message': f'Order status updated to {new_status}'}
+
 # ==================== PRODUCT CATEGORIES MANAGEMENT ====================
 @api_router.get("/admin/categories")
 async def get_all_categories(
