@@ -57,8 +57,10 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <SEO 
-        title="Premium Clothing Manufacturing"
-        description="Nigeria's leading clothing factory for bulk orders, print-on-demand, corporate uniforms, and custom fashion."
+        title={SEO_CONFIG.home.title}
+        description={SEO_CONFIG.home.description}
+        image={SEO_CONFIG.home.image}
+        url={SEO_CONFIG.home.url}
       />
 
       {/* Hero Section */}
