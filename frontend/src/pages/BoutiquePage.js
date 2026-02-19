@@ -23,6 +23,16 @@ const BoutiquePage = () => {
     name: '', email: '', phone: '',
     delivery_address: '', delivery_city: '', delivery_state: '', delivery_notes: ''
   });
+  
+  // Size selection modal state
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [customSize, setCustomSize] = useState('');
+  
+  // Size options
+  const MALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+  const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
 
   // Category filters
   const [selectedCategory, setSelectedCategory] = useState('all');
