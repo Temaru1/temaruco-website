@@ -40,7 +40,8 @@ const CustomOrderPage = () => {
     color_other: '',
     size_type: '',
     male_sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, XXXL: 0 },
-    female_sizes: { '6': 0, '8': 0, '10': 0, '12': 0, '14': 0, '16': 0, '18': 0, '20': 0, '22': 0 },
+    female_sizes: { '6': 0, '8': 0, '10': 0, '12': 0, '14': 0, 'Other': 0 },
+    female_custom_size: '',  // For "Other" option
     design_details: '',
     deadline: '',
     additional_notes: ''
