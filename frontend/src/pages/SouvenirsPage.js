@@ -56,10 +56,17 @@ const SouvenirsPage = () => {
 
   // Get the effective price for an item based on branding choice
   const getEffectivePrice = (souvenir, brandingChoice) => {
+    // Support both 'price' and 'unbranded_price' for backward compatibility
+    const basePrice = souvenir.price || souvenir.unbranded_price || 0;
     if (brandingChoice === 'branded' && souvenir.branded_price) {
       return souvenir.branded_price;
     }
-    return souvenir.price;
+    return basePrice;
+  };
+
+  // Get base price (handles both price and unbranded_price fields)
+  const getBasePrice = (souvenir) => {
+    return souvenir.price || souvenir.unbranded_price || 0;
   };
 
   const addToCart = (souvenir) => {
