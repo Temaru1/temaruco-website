@@ -19,6 +19,8 @@ import AdminMaterialsPage from './AdminMaterialsPage';
 import AdminSuppliersPage from './AdminSuppliersPage';
 import AdminClothingItemsPage from './AdminClothingItemsPage';
 import AdminReminderSettingsPage from './AdminReminderSettingsPage';
+import AdminFileManagerPage from './AdminFileManagerPage';
+import AdminSouvenirSuppliersPage from './AdminSouvenirSuppliersPage';
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
