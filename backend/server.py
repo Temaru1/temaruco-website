@@ -3564,6 +3564,12 @@ async def create_design_request(
     except Exception as e:
         logger.error(f"Failed to send design lab acknowledgment email: {str(e)}")
     
+    # Send push notification to admins
+    try:
+        await notify_new_enquiry(db, enquiry_code, customer_name, 'design')
+    except Exception as e:
+        logger.error(f"Failed to send push notification for design enquiry: {e}")
+    
     return {
         'message': 'Design request submitted successfully',
         'enquiry_code': enquiry_code,
