@@ -28,11 +28,23 @@ const BoutiquePage = () => {
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
-  const [customSize, setCustomSize] = useState('');
   
-  // Size options
-  const MALE_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
-  const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
+  // Default size options (used when admin hasn't set available_sizes)
+  const DEFAULT_MALE_SIZES = ['S', 'M', 'L', 'XL', '2XL'];
+  const DEFAULT_FEMALE_SIZES = ['6', '8', '10', '12', '14'];
+  const DEFAULT_CHILD_SIZES = ['2', '4', '6', '8', '10'];
+  
+  // Get available sizes for a product (admin-defined or defaults, NO "Other" option)
+  const getAvailableSizes = (product) => {
+    // If admin has set available_sizes, use those
+    if (product.available_sizes && product.available_sizes.length > 0) {
+      return product.available_sizes;
+    }
+    // Otherwise use defaults based on gender
+    if (product.gender === 'female') return DEFAULT_FEMALE_SIZES;
+    if (product.gender === 'child') return DEFAULT_CHILD_SIZES;
+    return DEFAULT_MALE_SIZES;
+  };
 
   // Category filters
   const [selectedCategory, setSelectedCategory] = useState('all');
