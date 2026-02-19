@@ -1171,4 +1171,53 @@ sizes: {
 **Testing:** 100% pass rate (14/14 backend tests, all frontend features verified)
 - Test report: `/app/test_reports/iteration_9.json`
 
+## Completed Work (Feb 19, 2026) - Browser Push Notifications
+
+### Browser Push Notifications for Admin Dashboard ✅
+
+**User Requirements:**
+1. Configurable per admin - each admin chooses to enable/disable
+2. All events trigger notifications (new orders, enquiries, design requests, payment confirmations)
+3. Settings page with both enable/disable toggle and event type selection
+
+**Implementation:**
+
+**Backend (pywebpush):**
+- `services/push_notification_service.py` - Push notification service with VAPID authentication
+- VAPID keys stored in `.env` (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_CLAIMS_EMAIL)
+- `push_subscriptions` collection stores admin subscriptions with event preferences
+
+**API Endpoints:**
+- `GET /api/push/vapid-public-key` - Get VAPID public key for client subscription (no auth)
+- `GET /api/admin/push/settings` - Get push settings for current admin
+- `POST /api/admin/push/subscribe` - Subscribe to push notifications
+- `POST /api/admin/push/unsubscribe` - Unsubscribe from push notifications  
+- `PUT /api/admin/push/settings` - Update enabled event types
+- `POST /api/admin/push/test` - Send test notification
+
+**Event Types Supported:**
+- `new_order` - New orders (bulk, POD, souvenir, fabric, boutique)
+- `new_enquiry` - New enquiries and custom order requests
+- `new_design_request` - New branded product design requests
+- `payment_received` - Payment confirmations
+- `quote_response` - Customer responses to quotes
+- `low_inventory` - Inventory alerts
+
+**Frontend (React):**
+- `AdminPushNotificationsPage.js` - Settings UI with enable/disable toggle
+- Service Worker (`public/service-worker.js`) - Handles push events and notification display
+- Route: `/admin/dashboard/push-notifications`
+- Navigation: Settings menu in admin sidebar
+
+**Integration Points:**
+Push notifications are triggered on:
+- Bulk order creation
+- POD order creation
+- Souvenir order creation (with special handling for design requests)
+- Design lab enquiry submission
+- Payment confirmation via Flutterwave
+
+**Testing:** 100% pass rate (18/18 backend tests, all frontend features verified)
+- Test report: `/app/test_reports/iteration_10.json`
+
 ## Pending Features (Not Yet Implemented)
