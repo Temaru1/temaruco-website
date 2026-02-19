@@ -136,23 +136,77 @@ const BulkOrdersPage = () => {
     const newColors = orderData.colors.includes(color)
       ? orderData.colors.filter(c => c !== color)
       : [...orderData.colors, color];
-    setOrderData({...orderData, colors: newColors});
+    
+    // Initialize sizes for new color with gender categories
+    const newSizes = { ...orderData.sizes };
+    if (!newColors.includes(color)) {
+      // Removing color, clean up sizes
+      delete newSizes[color];
+    } else if (!newSizes[color]) {
+      // Adding color, initialize structure
+      newSizes[color] = {
+        male: {},
+        female: {},
+        child: {}
+      };
+    }
+    
+    setOrderData({...orderData, colors: newColors, sizes: newSizes});
   };
 
-  // Update size quantity
-  const updateSizeQty = (size, qty) => {
+  // Update size quantity for specific color and gender
+  const updateSizeQty = (color, gender, size, qty) => {
     const newSizes = { ...orderData.sizes };
+    if (!newSizes[color]) {
+      newSizes[color] = { male: {}, female: {}, child: {} };
+    }
+    if (!newSizes[color][gender]) {
+      newSizes[color][gender] = {};
+    }
+    
     if (qty > 0) {
-      newSizes[size] = qty;
+      newSizes[color][gender][size] = qty;
     } else {
-      delete newSizes[size];
+      delete newSizes[color][gender][size];
     }
     setOrderData({...orderData, sizes: newSizes});
   };
 
-  // Calculate total from sizes
+  // Get total for a specific color
+  const getColorTotal = (color) => {
+    const colorSizes = orderData.sizes[color];
+    if (!colorSizes) return 0;
+    
+    let total = 0;
+    ['male', 'female', 'child'].forEach(gender => {
+      if (colorSizes[gender]) {
+        Object.values(colorSizes[gender]).forEach(qty => {
+          total += parseInt(qty) || 0;
+        });
+      }
+    });
+    return total;
+  };
+
+  // Calculate total from all sizes (all colors)
   const getTotalFromSizes = () => {
-    return Object.values(orderData.sizes).reduce((sum, qty) => sum + (parseInt(qty) || 0), 0);
+    let total = 0;
+    orderData.colors.forEach(color => {
+      total += getColorTotal(color);
+    });
+    return total;
+  };
+
+  // Check if all colors meet minimum quantity
+  const validateColorMinimums = () => {
+    const errors = [];
+    orderData.colors.forEach(color => {
+      const colorTotal = getColorTotal(color);
+      if (colorTotal > 0 && colorTotal < 50) {
+        errors.push(`${color}: ${colorTotal}/50 pieces (need ${50 - colorTotal} more)`);
+      }
+    });
+    return errors;
   };
 
   const handleSubmit = async () => {
