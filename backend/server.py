@@ -6010,7 +6010,9 @@ async def trigger_quote_reminders(admin_user: Dict = Depends(get_admin_user)):
 
 @api_router.post("/admin/quotes/{quote_id}/mark-paid")
 async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
-    """Mark a quote as paid and create an order from it"""
+    """Mark a quote as paid, generate receipt PDF, upload to Supabase, and email to client"""
+    from services.receipt_service import generate_receipt_pdf, upload_receipt_to_supabase
+    
     # Get the quote
     quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
     if not quote:
@@ -6022,6 +6024,20 @@ async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin
     
     # Generate order ID
     order_id = await generate_order_id()
+    paid_at = datetime.now(timezone.utc).isoformat()
+    
+    # Update quote with paid_at for receipt generation
+    quote['marked_paid_at'] = paid_at
+    quote['order_id'] = order_id
+    
+    # Generate PDF receipt
+    receipt_url = None
+    try:
+        pdf_bytes = generate_receipt_pdf(quote, order_id)
+        receipt_url = await upload_receipt_to_supabase(pdf_bytes, quote_id)
+        logger.info(f"Receipt generated for quote {quote_id}: {receipt_url}")
+    except Exception as e:
+        logger.error(f"Failed to generate receipt for quote {quote_id}: {e}")
     
     # Create order from quote
     order = {
@@ -6038,8 +6054,8 @@ async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin
         'total_price': quote.get('total'),
         'status': 'payment_verified',
         'payment_status': 'paid',
-        'payment_verified_at': datetime.now(timezone.utc).isoformat(),
-        'payment_receipt_url': None,
+        'payment_verified_at': paid_at,
+        'payment_receipt_url': receipt_url,
         'notes': quote.get('notes'),
         'created_at': datetime.now(timezone.utc).isoformat(),
         'created_from_quote': True
@@ -6047,33 +6063,173 @@ async def mark_quote_as_paid(quote_id: str, admin_user: Dict = Depends(get_admin
     
     await db.orders.insert_one(order)
     
-    # Update quote status to paid
+    # Update quote status to paid with receipt URL
     await db.manual_quotes.update_one(
         {'id': quote_id},
         {
             '$set': {
                 'status': 'paid',
                 'order_id': order_id,
+                'paid_at': paid_at,
                 'marked_paid_by': admin_user['email'],
-                'marked_paid_at': datetime.now(timezone.utc).isoformat()
+                'marked_paid_at': paid_at,
+                'receipt_url': receipt_url
             }
         }
     )
+    
+    # Send receipt email to client
+    if quote.get('client_email') and receipt_url:
+        try:
+            await send_receipt_email(
+                to_email=quote.get('client_email'),
+                client_name=quote.get('client_name', 'Valued Customer'),
+                quote_number=quote.get('quote_number'),
+                total_amount=quote.get('total', 0),
+                receipt_url=receipt_url,
+                order_id=order_id
+            )
+            logger.info(f"Receipt email sent to {quote.get('client_email')}")
+        except Exception as e:
+            logger.error(f"Failed to send receipt email: {e}")
     
     # Create notification
     await create_notification(
         'quote_paid',
         'Quote Marked as Paid',
-        f"Quote {quote.get('quote_number')} marked as paid. Order {order_id} created.",
+        f"Quote {quote.get('quote_number')} marked as paid. Order {order_id} created. Receipt generated.",
         order_id=order_id
     )
     
     del order['_id']
     return {
-        'message': 'Quote marked as paid and order created',
+        'message': 'Quote marked as paid, receipt generated and emailed',
         'order_id': order_id,
+        'receipt_url': receipt_url,
         'order': order
     }
+
+
+async def send_receipt_email(to_email: str, client_name: str, quote_number: str, total_amount: float, receipt_url: str, order_id: str):
+    """Send receipt email to client with PDF attachment link"""
+    
+    # Get email settings
+    email_settings = await db.system_config.find_one({'type': 'email_settings'}, {'_id': 0})
+    if not email_settings or not email_settings.get('smtp_configured'):
+        logger.warning("SMTP not configured, skipping receipt email")
+        return
+    
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    
+    smtp_host = email_settings.get('smtp_host', 'smtp.gmail.com')
+    smtp_port = email_settings.get('smtp_port', 587)
+    smtp_user = email_settings.get('smtp_user')
+    smtp_pass = email_settings.get('smtp_pass')
+    from_email = email_settings.get('from_email', smtp_user)
+    
+    if not smtp_user or not smtp_pass:
+        logger.warning("SMTP credentials not configured")
+        return
+    
+    subject = f"TEMARUCO Payment Receipt – Order #{quote_number}"
+    
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #2B2D42; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #D90429, #2B2D42); color: white; padding: 30px; text-align: center; }}
+            .content {{ padding: 30px; background: #f8f9fa; }}
+            .amount {{ font-size: 28px; color: #D90429; font-weight: bold; }}
+            .btn {{ display: inline-block; background: #D90429; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+            .footer {{ text-align: center; padding: 20px; color: #8D99AE; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>TEMARUCO</h1>
+                <p>Payment Receipt</p>
+            </div>
+            <div class="content">
+                <p>Dear {client_name},</p>
+                <p>Thank you for your payment! We have received your payment for Order <strong>#{quote_number}</strong>.</p>
+                
+                <p style="text-align: center;">
+                    <span class="amount">₦{total_amount:,.2f}</span><br/>
+                    <small>Amount Paid</small>
+                </p>
+                
+                <p>Your Order ID: <strong>{order_id}</strong></p>
+                
+                <p style="text-align: center;">
+                    <a href="{receipt_url}" class="btn">View/Download Receipt</a>
+                </p>
+                
+                <p>If you have any questions about your order, please don't hesitate to contact us.</p>
+                
+                <p>Thank you for choosing TEMARUCO!</p>
+            </div>
+            <div class="footer">
+                <p>TEMARUCO - Premium Fashion, Souvenirs & Creative Solutions</p>
+                <p>Email: temarucoltd@gmail.com | Website: www.temarucogroup.com</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = from_email
+    msg['To'] = to_email
+    
+    msg.attach(MIMEText(html_body, 'html'))
+    
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        logger.info(f"Receipt email sent to {to_email}")
+    except Exception as e:
+        logger.error(f"Failed to send receipt email: {e}")
+        raise
+
+
+@api_router.post("/admin/quotes/{quote_id}/resend-receipt")
+async def resend_receipt_email(quote_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Resend receipt email to client"""
+    quote = await db.manual_quotes.find_one({'id': quote_id}, {'_id': 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    if quote.get('status') != 'paid':
+        raise HTTPException(status_code=400, detail="Quote is not paid yet")
+    
+    receipt_url = quote.get('receipt_url')
+    if not receipt_url:
+        raise HTTPException(status_code=400, detail="No receipt found for this quote")
+    
+    if not quote.get('client_email'):
+        raise HTTPException(status_code=400, detail="No client email available")
+    
+    try:
+        await send_receipt_email(
+            to_email=quote.get('client_email'),
+            client_name=quote.get('client_name', 'Valued Customer'),
+            quote_number=quote.get('quote_number'),
+            total_amount=quote.get('total', 0),
+            receipt_url=receipt_url,
+            order_id=quote.get('order_id', '')
+        )
+        return {'message': 'Receipt email resent successfully'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
 
 @api_router.post("/admin/quotes/search")
 async def search_quotes_receipts(
