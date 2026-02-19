@@ -6257,8 +6257,9 @@ async def create_enquiry(
     import json
     enquiry_dict = json.loads(enquiry_data)
     
-    # Generate unique enquiry code
+    # Generate unique enquiry code and order ID
     enquiry_code = await generate_enquiry_code()
+    order_id = await generate_custom_order_id()
     enquiry_id = str(uuid.uuid4())
     
     # Save design images
@@ -6273,28 +6274,48 @@ async def create_enquiry(
         file_data = await save_upload_file(measurement_file, ALLOWED_IMAGE_EXTENSIONS | ALLOWED_DOCUMENT_EXTENSIONS)
         measurement_file_url = file_data['file_path']
     
-    # Create enquiry document
+    # Calculate total quantity from sizes if available
+    total_quantity = enquiry_dict.get('quantity', 0)
+    sizes_selected = {}
+    if enquiry_dict.get('male_sizes'):
+        for size, qty in enquiry_dict.get('male_sizes', {}).items():
+            if qty > 0:
+                sizes_selected[f"Male {size}"] = qty
+    if enquiry_dict.get('female_sizes'):
+        for size, qty in enquiry_dict.get('female_sizes', {}).items():
+            if qty > 0:
+                sizes_selected[f"Female {size}"] = qty
+    
+    # Create enquiry document (Custom Order)
     enquiry = {
         'id': enquiry_id,
+        'order_id': order_id,  # Unique Order ID for Custom Orders
         'enquiry_code': enquiry_code,
+        'enquiry_type': 'custom_order',  # Distinguish from general enquiries
         'customer_name': customer_name,
         'customer_email': customer_email,
         'customer_phone': customer_phone,
+        'delivery_address': enquiry_dict.get('delivery_address', ''),
         'order_category': enquiry_dict.get('order_category'),
+        'product_type': enquiry_dict.get('clothing_name'),  # Alias for consistency
         'clothing_name': enquiry_dict.get('clothing_name'),
         'quantity': enquiry_dict.get('quantity'),
+        'total_quantity': total_quantity,
+        'sizes_selected': sizes_selected,
         'fabric_material': enquiry_dict.get('fabric_material'),
         'colors': enquiry_dict.get('colors', []),
         'size_type': enquiry_dict.get('size_type'),
         'male_sizes': enquiry_dict.get('male_sizes', {}),
         'female_sizes': enquiry_dict.get('female_sizes', {}),
         'design_details': enquiry_dict.get('design_details'),
+        'additional_notes': enquiry_dict.get('additional_notes'),
         'design_images': design_image_urls,
+        'design_file_url': design_image_urls[0] if design_image_urls else None,
         'measurement_file': measurement_file_url,
         'deadline': enquiry_dict.get('deadline'),
-        'additional_notes': enquiry_dict.get('additional_notes'),
-        'status': 'New Inquiry',
+        'status': 'pending',  # pending / reviewed / approved / rejected
         'quote': None,
+        'linked_quote_id': None,
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
@@ -6304,10 +6325,77 @@ async def create_enquiry(
     # Create admin notification
     await create_notification(
         'new_enquiry',
-        'New Custom Order Enquiry',
-        f"New enquiry {enquiry_code} from {customer_name} - {enquiry_dict.get('clothing_name')} x{enquiry_dict.get('quantity')}",
+        'New Custom Order',
+        f"Custom Order {order_id} from {customer_name} - {enquiry_dict.get('clothing_name')} x{enquiry_dict.get('quantity')}",
         order_id=enquiry_id
     )
+    
+    # Send confirmation email to customer
+    confirmation_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
+            .header h1 {{ margin: 0; font-size: 24px; }}
+            .content {{ padding: 30px 20px; background: #fff; }}
+            .order-box {{ background: #f5f5f5; border-left: 4px solid #D90429; padding: 15px; margin: 20px 0; }}
+            .order-id {{ font-size: 24px; font-weight: bold; color: #D90429; }}
+            .footer {{ background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Custom Order Received - TEMARUCO</h1>
+            </div>
+            <div class="content">
+                <p>Dear {customer_name},</p>
+                
+                <p>Thank you for submitting your custom order with TEMARUCO.</p>
+                
+                <p><strong>Your custom order details have been received successfully.</strong><br>
+                Our team is currently reviewing your request.</p>
+                
+                <p><strong>A quote will be sent to your email within 24 hours.</strong></p>
+                
+                <div class="order-box">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">YOUR ORDER ID</p>
+                    <p class="order-id">{order_id}</p>
+                    <p style="margin: 10px 0 0 0; font-size: 14px;">
+                        <strong>Product:</strong> {enquiry_dict.get('clothing_name')}<br>
+                        <strong>Quantity:</strong> {enquiry_dict.get('quantity')} pieces<br>
+                        <strong>Category:</strong> {enquiry_dict.get('order_category')}
+                    </p>
+                </div>
+                
+                <p>If you have additional information to provide, please reply to this email or contact us directly.</p>
+                
+                <p>Best regards,<br>
+                <strong>TEMARUCO Team</strong><br>
+                temarucoltd@gmail.com | +234 912 542 3902</p>
+            </div>
+            <div class="footer">
+                <p>© {datetime.now().year} Temaruco Clothing Factory. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Send the confirmation email
+    try:
+        await send_email_notification(
+            customer_email,
+            f"Custom Order Received – TEMARUCO",
+            confirmation_html
+        )
+        logger.info(f"Confirmation email sent to {customer_email} for order {order_id}")
+    except Exception as e:
+        # Log error but don't fail the order creation
+        logger.error(f"Failed to send confirmation email for order {order_id}: {str(e)}")
     
     del enquiry['_id']
     return enquiry
