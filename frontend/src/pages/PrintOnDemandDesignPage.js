@@ -60,9 +60,11 @@ const PrintOnDemandDesignPage = () => {
   
   const productFromState = location.state?.product;
   
-  // Size options based on gender
-  const MALE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  // Size options based on gender (Universal Sizes)
+  const MALE_SIZES = ['S', 'M', 'L', 'XL', '2XL', 'Other'];
   const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
+  const CHILD_SIZES = ['2', '4', '6', '8', '10', 'Other'];
+  const GENDERS = ['Male', 'Female', 'Child'];
   
   // Design state
   const [selectedVariant, setSelectedVariant] = useState('standard');
