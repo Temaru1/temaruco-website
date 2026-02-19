@@ -27,7 +27,8 @@ const AdminProductsPage = () => {
     image_url: '',
     description: '',
     is_active: true,
-    moq_value: '1'
+    moq_value: '1',
+    has_branding: false  // For souvenirs: enable branding option
   });
 
   const token = localStorage.getItem('token');
@@ -131,7 +132,8 @@ const AdminProductsPage = () => {
       image_url: item.image_url || '',
       description: item.description || '',
       is_active: item.is_active !== false,
-      moq_value: item.moq_value?.toString() || '1'
+      moq_value: item.moq_value?.toString() || '1',
+      has_branding: item.has_branding || false
     });
     // Set preview from existing image
     if (item.image_url) {
@@ -143,7 +145,7 @@ const AdminProductsPage = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', price: '', branded_price: '', image_url: '', description: '', is_active: true, moq_value: '1' });
+    setFormData({ name: '', price: '', branded_price: '', image_url: '', description: '', is_active: true, moq_value: '1', has_branding: false });
     setEditingItem(null);
     setImagePreview(null);
   };
