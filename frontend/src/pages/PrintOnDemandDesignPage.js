@@ -964,13 +964,13 @@ const PrintOnDemandDesignPage = () => {
                   ))}
                 </div>
                 {/* Custom size input for "Other" */}
-                {selectedGender === 'Female' && selectedSize === 'Other' && (
+                {selectedSize === 'Other' && (
                   <div className="mt-3">
                     <input
                       type="text"
                       value={customSize}
                       onChange={(e) => setCustomSize(e.target.value)}
-                      placeholder="Enter your custom size (e.g., 16, 18, 20)"
+                      placeholder={`Enter custom ${selectedGender.toLowerCase()} size`}
                       className="w-full px-3 py-2 border border-amber-300 rounded-lg bg-amber-50 text-sm"
                       data-testid="custom-size-input"
                     />
