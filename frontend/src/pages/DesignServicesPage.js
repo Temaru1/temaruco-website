@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Palette, Shirt, Building2, Instagram, Calendar, PenTool, Upload, X, CheckCircle, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
@@ -153,8 +153,10 @@ const DesignServicesPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Design Services" 
-        description="Professional graphic design services. Logo design, t-shirt artwork, brand identity, and more."
+        title={SEO_CONFIG.designServices.title}
+        description={SEO_CONFIG.designServices.description}
+        image={SEO_CONFIG.designServices.image}
+        url={SEO_CONFIG.designServices.url}
       />
 
       {/* Hero Section */}
@@ -162,7 +164,7 @@ const DesignServicesPage = () => {
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Professional Design Services
+              {SEO_CONFIG.designServices.h1}
             </h1>
             <p className="text-xl text-white/90 mb-8">
               Need a logo or custom artwork? Our design team will create it for you. 
