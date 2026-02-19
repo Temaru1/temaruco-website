@@ -215,6 +215,13 @@ const BulkOrdersPage = () => {
       return;
     }
 
+    // Validate minimum per color
+    const colorErrors = validateColorMinimums();
+    if (colorErrors.length > 0) {
+      toast.error(`Minimum 50 pieces required per color:\n${colorErrors.join('\n')}`);
+      return;
+    }
+
     // Navigate to order details page for review and payment
     navigate('/bulk-orders/details', {
       state: {
