@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Package, Paintbrush, Shirt, ShoppingBag, Scissors, Gift } from 'lucide-react';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { useSiteTexts } from '../contexts/SiteTextContext';
 
