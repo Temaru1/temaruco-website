@@ -592,7 +592,13 @@ const PrintOnDemandDesignPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-100">
-      <SEO title={`Design Your ${activeProduct.name}`} description="Create your custom design" />
+      <SEO 
+        title={`${activeProduct.name} - Print on Demand | TEMARUCO`}
+        description={`Design your custom ${activeProduct.name}. Upload your artwork and create personalized merchandise with TEMARUCO's premium print on demand service.`}
+        image={activeProduct.mockup_url || activeProduct.image_url}
+        url={`https://temarucogroup.com/pod/${productId}`}
+        product={activeProduct}
+      />
 
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
