@@ -778,4 +778,46 @@ These sections in `server.py` should be extracted:
 - Materials Inventory (lines 7939-8247)
 - Site Text CMS (lines 8886-9187)
 
+## Completed Work (Feb 19, 2026) - MOQ Feature
+
+### Minimum Order Quantity (MOQ) for Fabrics & Souvenirs ✅
+
+**Implementation:**
+1. **Database Schema Updates:**
+   - Fabrics: `moq_value` (float, default 1), `unit_type` (string, default "yard")
+   - Souvenirs: `moq_value` (integer, default 1), `unit_type` (string, default "piece")
+
+2. **Backend Endpoints Updated:**
+   - `POST /api/admin/fabrics` - Creates fabric with MOQ (accepts decimal yards)
+   - `PUT /api/admin/fabrics/{id}` - Updates fabric MOQ
+   - `POST /api/admin/souvenirs` - Creates souvenir with MOQ (converts to integer)
+   - `PUT /api/admin/souvenirs/{id}` - Updates souvenir MOQ
+   - Zero/negative MOQ defaults to 1
+
+3. **Admin UI:**
+   - AdminProductsPage: MOQ input field added below Price
+   - Fabrics: Label "Minimum Order Quantity (Yards) *" with decimal step
+   - Souvenirs: Label "Minimum Order Quantity (Pieces) *" with integer step
+   - Product cards display "MOQ: X Yards/Pieces"
+
+4. **Customer-Facing Pages:**
+   - FabricsPage: Shows "Minimum Order: X Yards" per product
+   - SouvenirsPage: Shows "Minimum Order: X Pieces" per product
+   - Quantity selector with MOQ as minimum value
+   - Step: 0.5 for fabrics, 1 for souvenirs
+
+5. **Validation:**
+   - **Add to Cart**: Prevents adding if quantity < MOQ
+   - **Cart Sidebar**: Quantity controls respect MOQ minimum
+   - **Checkout (Safety Layer)**: Re-validates MOQ before order creation
+   - Error toast: "Minimum order for this fabric/item is X yards/pieces."
+
+6. **Files Modified:**
+   - `/app/backend/server.py` - CRUD endpoints with MOQ fields
+   - `/app/frontend/src/pages/AdminProductsPage.js` - MOQ form field
+   - `/app/frontend/src/pages/FabricsPage.js` - MOQ display + validation
+   - `/app/frontend/src/pages/SouvenirsPage.js` - MOQ display + validation
+
+**Testing:** 100% pass rate (12 backend tests, all UI tests passed)
+
 
