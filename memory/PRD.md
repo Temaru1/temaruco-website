@@ -1117,13 +1117,58 @@ sizes: {
 ### Dependencies Added
 - `reportlab==4.4.10` - PDF generation
 
-## Pending Features (Not Yet Implemented)
+## Completed Work (Feb 19, 2026) - Child Sizes & Branded Products Feature
 
-### Branded Products with Design Creation (Souvenirs)
-- [ ] Branding option selector (Unbranded vs Branded)
-- [ ] Design source selection (Upload own vs TEMARUCO creates)
-- [ ] Client design upload to Supabase
-- [ ] Design brief form for TEMARUCO design requests
-- [ ] Production lock for pending design pricing
-- [ ] Admin panel for managing design orders
-- [ ] Email notifications for TEMARUCO design orders
+### 1. Child Size Labels Update ✅
+- **File:** `/app/frontend/src/pages/BulkOrdersPage.js`
+- **Change:** Updated `CHILD_SIZES` array from `['2-3', '3-4', ...]` to `['2-3 yrs', '3-4 yrs', '4-5 yrs', '5-6 yrs', '6-7 yrs', '7-8 yrs', '8-9 yrs', '9-10 yrs', '10-11 yrs', '11-12 yrs']`
+- **Display:** Shows under "Child Sizes (Age)" label with individual quantity inputs per color
+
+### 2. Branded Products Feature for Souvenirs ✅
+
+**Customer-Facing Flow:**
+1. **Product Selection:** Souvenirs with `has_branding=true` show Unbranded/Branded toggle buttons
+2. **Price Display:** Shows both Unbranded price and Branded price when branding is enabled
+3. **Add to Cart:** Selected branding choice (Unbranded/Branded) saved with cart item
+4. **Design Source Selection:** When cart contains branded items, customer must choose:
+   - **"I will upload my design"** → File upload (JPG/PNG, max 2MB) to Supabase
+   - **"I want TEMARUCO to create the design"** → Design brief form (company name, colors, style, notes)
+5. **Design Fee Notice:** Warning displayed that design fee is NOT included in cart total
+6. **Order Creation:** Order saved with branding fields, email notifications sent
+
+**Backend Endpoints:**
+- `POST /api/branding/upload-design` - Upload branding design file (JPG/PNG, max 2MB)
+- `POST /api/orders/souvenir` - Enhanced to accept branding fields
+- `GET /api/admin/branded-orders` - List all branded orders with status counts
+- `PUT /api/admin/branded-orders/{order_id}/design-fee` - Set design fee and notify customer
+- `PUT /api/admin/branded-orders/{order_id}/status` - Update design negotiation status
+
+**Order Fields Added:**
+- `contains_branded_items` (boolean)
+- `design_source` (string: "client_upload" | "temaruco_design")
+- `branding_image_url` (string, nullable)
+- `design_brief` (object: {company_name, colors, style_preferences, additional_notes})
+- `design_negotiation_status` (string: "pending_design_quote" | "design_received" | "quote_sent" | "design_approved" | "production_locked")
+- `design_fee` (number, nullable)
+- `design_fee_approved` (boolean)
+
+**Souvenir Product Fields Added:**
+- `has_branding` (boolean) - Enables branding option for product
+
+**Admin UI:**
+- **Admin Products Page:** Added "Enable Branding Option" checkbox in Add/Edit Souvenir modal
+- **Branded Orders Management:** Accessible via `/api/admin/branded-orders` endpoint
+
+**Email Notifications:**
+- Customer: Order confirmation with design brief details (for TEMARUCO design orders)
+- Admin: New branded order notification with design brief for action
+
+**Files Modified:**
+- `/app/backend/server.py` - Added branding endpoints, enhanced souvenir order
+- `/app/frontend/src/pages/SouvenirsPage.js` - Complete UI for branding selection and design source
+- `/app/frontend/src/pages/AdminProductsPage.js` - Added has_branding toggle
+
+**Testing:** 100% pass rate (14/14 backend tests, all frontend features verified)
+- Test report: `/app/test_reports/iteration_9.json`
+
+## Pending Features (Not Yet Implemented)
