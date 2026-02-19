@@ -8,6 +8,7 @@ import OrderCodeInput from '../components/OrderCodeInput';
 import AdminQuotesPage from './AdminQuotesPage';
 import AdminCMSPage from './AdminCMSPage';
 import AdminCustomRequestsPage from './AdminCustomRequestsPage';
+import AdminEnquiriesPage from './AdminEnquiriesPage';
 import SuperAdminPage from './SuperAdminPage';
 import AdminPricingPage from './AdminPricingPage';
 import AdminImageCMSPage from './AdminImageCMSPage';
