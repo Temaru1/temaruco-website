@@ -4938,6 +4938,12 @@ async def verify_flutterwave_payment(verify_request: dict):
             # Create notification
             await create_notification('payment_received', 'Payment Received', f"Flutterwave payment received for order {order_id}", order_id)
             
+            # Send push notification to admins
+            try:
+                await notify_payment_received(db, order_id, payment_record.get('amount', 0), payment_record.get('currency', 'NGN') if payment_record else 'NGN')
+            except Exception as e:
+                logger.error(f"Failed to send push notification for payment: {e}")
+            
             # Send confirmation email
             if payment_record:
                 await send_email_mock(payment_record['email'], "Payment Confirmed - Temaruco", f"Your payment of {payment_record.get('currency', 'NGN')} {payment_record['amount']:,.2f} has been confirmed. Order ID: {order_id}")
