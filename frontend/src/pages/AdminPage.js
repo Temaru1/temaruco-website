@@ -766,6 +766,7 @@ const AdminPage = () => {
         { label: 'Guest Designs', path: '/admin/guest-designs', icon: Image },
         { label: 'Enquiries', path: '/admin/dashboard/custom-requests', icon: FileQuestion },
         { label: 'Quotes', path: '/admin/dashboard/quotes', icon: FileText },
+        { label: 'Job Orders', path: '/admin/dashboard/job-orders', icon: ClipboardList },
       ]
     },
     {
