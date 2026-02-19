@@ -526,6 +526,72 @@ const BoutiquePage = () => {
           </div>
         </div>
       )}
+
+      {/* Size Selection Modal */}
+      {showSizeModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-bold">{selectedProduct.name}</h3>
+                  <p className="text-[#D90429] font-semibold">{formatPrice(selectedProduct.price)}</p>
+                </div>
+                <button onClick={() => setShowSizeModal(false)} className="text-zinc-400 hover:text-zinc-600">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-zinc-700 mb-2">Select Size</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(selectedProduct.gender === 'female' ? FEMALE_SIZES : MALE_SIZES).map(size => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        if (size !== 'Other') setCustomSize('');
+                      }}
+                      className={`py-3 px-4 border rounded-lg text-center font-medium transition-all ${
+                        selectedSize === size 
+                          ? 'border-[#D90429] bg-red-50 text-[#D90429]' 
+                          : 'border-zinc-200 hover:border-zinc-300'
+                      }`}
+                      data-testid={`size-option-${size}`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Custom Size Input for "Other" */}
+              {selectedSize === 'Other' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-2">Enter Custom Size</label>
+                  <input
+                    type="text"
+                    value={customSize}
+                    onChange={(e) => setCustomSize(e.target.value)}
+                    placeholder="Enter your size (e.g., 16, 18, 20)"
+                    className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 bg-amber-50"
+                    data-testid="custom-size-input"
+                  />
+                </div>
+              )}
+              
+              <Button
+                onClick={() => addToCartWithSize(selectedProduct, selectedSize, selectedSize === 'Other' ? customSize : null)}
+                disabled={selectedSize === 'Other' && !customSize}
+                className="w-full bg-[#D90429] hover:bg-[#B90322]"
+                data-testid="confirm-size-btn"
+              >
+                Add to Cart
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
