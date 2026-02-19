@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import PaymentSelector from '../components/PaymentSelector';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -122,8 +122,10 @@ const FabricsPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Buy Premium Fabrics"
-        description="Shop premium quality fabrics for all your clothing needs."
+        title={SEO_CONFIG.fabrics.title}
+        description={SEO_CONFIG.fabrics.description}
+        image={SEO_CONFIG.fabrics.image}
+        url={SEO_CONFIG.fabrics.url}
       />
 
       {/* Header */}
@@ -138,7 +140,7 @@ const FabricsPage = () => {
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
               </button>
               <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="fabrics-page-title">
-                Premium Fabrics
+                {SEO_CONFIG.fabrics.h1}
               </h1>
               <p className="text-zinc-600 mt-2">Quality materials for your projects</p>
             </div>
