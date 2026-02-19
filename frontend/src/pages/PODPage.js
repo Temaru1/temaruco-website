@@ -22,7 +22,9 @@ const PODPage = () => {
     quantity: 1,
     print_placement: 'front',
     color: 'White',
+    gender: 'Male',
     size: 'M',
+    custom_size: '',  // For "Other" female size
     notes: ''
   });
 
