@@ -1,0 +1,119 @@
+{
+  "summary": "Tested both requested features: 1) Child size labels on Bulk Orders page now display age format (2-3 yrs, 3-4 yrs, etc.) - VERIFIED 2) Complete Branded Products feature for souvenirs - VERIFIED (customer-facing UI with Unbranded/Branded selection, design source options, and all backend APIs working)",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Souvenirs Page",
+        "issues": ["Console warning: An empty string was passed to 'src' attribute on placeholder images - cosmetic only"]
+      },
+      {
+        "screen": "Admin Dashboard",
+        "issues": ["WebSocket connection warnings (1006 errors) - doesn't affect functionality"]
+      }
+    ]
+  },
+  "test_results": {
+    "backend_api_tests": {
+      "branding_upload_endpoint": {
+        "test_01_upload_valid_png_file": "PASS - Returns URL with storage type (supabase/local)",
+        "test_02_upload_valid_jpg_file": "PASS - JPEG files accepted",
+        "test_03_reject_invalid_file_type": "PASS - PDF files rejected with 400",
+        "test_04_reject_large_file": "PASS - Files >2MB rejected with 400"
+      },
+      "souvenir_order_with_branding": {
+        "test_05_create_souvenir_order_without_branding": "PASS - Order ID starts with SOU-",
+        "test_06_create_souvenir_order_with_client_upload_design": "PASS - design_source=client_upload accepted",
+        "test_07_create_souvenir_order_with_temaruco_design": "PASS - requires_design_quote=true returned"
+      },
+      "admin_branded_orders": {
+        "test_08_get_branded_orders_list": "PASS - Returns orders list with counts",
+        "test_09_get_branded_orders_filtered_by_status": "PASS - Filter by design_negotiation_status works"
+      },
+      "admin_souvenirs_branding": {
+        "test_10_create_souvenir_with_branding_enabled": "PASS - has_branding=true saved",
+        "test_11_verify_souvenir_has_branding_field": "PASS - Field persists in GET /api/souvenirs",
+        "test_12_update_souvenir_toggle_branding_off": "PASS - Toggle works",
+        "test_13_cleanup_test_souvenir": "PASS - Cleanup successful",
+        "test_14_souvenirs_return_branding_fields": "PASS - Returns has_branding, branded_price fields"
+      }
+    },
+    "frontend_ui_tests": {
+      "bulk_orders_child_sizes": {
+        "page_loads": "PASS - Bulk Orders page loads with clothing items",
+        "child_sizes_age_format": "PASS - 'Child Sizes (Age)' label visible",
+        "age_labels": "PASS - Labels show '2-3 yrs', '3-4 yrs', '4-5 yrs', ... '11-12 yrs'",
+        "male_female_sizes": "PASS - Male and Female size sections also working (S, M, L, XL, XXL)",
+        "moq_per_color": "PASS - 50 pieces per color validation working"
+      },
+      "souvenirs_branding_feature": {
+        "branding_option_display": "PASS - 'Choose Option:' label with Unbranded/Branded buttons",
+        "price_display": "PASS - Shows both Unbranded and Branded prices",
+        "branded_selection": "PASS - Branded button shows checkmark and red styling when selected",
+        "cart_branded_item": "PASS - Branded badge displayed on cart items",
+        "branding_design_section": "PASS - 'Branding Design' section appears for branded items"
+      },
+      "design_source_options": {
+        "upload_design_option": "PASS - 'I will upload my design' with file dropzone",
+        "file_upload_input": "PASS - File input accepts JPG/PNG max 2MB",
+        "temaruco_design_option": "PASS - 'I want TEMARUCO to create the design' option",
+        "design_fee_warning": "PASS - Warning about separate design fee quote",
+        "design_brief_form": "PASS - Company Name, Colors, Style, Notes fields present"
+      },
+      "admin_products_page": {
+        "navigation": "PASS - /admin/products route works",
+        "souvenirs_tab": "PASS - Fabrics and Souvenirs tabs with counts",
+        "add_souvenir_modal": "PASS - Modal with all fields",
+        "branding_toggle": "PASS - 'Enable Branding Option' checkbox with data-testid='has-branding-toggle'",
+        "branded_price_field": "PASS - Separate Branded Price (₦) field"
+      }
+    }
+  },
+  "verified_features": {
+    "child_sizes_age_format": {
+      "location": "/app/frontend/src/pages/BulkOrdersPage.js line 75",
+      "sizes": ["2-3 yrs", "3-4 yrs", "4-5 yrs", "5-6 yrs", "6-7 yrs", "7-8 yrs", "8-9 yrs", "9-10 yrs", "10-11 yrs", "11-12 yrs"],
+      "display": "Shows under 'Child Sizes (Age)' label with individual quantity inputs per color"
+    },
+    "branded_products_feature": {
+      "customer_flow": "Customer selects Unbranded/Branded on product card → Add to Cart → Choose design source → Fill form/upload → Place Order",
+      "design_sources": ["client_upload (JPG/PNG max 2MB)", "temaruco_design (requires design brief form)"],
+      "design_brief_fields": ["company_name (required)", "colors", "style_preferences", "additional_notes"],
+      "backend_endpoints": [
+        "POST /api/branding/upload-design - Upload design file",
+        "POST /api/orders/souvenir - Create order with branding fields",
+        "GET /api/admin/branded-orders - List branded orders (admin)",
+        "PUT /api/admin/branded-orders/{id}/design-fee - Set design fee (admin)",
+        "PUT /api/admin/branded-orders/{id}/status - Update status (admin)"
+      ],
+      "admin_toggle": "Enable Branding Option checkbox in Add/Edit Souvenir modal"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_branding_features.py",
+    "/app/test_reports/pytest/branding_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Prices displayed in USD ($) on souvenirs page due to currency context, but internally stored as NGN (₦) - functioning as expected based on currency settings"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_branding_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (All features verified)"
+  },
+  "test_credentials": {
+    "admin": "superadmin@temaruco.com / superadmin123"
+  },
+  "seed_data_creation": "Enabled has_branding=true on souvenir 'Branded Mug' for testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Child sizes on Bulk Orders page now show age format (2-3 yrs, etc.). Branded products feature fully implemented on souvenirs - customer can choose Unbranded/Branded, select design source (upload or TEMARUCO design), fill brief form. Admin can enable branding via /admin/products page Souvenirs tab. Backend endpoints for branding upload, souvenir orders with branding, and admin branded orders management all working."
+}
