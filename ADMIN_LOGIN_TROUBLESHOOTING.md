@@ -82,7 +82,7 @@ Password: admin123
 
 1. **Open Admin Login Page**:
    ```
-   https://retail-reboot-1.preview.emergentagent.com/admin/login
+   https://fabric-moq-system.preview.emergentagent.com/admin/login
    ```
 
 2. **In Email/Username field**, paste:
@@ -235,13 +235,13 @@ EOF
 
 Try these to verify everything is working:
 
-1. **Backend API**: https://retail-reboot-1.preview.emergentagent.com/api/bank-details
+1. **Backend API**: https://fabric-moq-system.preview.emergentagent.com/api/bank-details
    - Should show bank details
 
-2. **Test Connection**: https://retail-reboot-1.preview.emergentagent.com/test-connection.html
+2. **Test Connection**: https://fabric-moq-system.preview.emergentagent.com/test-connection.html
    - Should show green checkmarks
 
-3. **Admin Login**: https://retail-reboot-1.preview.emergentagent.com/admin/login
+3. **Admin Login**: https://fabric-moq-system.preview.emergentagent.com/admin/login
    - Should show login form
 
 ---
