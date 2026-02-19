@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import PaymentSelector from '../components/PaymentSelector';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -121,8 +121,10 @@ const SouvenirsPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Buy Souvenirs & Promotional Items"
-        description="Shop quality souvenirs and promotional items for your brand."
+        title={SEO_CONFIG.souvenirs.title}
+        description={SEO_CONFIG.souvenirs.description}
+        image={SEO_CONFIG.souvenirs.image}
+        url={SEO_CONFIG.souvenirs.url}
       />
 
       {/* Header */}
@@ -137,7 +139,7 @@ const SouvenirsPage = () => {
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
               </button>
               <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">
-                Souvenirs & Gifts
+                {SEO_CONFIG.souvenirs.h1}
               </h1>
               <p className="text-zinc-600 mt-2">Branded and unbranded promotional items</p>
             </div>
