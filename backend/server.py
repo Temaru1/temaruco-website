@@ -6533,6 +6533,107 @@ async def create_enquiry_quote(
     
     return {'message': 'Quote created successfully', 'quote': quote}
 
+class CreateQuoteFromEnquiryRequest(BaseModel):
+    unit_price: float
+    additional_cost: Optional[float] = 0
+    discount: Optional[float] = 0
+    estimated_production_days: Optional[int] = None
+    quote_expiry_date: Optional[str] = None
+    notes_to_customer: Optional[str] = None
+
+@api_router.post("/admin/enquiries/{enquiry_id}/create-full-quote")
+async def create_full_quote_from_enquiry(
+    enquiry_id: str,
+    quote_request: CreateQuoteFromEnquiryRequest,
+    request: Request = None
+):
+    """Admin: Create a full quote from enquiry that gets saved to quotes table"""
+    admin_user = await get_admin_user(request)
+    
+    # Get enquiry
+    enquiry = await db.enquiries.find_one({'id': enquiry_id}, {'_id': 0})
+    if not enquiry:
+        raise HTTPException(status_code=404, detail="Enquiry not found")
+    
+    # Generate quote number
+    quote_id = str(uuid.uuid4())
+    quote_number = await generate_quote_id()
+    
+    # Calculate totals
+    quantity = enquiry.get('quantity', 1)
+    unit_price = quote_request.unit_price
+    subtotal = unit_price * quantity
+    additional_cost = quote_request.additional_cost or 0
+    discount = quote_request.discount or 0
+    total = subtotal + additional_cost - discount
+    
+    # Build product details
+    product_details = {
+        'product_type': enquiry.get('clothing_name') or enquiry.get('product_type'),
+        'category': enquiry.get('order_category'),
+        'fabric': enquiry.get('fabric_material'),
+        'colors': enquiry.get('colors', []),
+        'size_type': enquiry.get('size_type'),
+        'male_sizes': enquiry.get('male_sizes', {}),
+        'female_sizes': enquiry.get('female_sizes', {}),
+        'design_details': enquiry.get('design_details'),
+        'additional_notes': enquiry.get('additional_notes')
+    }
+    
+    # Create quote document
+    quote = {
+        'id': quote_id,
+        'quote_number': quote_number,
+        'quote_type': 'quote',
+        'linked_enquiry_id': enquiry_id,
+        'linked_order_id': enquiry.get('order_id'),
+        'client_name': enquiry.get('customer_name'),
+        'client_email': enquiry.get('customer_email'),
+        'client_phone': enquiry.get('customer_phone'),
+        'client_address': enquiry.get('delivery_address', ''),
+        'items': [{
+            'description': f"Custom Order: {enquiry.get('clothing_name')} - {enquiry.get('order_category')}\n" +
+                          f"Fabric: {enquiry.get('fabric_material')}\n" +
+                          f"Colors: {', '.join(enquiry.get('colors', []))}\n" +
+                          (f"Design: {enquiry.get('design_details')[:100]}..." if enquiry.get('design_details') else ""),
+            'quantity': quantity,
+            'unit_price': unit_price,
+            'total': subtotal
+        }],
+        'product_details': product_details,
+        'unit_price': unit_price,
+        'additional_cost': additional_cost,
+        'discount': discount,
+        'subtotal': subtotal,
+        'tax': 0,
+        'total': total,
+        'estimated_production_days': quote_request.estimated_production_days,
+        'valid_until': quote_request.quote_expiry_date,
+        'notes': quote_request.notes_to_customer,
+        'status': 'draft',
+        'created_by': admin_user['email'],
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.manual_quotes.insert_one(quote)
+    
+    # Update enquiry with linked quote
+    update_data = {
+        'linked_quote_id': quote_id,
+        'status': 'Quote Created',
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'updated_by': admin_user['email']
+    }
+    
+    await db.enquiries.update_one({'id': enquiry_id}, {'$set': update_data})
+    
+    del quote['_id']
+    return {
+        'message': 'Quote created successfully',
+        'quote': quote,
+        'quote_number': quote_number
+    }
+
 @api_router.get("/admin/enquiries/{enquiry_id}/quote-pdf")
 async def download_quote_pdf(enquiry_id: str, request: Request):
     """Admin: Download quote as PDF"""
