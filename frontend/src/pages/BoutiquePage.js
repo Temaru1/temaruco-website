@@ -3,7 +3,7 @@ import { ShoppingBag, ArrowRight, X, ZoomIn, ArrowLeft, Search } from 'lucide-re
 import { getBoutiqueProducts, createBoutiqueOrder } from '../utils/api';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -148,7 +148,12 @@ const BoutiquePage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <SEO title="Boutique" description="Shop our curated fashion collection." />
+      <SEO 
+        title={SEO_CONFIG.boutique.title}
+        description={SEO_CONFIG.boutique.description}
+        image={SEO_CONFIG.boutique.image}
+        url={SEO_CONFIG.boutique.url}
+      />
 
       {/* Header */}
       <div className="bg-white border-b">
@@ -158,7 +163,7 @@ const BoutiquePage = () => {
               <button onClick={() => navigate('/')} className="flex items-center text-zinc-500 hover:text-zinc-900 mb-2 text-sm">
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
               </button>
-              <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="boutique-title">Boutique</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="boutique-title">{SEO_CONFIG.boutique.h1}</h1>
               <p className="text-zinc-600 mt-1">Shop our curated collection</p>
             </div>
             <button
