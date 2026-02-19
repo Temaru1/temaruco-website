@@ -796,6 +796,8 @@ const AdminPage = () => {
         { label: 'Staff', path: '/admin/staff', icon: Users },
         { label: 'Clients', path: '/admin/dashboard/clients', icon: Users },
         { label: 'Suppliers', path: '/admin/dashboard/suppliers', icon: Users },
+        { label: 'Souvenir Suppliers', path: '/admin/dashboard/souvenir-suppliers', icon: Building2 },
+        { label: 'File Manager', path: '/admin/dashboard/file-manager', icon: FolderOpen },
         { label: 'Website Text', path: '/admin/site-texts', icon: FileText },
         { label: 'Email Marketing', path: '/admin/email', icon: Mail },
         ...(isSuperAdmin ? [{ label: 'System Config', path: '/admin/system-config', icon: Shield }] : []),
