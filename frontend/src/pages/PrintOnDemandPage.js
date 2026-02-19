@@ -105,8 +105,10 @@ const PrintOnDemandPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Print on Demand" 
-        description="Design your own custom clothing. Upload your design and we print it on premium garments."
+        title={SEO_CONFIG.printOnDemand.title}
+        description={SEO_CONFIG.printOnDemand.description}
+        image={SEO_CONFIG.printOnDemand.image}
+        url={SEO_CONFIG.printOnDemand.url}
       />
 
       {/* Header */}
@@ -118,7 +120,7 @@ const PrintOnDemandPage = () => {
           >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
           </button>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Print on Demand</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{SEO_CONFIG.printOnDemand.h1}</h1>
           <p className="text-xl text-white/90 max-w-2xl">
             Choose a product below and start designing. Upload your artwork, 
             position it perfectly, and we'll print it on premium quality garments.
