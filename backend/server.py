@@ -2721,8 +2721,22 @@ async def delete_souvenir(souvenir_id: str, admin_user: Dict = Depends(get_admin
 
 @api_router.post("/orders/souvenir")
 async def create_souvenir_order(order_data: Dict[str, Any]):
-    """Create a souvenir order"""
+    """Create a souvenir order - supports branded items with design options"""
     order_id = f"SOU-{datetime.now().strftime('%y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+    
+    # Check if order contains branded items
+    contains_branded_items = order_data.get('contains_branded_items', False)
+    design_source = order_data.get('design_source')  # 'client_upload' or 'temaruco_design'
+    branding_image_url = order_data.get('branding_image_url')
+    design_brief = order_data.get('design_brief')  # {company_name, colors, style_preferences, additional_notes}
+    
+    # Determine design negotiation status
+    design_negotiation_status = None
+    if contains_branded_items:
+        if design_source == 'temaruco_design':
+            design_negotiation_status = 'pending_design_quote'  # Admin needs to quote design fee
+        elif design_source == 'client_upload':
+            design_negotiation_status = 'design_received'  # Design uploaded, ready for production
     
     order = {
         'id': order_id,
@@ -2735,6 +2749,14 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
         'total_price': order_data.get('total_price', 0),
         'status': 'pending_payment',
         'payment_status': 'pending',
+        # Branding fields
+        'contains_branded_items': contains_branded_items,
+        'design_source': design_source,
+        'branding_image_url': branding_image_url,
+        'design_brief': design_brief,
+        'design_negotiation_status': design_negotiation_status,
+        'design_fee': None,  # Admin will set this for TEMARUCO design orders
+        'design_fee_approved': False,
         'created_at': datetime.now(timezone.utc).isoformat(),
         'updated_at': datetime.now(timezone.utc).isoformat()
     }
@@ -2743,24 +2765,85 @@ async def create_souvenir_order(order_data: Dict[str, Any]):
     
     # Send order confirmation email
     try:
-        email_html = get_order_confirmation_email(
-            order_id=order_id,
-            customer_name=order['customer_name'],
-            total_amount=order['total_price'],
-            order_type='Souvenir'
-        )
-        await send_email_notification(
-            to_email=order['customer_email'],
-            subject=f'Order Confirmation - {order_id}',
-            html_content=email_html
-        )
+        if contains_branded_items and design_source == 'temaruco_design':
+            # Special email for TEMARUCO design orders
+            email_html = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: #D90429; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">TEMARUCO</h1>
+                </div>
+                <div style="padding: 30px; background: #f9f9f9;">
+                    <h2 style="color: #333;">Branded Order Received - Design Required</h2>
+                    <p>Dear {order['customer_name']},</p>
+                    <p>Thank you for your branded souvenir order. Your order ID is <strong>{order_id}</strong>.</p>
+                    <p>You've requested TEMARUCO to create your custom design. Our design team will review your brief and send you a design fee quote within 24-48 hours.</p>
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0; color: #856404;"><strong>Note:</strong> Production will begin once the design fee is confirmed and paid.</p>
+                    </div>
+                    <p>Your Design Brief:</p>
+                    <ul>
+                        <li>Company/Brand Name: {design_brief.get('company_name', 'N/A') if design_brief else 'N/A'}</li>
+                        <li>Preferred Colors: {design_brief.get('colors', 'N/A') if design_brief else 'N/A'}</li>
+                        <li>Style: {design_brief.get('style_preferences', 'N/A') if design_brief else 'N/A'}</li>
+                    </ul>
+                    <p>We'll be in touch soon!</p>
+                    <p>Best regards,<br>The TEMARUCO Team</p>
+                </div>
+            </body>
+            </html>
+            """
+            await send_email_notification(
+                to_email=order['customer_email'],
+                subject=f'Branded Order Received - Design Quote Pending - {order_id}',
+                html_content=email_html
+            )
+            
+            # Also notify admin about design request
+            admin_email_html = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>🎨 New Branded Order - Design Required</h2>
+                <p><strong>Order ID:</strong> {order_id}</p>
+                <p><strong>Customer:</strong> {order['customer_name']} ({order['customer_email']})</p>
+                <p><strong>Phone:</strong> {order['customer_phone']}</p>
+                <p><strong>Design Source:</strong> TEMARUCO Design Team</p>
+                <h3>Design Brief:</h3>
+                <ul>
+                    <li><strong>Company/Brand:</strong> {design_brief.get('company_name', 'N/A') if design_brief else 'N/A'}</li>
+                    <li><strong>Colors:</strong> {design_brief.get('colors', 'N/A') if design_brief else 'N/A'}</li>
+                    <li><strong>Style:</strong> {design_brief.get('style_preferences', 'N/A') if design_brief else 'N/A'}</li>
+                    <li><strong>Notes:</strong> {design_brief.get('additional_notes', 'N/A') if design_brief else 'N/A'}</li>
+                </ul>
+                <p><strong>Action Required:</strong> Please review and send design fee quote to customer.</p>
+            </body>
+            </html>
+            """
+            await send_email_notification(
+                to_email='temarucoltd@gmail.com',
+                subject=f'🎨 New Branded Order Needs Design Quote - {order_id}',
+                html_content=admin_email_html
+            )
+        else:
+            email_html = get_order_confirmation_email(
+                order_id=order_id,
+                customer_name=order['customer_name'],
+                total_amount=order['total_price'],
+                order_type='Souvenir'
+            )
+            await send_email_notification(
+                to_email=order['customer_email'],
+                subject=f'Order Confirmation - {order_id}',
+                html_content=email_html
+            )
     except Exception as e:
         logger.error(f"Failed to send confirmation email: {str(e)}")
     
     return {
         'message': 'Souvenir order created successfully',
         'order_id': order_id,
-        'order': {k: v for k, v in order.items() if k != '_id'}
+        'order': {k: v for k, v in order.items() if k != '_id'},
+        'requires_design_quote': design_negotiation_status == 'pending_design_quote'
     }
 
 # ==================== PRODUCT CATEGORIES MANAGEMENT ====================
