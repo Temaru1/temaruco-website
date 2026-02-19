@@ -318,6 +318,29 @@ const AdminProductsPage = () => {
                 </div>
               </div>
               
+              {/* MOQ Field - Below Price, Above Image */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Minimum Order Quantity ({activeTab === 'fabrics' ? 'Yards' : 'Pieces'}) *
+                </label>
+                <input
+                  type="number"
+                  value={formData.moq_value}
+                  onChange={(e) => setFormData({...formData, moq_value: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  min={activeTab === 'fabrics' ? '0.1' : '1'}
+                  step={activeTab === 'fabrics' ? '0.5' : '1'}
+                  placeholder={activeTab === 'fabrics' ? 'e.g., 1.5' : 'e.g., 20'}
+                  required
+                  data-testid="moq-input"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  {activeTab === 'fabrics' 
+                    ? 'Minimum yards customers must order (decimals allowed)' 
+                    : 'Minimum pieces customers must order (whole numbers only)'}
+                </p>
+              </div>
+              
               {/* Image Upload Section */}
               <div>
                 <label className="block text-sm font-medium mb-1">Product Image</label>
