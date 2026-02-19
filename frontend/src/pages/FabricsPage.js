@@ -234,17 +234,19 @@ const FabricsPage = () => {
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-zinc-500">{formatPrice(item.price)}/yard</p>
+                          <p className="text-xs text-zinc-400">Min: {item.moq_value || 1} yards</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.id, -1)}
+                            onClick={() => updateQuantity(item.id, -0.5)}
                             className="p-1 hover:bg-zinc-200 rounded"
+                            disabled={item.quantity <= (item.moq_value || 1)}
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-8 text-center">{item.quantity}</span>
+                          <span className="w-12 text-center text-sm">{item.quantity} yds</span>
                           <button
-                            onClick={() => updateQuantity(item.id, 1)}
+                            onClick={() => updateQuantity(item.id, 0.5)}
                             className="p-1 hover:bg-zinc-200 rounded"
                           >
                             <Plus className="w-4 h-4" />
