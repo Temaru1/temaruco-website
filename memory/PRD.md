@@ -916,3 +916,73 @@ These sections in `server.py` should be extracted:
 **Result:** Users will automatically receive fresh content after each deployment without clearing browser data.
 
 
+
+## Completed Work (Feb 19, 2026) - Admin File Manager & Souvenir Suppliers
+
+### Admin File Manager ✅
+- **Location:** Settings → File Manager (`/admin/dashboard/file-manager`)
+- **Purpose:** Central dashboard to view, search, and manage all uploaded files
+- **Features:**
+  - **Statistics Cards:** Total Files, Local Files, Cloud Files, Images, Documents, Total Size
+  - **File Sources:** 
+    - Local storage (`/app/backend/uploads/` - designs, products, images, enquiries, mockups)
+    - Supabase cloud storage (fabrics, souvenirs, boutique, pod-designs, pod-mockups, bulk/pod products)
+  - **Search:** By file name or folder
+  - **Filters:** Type (Images/Documents), Source (Local/Cloud)
+  - **Table Display:** Preview thumbnail, File Name, Folder (color-coded), Type, Size, Source, Modified date, Actions
+  - **Actions:** Open/Download (all files), Delete (local files only)
+  - **Image Preview Modal:** Full-size view with file details
+  - **Refresh Button:** Reload file list
+
+**API Endpoints:**
+- `GET /api/admin/files` - Get files with optional filters (file_type, source, search)
+  - Returns: `{ files: [...], stats: { total, local, supabase, images, documents, total_size_formatted } }`
+- `DELETE /api/admin/files?file_path=...` - Delete local file
+
+**Frontend:** `/app/frontend/src/pages/AdminFileManagerPage.js`
+
+### Souvenir Supplier Contacts ✅
+- **Location:** Settings → Souvenir Suppliers (`/admin/dashboard/souvenir-suppliers`)
+- **Purpose:** Manage a separate contact list for souvenir vendors (distinct from material suppliers)
+- **Features:**
+  - **Full CRUD:** Create, Read, Update, Delete (soft delete sets status to inactive)
+  - **Supplier ID Format:** SUP-YYYYMMDD-NNN (e.g., SUP-20260219-001)
+  - **Filter Tabs:** All, Active, Inactive with counts
+  - **Search:** By company name, contact person, phone, email, products supplied
+  - **Form Fields:** Company Name*, Phone Number*, Contact Person, WhatsApp, Email, Address, City, State, Country, Status, Products Supplied, Notes
+  - **Modals:** Add New Supplier, View Details, Edit Supplier, Delete Confirmation
+
+**API Endpoints:**
+- `GET /api/admin/souvenir-suppliers` - Get suppliers with filters (status, search)
+  - Returns: `{ suppliers: [...], counts: { all, active, inactive } }`
+- `POST /api/admin/souvenir-suppliers` - Create new supplier
+- `GET /api/admin/souvenir-suppliers/{id}` - Get single supplier
+- `PUT /api/admin/souvenir-suppliers/{id}` - Update supplier
+- `DELETE /api/admin/souvenir-suppliers/{id}` - Soft delete (sets status to inactive)
+
+**Database Collection:** `souvenir_suppliers`
+- Fields: supplier_id, company_name, contact_person, phone_number, whatsapp_number, email, address, city, state, country, products_supplied, notes, status, created_at, updated_at
+
+**Frontend:** `/app/frontend/src/pages/AdminSouvenirSuppliersPage.js`
+
+**Navigation Updated:**
+- Settings sidebar now includes: Souvenir Suppliers, File Manager links
+- Routes added to AdminPage.js
+
+**Testing:** 100% pass rate (18 backend API tests, all UI tests passed)
+- Test report: `/app/test_reports/iteration_8.json`
+
+## Upcoming Tasks
+
+### P0 (High Priority)
+- **Backend Refactoring:** server.py is over 11,000 lines - needs modular breakdown into routes/services
+
+### P1 (Medium Priority)
+- Landing Page UI: Replace hero image + add Quick Price Calculator widget
+- Admin Mockup Editor: UI for defining print_area on POD product base images
+
+### P2 (Future)
+- Newsletter signup form in footer
+- Shipping provider integration
+- Multi-print area support in design tool (front, back, sleeves)
+- Browser push notifications for admins
