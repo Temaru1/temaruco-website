@@ -1,132 +1,190 @@
-<analysis>**original_problem_statement**: The user's initial goals were to build a full-stack e-commerce application. Over the course of development, numerous large-scale features and fixes have been requested and implemented. The most recent user requests included:
+<analysis>**original_problem_statement**: The user requested a series of features to enhance the admin dashboard and customer experience.
 
-1.  **PRINT-ON-DEMAND IMAGE REUSE SYSTEM**: Ensure the exact same product image from a product card is used on the design page, with no new image generation.
-2.  **DATABASE-DRIVEN ARCHITECTURE**: All system-critical behavior (feature flags, product settings) must be stored in the database to persist across redeployments.
-3.  **UI & FUNCTIONALITY CORRECTIONS**: A comprehensive list of 15+ specific fixes and improvements across the application.
-4.  **SYSTEM CONFIG ADMIN PAGE**: A dedicated page in the admin dashboard for managing all the new database-driven feature flags and system settings.
-5.  **IMAGE UPLOAD FOR FABRICS & SOUVENIRS**: A robust image upload feature for the Fabrics and Souvenirs sections in the admin panel.
-6.  **SUPABASE CLOUD STORAGE INTEGRATION**: Migrate all product image uploads from local server storage to Supabase Cloud Storage to ensure images persist after redeployment.
-7.  **CURRENT REQUEST**: Extend the Supabase integration to cover bulk orders, print-on-demand product images, and POD designs.
+**PRODUCT REQUIREMENTS:**
+
+**Feature Set 1: Custom Order & Quote Management (Implemented)**
+1.  **Store Custom Orders**: All custom orders must be stored under Admin Dashboard → Enquiries and be filterable.
+2.  **Search Enquiries**: Admins must be able to search enquiries by Order ID, Customer Name, Phone, and Email.
+3.  **View & Quote Flow**:
+    *   Add a View button to each enquiry in the list.
+    *   The details view should contain a Create Quote button.
+    *   Clicking Create Quote should open a new quote form with customer and enquiry details auto-filled.
+    *   The created quote must be linked to the original enquiry.
+4.  **Guest Confirmation**:
+    *   Display an on-screen confirmation message with an Order ID after a guest submits a custom order.
+    *   Send an automated confirmation email to the guest.
+5.  **Admin Notification**: Send an email notification to the admin () for every new custom order submitted.
+
+**Feature Set 2: Cache Invalidation (Implemented)**
+1.  Implement a cache-busting mechanism for static assets (JS/CSS) to prevent users from needing to clear their browser cache after a redeployment.
+2.  Achieved by updating the service worker to an auto-update strategy and adding appropriate cache-control headers.
+
+**Feature Set 3: New Admin Modules (In Progress)**
+1.  **Admin File Manager**: Create a central dashboard for admins to view, search, organize, and delete all files uploaded to the platform.
+2.  **Souvenir Supplier Contacts**: Create a new admin page to manage a CRUD (Create, Read, Update, Delete) list of souvenir suppliers, with search and filtering capabilities.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a feature-rich e-commerce platform. The image storage system was previously migrated to Supabase Cloud Storage for primary product types. In this session, the agent extended this integration to cover all remaining image upload functionalities, including bulk orders, print-on-demand (POD) clothing items, and POD designs. All image uploads now correctly use the centralized  to upload files to Supabase, and corresponding delete endpoints have been updated to clean up Supabase storage.
+The application is a full-stack e-commerce platform. The agent successfully implemented a comprehensive custom order, enquiry, and quote management system within the admin dashboard. This included backend API endpoints, frontend UI changes, and email notifications for both customers and admins. A cache-busting mechanism was also implemented. The agent has just started work on two new admin modules: a File Manager and a Souvenir Supplier contact list, by adding the necessary backend endpoints.
 
 **Last working item**:
--   Last item agent was working: The agent finished extending the Supabase Cloud Storage integration to bulk order images, print-on-demand (POD) product images, and POD designs. This involved modifying backend endpoints and frontend components to use the existing .
--   Status: USER VERIFICATION PENDING
--   Agent Testing Done: Y
+-   Last item agent was working: The agent was implementing the backend functionality for the Admin File Manager and Souvenir Supplier Contacts features. It successfully added the required API endpoints to .
+-   Status: IN PROGRESS
+-   Agent Testing Done: N
 -   Which testing method agent to use? both
 -   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   Issue 1: Complete the backend refactoring from . (P0)
+-   Issue 1: Complete the backend refactoring of . (P0)
 
 **Issues Detail:**
 -   **Issue 1:** Complete the backend refactoring.
-    -   **Attempted fixes:** The agent has previously extracted the email system. In this session, more logic related to image handling was added to  to complete the Supabase migration, making the need for refactoring even more critical.
+    -   **Attempted fixes:** This is a long-standing technical debt item. The agent has continued to add more endpoints to the monolithic  file to fulfill user requests, making the refactoring even more critical. No refactoring has been attempted in this session.
     -   **Next debug checklist:**
-        1.  Create new route files in  for logical modules like , , , .
-        2.  Systematically move related endpoints (e.g., , , bulk item CRUD) and their business logic from  into these new modules.
-        3.  Refactor business logic from the routes into corresponding service files under .
-        4.  Update  to import and include the new routers, progressively shrinking it until it primarily handles startup, middleware, and router includes.
-    -   **Why fix this issue and what will be achieved with the fix?** The  file is excessively large, hindering development, debugging, and stability. Refactoring is essential for maintainability and scalability.
-    -   **Status:** IN PROGRESS
+        1.  Create new route files in  for logical modules (e.g., , , , , ).
+        2.  Systematically move related endpoints and business logic from  into these new modules.
+        3.  Refactor business logic from the routes into corresponding service files under a new  directory.
+        4.  Update  to import and include the new routers. The goal is to dramatically shrink  to only handle core application startup, middleware, and router inclusion.
+    -   **Why fix this issue and what will be achieved with the fix?** The  file is a monolith that hinders development, debugging, and maintenance. Refactoring will improve code organization, scalability, and maintainability.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Backend
-    -   **Blocked on other issue:** None. This is the highest priority task.
+    -   **Blocked on other issue:** None. This is the highest priority technical debt.
 
 **In progress Task List**:
--   None.
+-   Task 1: Create Admin File Manager (P0)
+-   Task 2: Create Souvenir Supplier Contacts Page (P0)
+
+**Task Detail:**
+-   **Task 1:** Create Admin File Manager
+    -   **Where to resume:** The backend endpoints (, , etc.) have been added in . The next step is to create the frontend component , add it to the React router, and link it in the admin sidebar navigation in .
+    -   **What will be achieved with this?** Admins will have a centralized UI to manage all uploaded files.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on something:** None.
+-   **Task 2:** Create Souvenir Supplier Contacts Page
+    -   **Where to resume:** The backend CRUD endpoints (, etc.) have been added in . The next step is to create the frontend page , handle the form logic for add/edit, display the data, and add the new route to the admin sidebar in .
+    -   **What will be achieved with this?** A complete module for managing souvenir supplier information.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **Landing Page UI Changes (P1):** Replace hero image and add a Quick Price Calculator.
-    -   **Admin Mockup Editor (P1):** Create a UI for admins to visually define the  on POD product base images, instead of manually inputting coordinates.
+    -   **P0:** Refactor  into modular routes and services.
+    -   **P1:** Landing Page UI Changes: Replace hero image and add a Quick Price Calculator.
+    -   **P1:** Admin Mockup Editor: Create a UI for admins to visually define the  on POD product base images.
 -   **Future Tasks:**
     -   Newsletter signup form in the website footer.
     -   Integrate with a shipping provider.
     -   Enhance the design tool to support multiple print areas (front, back, sleeves).
     -   Implement browser push notifications for admins.
-    -   Build a File Manager in the admin dashboard.
 
 **Completed work in this session**
--   **Supabase Integration for Bulk & POD (DONE):** Successfully migrated image uploads for Bulk Orders, POD Items, and POD Designs to Supabase.
-    -   Updated  to handle uploads for bulk and pod modules.
-    -   Updated  and  to use Supabase.
-    -   Updated delete endpoints for bulk items to remove images from Supabase.
-    -   Modified frontend pages (, ) to support the new upload logic.
-    -   Verified changes using  commands.
+-   **Custom Order & Quote Flow (DONE):**
+    -   Implemented backend endpoints for creating, searching, and managing custom order enquiries.
+    -   Updated  with tabs, search, and a modal-based view/create-quote flow.
+    -   Implemented on-screen and email confirmations for guest custom orders.
+-   **Admin Notifications (DONE):**
+    -   Configured backend to send an email notification to the admin upon new custom order submission.
+-   **Cache Fix (DONE):**
+    -   Updated  and  to implement an auto-update strategy for the PWA.
+    -   Added cache-control meta tags to .
 
 **Earlier issues found/mentioned but not fixed**
--   The core issue of the monolithic  file remains. This is the highest priority technical debt item and is tracked as the main pending issue.
+-   The core issue of the monolithic  file remains unaddressed and is the highest priority technical debt item.
 
 **Known issue recurrence from previous fork**
--   The practice of adding new endpoints and logic to the main  file continues out of necessity. The work in this session, while completing a user request, further bloated the file, making the P0 refactoring task even more urgent.
+-   The agent continued the practice of adding new endpoints and business logic directly into  to rapidly deliver features, which has further increased the file's size and complexity. The P0 refactoring task is now significantly more urgent.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Supabase Storage:** The unified system for all file uploads. Its use has been extended to all image types in the application.
--   **Modular Backend Refactoring:** The stalled but critical process of breaking down the monolithic  into smaller, maintainable route and service files.
+-   **Monolithic API (FastAPI):** All backend logic resides in a single  file.
+-   **CRUD Operations:** Implemented full CRUD for Souvenir Suppliers and read/search for Files.
+-   **Service Worker:** Updated for cache invalidation and PWA auto-updates.
+-   **State Management (React):** Extensive use of  and  for managing UI state, modals, and data fetching in admin pages.
 
 **key DB schema**
--   No changes were made to the database schema in this session.
+-   **:** Implicitly used within the  collection with .
+-   **:** Schema updated to include .
+-   ** (NEW):**
+    -   , , , , , , , , , , , , , , .
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
--   **Updated (Major):**
-    -   : Endpoints , , , and  were refactored to use  for Supabase integration.
-    -   : Updated image upload logic to include a  parameter.
-    -   : Updated image upload logic to include a  parameter for bulk/pod items.
--   **Updated (Minor):**
-    -   : Documented the completion of the Supabase migration for all image types.
+-   **Created/Updated (Backend):**
+    -   : Added ~250 lines for supplier and file manager endpoints, plus logic for custom order notifications and quote creation.
+-   **Created/Updated (Frontend):**
+    -   : Rewritten to include an auto-update strategy.
+    -   : Added meta tags for cache control.
+    -   : Updated to register the new service worker logic.
+    -   : Overhauled to support new features.
+    -   : Modified to handle successful submission response.
+    -   : Modified to display a dynamic Order ID.
+-   **To be created:**
+    -   
+    -   
 
 **Areas that need refactoring**:
--   **:** This remains the top priority. The file has grown further and must be broken down into a modular structure (routes and services).
+-   **:** This is a critical bottleneck. The file is now over 11,000 lines long and MUST be broken down into a modular structure with separate files for routes and services.
 
 **key api endpoints**
--   **/api/admin/upload-image**: (POST) Modified to handle  parameter for routing uploads for 'bulk' and 'pod' to Supabase.
--   **/api/admin/bulk/clothing-items/{item_id}**: (DELETE) Updated to handle image deletion from Supabase.
--   **/api/pod/upload-design**: (POST) Now uploads POD design source files to Supabase.
--   **/api/pod/upload-mockup/{design_id}**: (POST) Now uploads generated POD mockups to Supabase.
+-   **/api/admin/files**: (GET) List all files.
+-   **/api/admin/files/search**: (GET) Search files.
+-   **/api/admin/files/delete**: (POST) Delete a file.
+-   **/api/admin/suppliers**: (GET, POST) List and create suppliers.
+-   **/api/admin/suppliers/{supplier_id}**: (GET, PUT, DELETE) Manage a specific supplier.
+-   **/api/admin/enquiries**: (GET) Modified to support search and filtering.
+-   **/api/enquiries/create**: (POST) Modified to generate a custom  and trigger admin/customer emails.
+-   **/api/admin/quotes/from-enquiry**: (POST) Create a quote linked to an enquiry.
 
 **Critical Info for New Agent**
--   **Supabase migration is now fully complete.** All image upload functionality across the entire application now uses Supabase. The agent has confirmed this with  tests.
--   **Your immediate priority is the P0 task: Refactor **. The user-facing feature work is done. Now you must address the critical technical debt. Propose a plan to the user to start breaking down  module by module.
--   **Follow the existing refactoring pattern**: Use  and  as the template for creating new modules.
+-   **PRIORITY 1: Complete In-Progress Features.** Your immediate task is to build the frontend for the Admin File Manager and Souvenir Supplier Contacts pages. The backend endpoints are already created.
+-   **PRIORITY 2: Technical Debt.** After completing the current features, the highest priority is to refactor the monolithic  file. This is critical for the project's long-term health. You should propose this refactoring to the user as the next step.
+-   **Admin Navigation:** Remember to add links for the two new pages in the admin sidebar navigation located in .
 
 **documents and test reports created in this job**
 -    (updated)
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Implement superbase for bulk order and print on demand product image (COMPLETED)
+1.  **User:** Provided detailed requirements for Custom Order storage, search, a view/quote flow, and guest confirmations. (COMPLETED)
+2.  **Agent:** Acknowledged the requirements and started exploration. (COMPLETED)
+3.  **User:** Requested admin email notifications and a fix for a cache-invalidation issue. (COMPLETED)
+4.  **Agent:** Implemented both requests. (COMPLETED)
+5.  **User:** Asked for a definition of the Admin File Manager feature. (COMPLETED)
+6.  **Agent:** Provided a detailed explanation. (COMPLETED)
+7.  **User:** Approved the Admin File Manager and requested a new Souvenir Supplier Contact List page. (IN PROGRESS)
+8.  **Agent:** Started implementation of both new features. (IN PROGRESS)
 
 **Project Health Check:**
 -   **Broken:** None.
 -   **Mocked:** None.
 -   **At Risk:**
-    -   The monolithic  file continues to be a critical risk to stability and development velocity. Its refactoring is the top priority.
+    -   The monolithic  file is now extremely large and complex, posing a severe risk to future development speed, stability, and maintainability. Its refactoring is the top priority after the current tasks are finished.
 
 **3rd Party Integrations**
--   **Flutterwave:** Payments.
--   **ip-api.com:** Geolocation.
--   **exchangerate-api.com:** Currency rates.
--   **MongoDB:** Database.
--   **APScheduler:** Background jobs.
--   **cryptography:** Credential encryption.
--   **Supabase (User API Key):** Cloud object storage.
+-   Flutterwave: Payments.
+-   ip-api.com: Geolocation.
+-   exchangerate-api.com: Currency rates.
+-   MongoDB: Database.
+-   APScheduler: Background jobs.
+-   cryptography: Credential encryption.
+-   Supabase (User API Key): Cloud object storage.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO (Agent performed manual  tests).
+-   **Testing agent used after significant changes:** YES (For the custom order/quote feature).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** None known, but a full regression test is recommended due to the widespread changes.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Admin Login:**  / 
--   **Supabase Credentials:** Stored in .
 
 **What agent forgot to execute**
--   The agent correctly prioritized a direct user request over the planned refactoring task from the previous handoff. The refactoring task remains the next highest priority item.</analysis>
+-   The agent correctly prioritized user-requested features. The critical technical debt of refactoring  was deferred again and remains the most important upcoming task after the current work is completed.</analysis>

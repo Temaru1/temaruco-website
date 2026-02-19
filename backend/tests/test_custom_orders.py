@@ -14,7 +14,7 @@ import re
 import json
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://fabric-moq-system.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://file-supplier-mgmt.preview.emergentagent.com').rstrip('/')
 
 # Test data
 ADMIN_EMAIL = "superadmin@temaruco.com"
