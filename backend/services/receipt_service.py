@@ -128,7 +128,7 @@ def generate_receipt_pdf(quote_data: dict, order_id: str = None) -> bytes:
     if isinstance(payment_date, str):
         try:
             payment_date = datetime.fromisoformat(payment_date.replace('Z', '+00:00'))
-        except:
+        except (ValueError, TypeError):
             payment_date = datetime.now(timezone.utc)
     
     info_data = [
