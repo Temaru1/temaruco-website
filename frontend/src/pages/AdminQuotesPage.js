@@ -273,10 +273,29 @@ const AdminQuotesPage = () => {
       }
       
       const data = await response.json();
-      toast.success(`Quote marked as paid! Order ${data.order_id} created`);
+      toast.success(`Quote marked as paid! Order ${data.order_id} created. Receipt generated.`);
       loadData();
     } catch (error) {
       toast.error(error.message || 'Failed to mark as paid');
+    }
+  };
+
+  const handleResendReceipt = async (quoteId) => {
+    try {
+      const API_URL = process.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${API_URL}/api/admin/quotes/${quoteId}/resend-receipt`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Failed to resend receipt');
+      }
+      
+      toast.success('Receipt email resent successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to resend receipt');
     }
   };
 
