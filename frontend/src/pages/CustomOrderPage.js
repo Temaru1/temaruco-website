@@ -3,7 +3,7 @@ import { Upload, ArrowLeft, FileText, X, CheckCircle, ChevronRight } from 'lucid
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 
@@ -182,8 +182,10 @@ const CustomOrderPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Custom Order"
-        description="Submit your custom tailoring or manufacturing order request."
+        title={SEO_CONFIG.customOrder.title}
+        description={SEO_CONFIG.customOrder.description}
+        image={SEO_CONFIG.customOrder.image}
+        url={SEO_CONFIG.customOrder.url}
       />
 
       {/* Header */}
@@ -196,7 +198,7 @@ const CustomOrderPage = () => {
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
           </button>
           <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="custom-order-title">
-            Custom Order Inquiry
+            {SEO_CONFIG.customOrder.h1}
           </h1>
           <p className="text-zinc-600 mt-2">
             Submit your custom tailoring or manufacturing order. We'll send you a personalized quote.
