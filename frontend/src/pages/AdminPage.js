@@ -924,7 +924,7 @@ const AdminPage = () => {
             <Route path="/" element={<AdminDashboard />} />
             <Route path="/production" element={<AdminProductionPage />} />
             <Route path="/orders" element={<AdminOrders />} />
-            <Route path="/custom-requests" element={<AdminCustomRequestsPage />} />
+            <Route path="/custom-requests" element={<AdminEnquiriesPage />} />
             <Route path="/quotes" element={<AdminQuotesPage />} />
             {(isSuperAdmin || userRole.can_manage_cms || userRole.can_manage_products) && <Route path="/cms" element={<AdminCMSPage />} />}
             {(isSuperAdmin || userRole.can_manage_cms) && <Route path="/images" element={<AdminImageCMSPage />} />}
