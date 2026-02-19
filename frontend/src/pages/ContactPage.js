@@ -3,7 +3,7 @@ import { Mail, Phone, Instagram, MapPin, Clock, Send, ArrowLeft } from 'lucide-r
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 
@@ -74,8 +74,10 @@ const ContactPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Contact Us"
-        description="Get in touch with Temaruco Clothing Factory for all your clothing manufacturing needs."
+        title={SEO_CONFIG.contact.title}
+        description={SEO_CONFIG.contact.description}
+        image={SEO_CONFIG.contact.image}
+        url={SEO_CONFIG.contact.url}
       />
 
       {/* Header */}
@@ -88,7 +90,7 @@ const ContactPage = () => {
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
           </button>
           <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="contact-title">
-            Contact Us
+            {SEO_CONFIG.contact.h1}
           </h1>
           <p className="text-zinc-600 mt-2">
             Have questions? We'd love to hear from you.
