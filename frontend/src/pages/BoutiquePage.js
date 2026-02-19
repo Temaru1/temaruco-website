@@ -95,16 +95,51 @@ const BoutiquePage = () => {
     });
   }, [products, selectedCategory, selectedAudience, selectedGender, searchQuery]);
 
-  const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    let newCart = existingItem
-      ? cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)
-      : [...cart, { ...product, quantity: 1 }];
+  // Handle add to cart - show size selection modal for clothing items
+  const handleAddToCart = (product) => {
+    // Check if product needs size selection (has gender attribute)
+    if (product.gender === 'male' || product.gender === 'female' || product.gender === 'unisex') {
+      setSelectedProduct(product);
+      setSelectedSize(product.gender === 'female' ? '8' : 'M');
+      setCustomSize('');
+      setShowSizeModal(true);
+    } else {
+      // No size needed, add directly
+      addToCartWithSize(product, null, null);
+    }
+  };
+
+  const addToCartWithSize = (product, size, customSizeValue) => {
+    const cartItemId = size ? `${product.id}-${size}${customSizeValue ? '-' + customSizeValue : ''}` : product.id;
+    const existingItem = cart.find(item => item.cartItemId === cartItemId || (item.id === product.id && item.size === size));
+    
+    let newCart;
+    if (existingItem) {
+      newCart = cart.map(item => 
+        (item.cartItemId === cartItemId || (item.id === product.id && item.size === size))
+          ? { ...item, quantity: item.quantity + 1 } 
+          : item
+      );
+    } else {
+      newCart = [...cart, { 
+        ...product, 
+        cartItemId,
+        size: size,
+        custom_size: customSizeValue,
+        quantity: 1 
+      }];
+    }
     
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
     window.dispatchEvent(new Event('cartUpdated'));
-    toast.success('Added to cart!');
+    toast.success(size ? `Added to cart (Size: ${size === 'Other' ? customSizeValue : size})` : 'Added to cart!');
+    setShowSizeModal(false);
+    setSelectedProduct(null);
+  };
+
+  const addToCart = (product) => {
+    handleAddToCart(product);
   };
 
   const removeFromCart = (productId) => {
