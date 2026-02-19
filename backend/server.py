@@ -665,6 +665,25 @@ async def generate_enquiry_code() -> str:
     
     return f"ENQ-{month_year}-{enquiry_number}"
 
+async def generate_custom_order_id() -> str:
+    """Generate unique custom order ID in format CUS-YYYYMMDD-XXXX"""
+    now = datetime.now(timezone.utc)
+    date_part = now.strftime('%Y%m%d')  # e.g., "20260218"
+    day_key = f"custom_{date_part}"  # Unique key for daily counter
+    
+    # Get or create counter for this specific day
+    counter_doc = await db.custom_order_counters.find_one_and_update(
+        {'day_key': day_key},
+        {'$inc': {'counter': 1}},
+        upsert=True,
+        return_document=True
+    )
+    
+    counter = counter_doc.get('counter', 1) if counter_doc else 1
+    time_part = now.strftime('%H%M')  # HHMM format
+    
+    return f"CUS-{date_part}-{time_part}"
+
 # ==================== UTILITIES ====================
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
