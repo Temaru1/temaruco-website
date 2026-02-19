@@ -24,14 +24,28 @@ const AdminInventoryPage = () => {
   const [newProductData, setNewProductData] = useState({
     name: '',
     category: '',
+    gender: 'male',
     price: 0,
     description: '',
     image_url: '',
     colors: [],
-    sizes: []
+    sizes: [],
+    available_sizes: []
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
+  
+  // Universal size options for boutique products
+  const MALE_SIZES = ['S', 'M', 'L', 'XL', '2XL'];
+  const FEMALE_SIZES = ['6', '8', '10', '12', '14'];
+  const CHILD_SIZES = ['2', '4', '6', '8', '10'];
+  
+  // Get sizes based on gender selection
+  const getGenderSizes = (gender) => {
+    if (gender === 'female') return FEMALE_SIZES;
+    if (gender === 'child') return CHILD_SIZES;
+    return MALE_SIZES;
+  };
 
   useEffect(() => {
     loadInventory();
