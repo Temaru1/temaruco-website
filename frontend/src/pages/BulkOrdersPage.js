@@ -182,8 +182,10 @@ const BulkOrdersPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEO 
-        title="Bulk Clothing Orders"
-        description="Order bulk clothing for schools, corporates & events. Minimum 50 pieces."
+        title={SEO_CONFIG.bulkOrders.title}
+        description={SEO_CONFIG.bulkOrders.description}
+        image={SEO_CONFIG.bulkOrders.image}
+        url={SEO_CONFIG.bulkOrders.url}
       />
 
       {/* Header */}
@@ -195,7 +197,7 @@ const BulkOrdersPage = () => {
           >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
           </button>
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">Bulk Orders</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">{SEO_CONFIG.bulkOrders.h1}</h1>
           <p className="text-zinc-600 mt-2">Custom uniforms for schools, corporates & events</p>
         </div>
       </div>
