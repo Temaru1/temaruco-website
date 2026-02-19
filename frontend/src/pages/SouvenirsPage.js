@@ -20,6 +20,7 @@ const SouvenirsPage = () => {
   const [showCart, setShowCart] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
+  const [selectedQuantities, setSelectedQuantities] = useState({});  // Track quantity per product
 
   useEffect(() => {
     loadSouvenirs();
@@ -35,21 +36,39 @@ const SouvenirsPage = () => {
   };
 
   const addToCart = (souvenir) => {
+    const moq = souvenir.moq_value || 1;
+    const selectedQty = selectedQuantities[souvenir.id] || moq;
+    
+    // MOQ Validation
+    if (selectedQty < moq) {
+      toast.error(`Minimum order for this item is ${moq} pieces.`);
+      return;
+    }
+    
     const existing = cart.find(item => item.id === souvenir.id);
     if (existing) {
       setCart(cart.map(item => 
-        item.id === souvenir.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === souvenir.id ? { ...item, quantity: item.quantity + selectedQty } : item
       ));
     } else {
-      setCart([...cart, { ...souvenir, quantity: 1 }]);
+      setCart([...cart, { ...souvenir, quantity: selectedQty }]);
     }
-    toast.success(`${souvenir.name} added to cart`);
+    toast.success(`${souvenir.name} (${selectedQty} pcs) added to cart`);
+  };
+
+  // Update selected quantity for a product
+  const updateSelectedQuantity = (souvenirId, value) => {
+    setSelectedQuantities(prev => ({
+      ...prev,
+      [souvenirId]: parseInt(value) || 1
+    }));
   };
 
   const updateQuantity = (id, delta) => {
     setCart(cart.map(item => {
       if (item.id === id) {
-        const newQty = Math.max(1, item.quantity + delta);
+        const moq = item.moq_value || 1;
+        const newQty = Math.max(moq, item.quantity + delta);
         return { ...item, quantity: newQty };
       }
       return item;
