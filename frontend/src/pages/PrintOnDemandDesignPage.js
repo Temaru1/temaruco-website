@@ -92,7 +92,16 @@ const PrintOnDemandDesignPage = () => {
   
   // Get sizes based on selected gender
   const getSizesForGender = () => {
-    return selectedGender === 'Female' ? FEMALE_SIZES : MALE_SIZES;
+    if (selectedGender === 'Female') return FEMALE_SIZES;
+    if (selectedGender === 'Child') return CHILD_SIZES;
+    return MALE_SIZES;
+  };
+  
+  // Get default size for gender
+  const getDefaultSizeForGender = (gender) => {
+    if (gender === 'Female') return '8';
+    if (gender === 'Child') return '6';
+    return 'M';
   };
   
   // STATELESS: Use temp_design_id stored in localStorage (persists across sessions/cookies)
