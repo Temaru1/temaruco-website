@@ -423,8 +423,8 @@ const CustomOrderPage = () => {
 
                 {(formData.size_type === 'Female Sizes' || formData.size_type === 'Mixed') && (
                   <div className="mt-4 p-4 bg-zinc-50 rounded-lg">
-                    <h4 className="font-medium text-sm mb-3">Female Sizes</h4>
-                    <div className="grid grid-cols-4 md:grid-cols-9 gap-3">
+                    <h4 className="font-medium text-sm mb-3">Female Sizes (6, 8, 10, 12, 14 + Other)</h4>
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                       {Object.keys(formData.female_sizes).map(size => (
                         <div key={size}>
                           <label className="block text-xs text-zinc-600 mb-1 text-center">{size}</label>
@@ -439,6 +439,20 @@ const CustomOrderPage = () => {
                         </div>
                       ))}
                     </div>
+                    {/* Custom size input for "Other" */}
+                    {formData.female_sizes['Other'] > 0 && (
+                      <div className="mt-3">
+                        <label className="block text-xs text-zinc-600 mb-1">Custom Size Specification</label>
+                        <input
+                          type="text"
+                          value={formData.female_custom_size || ''}
+                          onChange={(e) => setFormData({...formData, female_custom_size: e.target.value})}
+                          placeholder="Enter custom size details (e.g., 16, 18, 20, or measurements)"
+                          className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50"
+                          data-testid="female-custom-size-input"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
