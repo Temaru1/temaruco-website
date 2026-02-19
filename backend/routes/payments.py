@@ -80,7 +80,7 @@ async def initialize_flutterwave_payment(payment_request: FlutterwavePaymentRequ
             }
         
         # Real Flutterwave integration
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://serverpy-reorg.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://retail-reboot-1.preview.emergentagent.com')
         
         payload = {
             'tx_ref': tx_ref,
