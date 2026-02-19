@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Target, Heart, Award, Users, Factory, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SEO from '../components/SEO';
+import SEO, { SEO_CONFIG } from '../components/SEO';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 
@@ -18,8 +18,10 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <SEO 
-        title="About Us"
-        description="Learn about Temaruco Clothing Factory - Nigeria's premier clothing manufacturing company."
+        title={SEO_CONFIG.about.title}
+        description={SEO_CONFIG.about.description}
+        image={SEO_CONFIG.about.image}
+        url={SEO_CONFIG.about.url}
       />
 
       {/* Header */}
@@ -32,7 +34,7 @@ const AboutPage = () => {
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
           </button>
           <h1 className="text-3xl md:text-4xl font-bold text-zinc-900" data-testid="about-title">
-            About Temaruco
+            {SEO_CONFIG.about.h1}
           </h1>
           <p className="text-zinc-600 mt-2">
             Nigeria's trusted clothing manufacturing partner
