@@ -554,13 +554,10 @@ const BoutiquePage = () => {
               <div className="mb-4">
                 <label className="block text-sm font-medium text-zinc-700 mb-2">Select Size</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(selectedProduct.gender === 'female' ? FEMALE_SIZES : MALE_SIZES).map(size => (
+                  {getAvailableSizes(selectedProduct).map(size => (
                     <button
                       key={size}
-                      onClick={() => {
-                        setSelectedSize(size);
-                        if (size !== 'Other') setCustomSize('');
-                      }}
+                      onClick={() => setSelectedSize(size)}
                       className={`py-3 px-4 border rounded-lg text-center font-medium transition-all ${
                         selectedSize === size 
                           ? 'border-[#D90429] bg-red-50 text-[#D90429]' 
@@ -574,24 +571,9 @@ const BoutiquePage = () => {
                 </div>
               </div>
               
-              {/* Custom Size Input for "Other" */}
-              {selectedSize === 'Other' && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-2">Enter Custom Size</label>
-                  <input
-                    type="text"
-                    value={customSize}
-                    onChange={(e) => setCustomSize(e.target.value)}
-                    placeholder="Enter your size (e.g., 16, 18, 20)"
-                    className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 bg-amber-50"
-                    data-testid="custom-size-input"
-                  />
-                </div>
-              )}
-              
               <Button
-                onClick={() => addToCartWithSize(selectedProduct, selectedSize, selectedSize === 'Other' ? customSize : null)}
-                disabled={selectedSize === 'Other' && !customSize}
+                onClick={() => addToCartWithSize(selectedProduct, selectedSize)}
+                disabled={!selectedSize}
                 className="w-full bg-[#D90429] hover:bg-[#B90322]"
                 data-testid="confirm-size-btn"
               >
