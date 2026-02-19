@@ -60,10 +60,16 @@ const PrintOnDemandDesignPage = () => {
   
   const productFromState = location.state?.product;
   
+  // Size options based on gender
+  const MALE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const FEMALE_SIZES = ['6', '8', '10', '12', '14', 'Other'];
+  
   // Design state
   const [selectedVariant, setSelectedVariant] = useState('standard');
   const [selectedColor, setSelectedColor] = useState('White');
+  const [selectedGender, setSelectedGender] = useState('Male');
   const [selectedSize, setSelectedSize] = useState('M');
+  const [customSize, setCustomSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -81,6 +87,11 @@ const PrintOnDemandDesignPage = () => {
   const [uploadedOriginalUrl, setUploadedOriginalUrl] = useState(null);
   const [dbProduct, setDbProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Get sizes based on selected gender
+  const getSizesForGender = () => {
+    return selectedGender === 'Female' ? FEMALE_SIZES : MALE_SIZES;
+  };
   
   // STATELESS: Use temp_design_id stored in localStorage (persists across sessions/cookies)
   const [tempDesignId, setTempDesignId] = useState(() => {
