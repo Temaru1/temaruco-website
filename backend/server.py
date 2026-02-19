@@ -6385,7 +6385,7 @@ async def create_enquiry(
     </html>
     """
     
-    # Send the confirmation email
+    # Send the confirmation email to customer
     try:
         await send_email_notification(
             customer_email,
@@ -6394,8 +6394,79 @@ async def create_enquiry(
         )
         logger.info(f"Confirmation email sent to {customer_email} for order {order_id}")
     except Exception as e:
-        # Log error but don't fail the order creation
         logger.error(f"Failed to send confirmation email for order {order_id}: {str(e)}")
+    
+    # Send notification email to admin
+    admin_notification_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #D90429; color: white; padding: 20px; text-align: center; }}
+            .header h1 {{ margin: 0; font-size: 24px; }}
+            .content {{ padding: 30px 20px; background: #fff; }}
+            .order-box {{ background: #f5f5f5; border-left: 4px solid #D90429; padding: 15px; margin: 20px 0; }}
+            .order-id {{ font-size: 24px; font-weight: bold; color: #D90429; }}
+            .detail-row {{ padding: 8px 0; border-bottom: 1px solid #eee; }}
+            .label {{ color: #666; font-size: 13px; }}
+            .value {{ font-weight: 600; }}
+            .cta-btn {{ display: inline-block; background: #D90429; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }}
+            .footer {{ background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔔 New Custom Order Received</h1>
+            </div>
+            <div class="content">
+                <p>A new custom order has been submitted and requires your attention.</p>
+                
+                <div class="order-box">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">ORDER ID</p>
+                    <p class="order-id">{order_id}</p>
+                </div>
+                
+                <h3 style="margin-top: 25px; border-bottom: 2px solid #D90429; padding-bottom: 10px;">Customer Details</h3>
+                <div class="detail-row"><span class="label">Name:</span> <span class="value">{customer_name}</span></div>
+                <div class="detail-row"><span class="label">Email:</span> <span class="value">{customer_email}</span></div>
+                <div class="detail-row"><span class="label">Phone:</span> <span class="value">{customer_phone}</span></div>
+                
+                <h3 style="margin-top: 25px; border-bottom: 2px solid #D90429; padding-bottom: 10px;">Order Details</h3>
+                <div class="detail-row"><span class="label">Product:</span> <span class="value">{enquiry_dict.get('clothing_name')}</span></div>
+                <div class="detail-row"><span class="label">Category:</span> <span class="value">{enquiry_dict.get('order_category')}</span></div>
+                <div class="detail-row"><span class="label">Quantity:</span> <span class="value">{enquiry_dict.get('quantity')} pieces</span></div>
+                <div class="detail-row"><span class="label">Fabric:</span> <span class="value">{enquiry_dict.get('fabric_material')}</span></div>
+                <div class="detail-row"><span class="label">Colors:</span> <span class="value">{', '.join(enquiry_dict.get('colors', []))}</span></div>
+                <div class="detail-row"><span class="label">Deadline:</span> <span class="value">{enquiry_dict.get('deadline', 'Not specified')}</span></div>
+                
+                {f'<h3 style="margin-top: 25px;">Design Notes</h3><p>{enquiry_dict.get("design_details", "")}</p>' if enquiry_dict.get('design_details') else ''}
+                {f'<h3 style="margin-top: 25px;">Additional Notes</h3><p>{enquiry_dict.get("additional_notes", "")}</p>' if enquiry_dict.get('additional_notes') else ''}
+                
+                <p style="margin-top: 30px; text-align: center;">
+                    <strong>⏰ Please send a quote within 24 hours</strong>
+                </p>
+            </div>
+            <div class="footer">
+                <p>This is an automated notification from Temaruco Order System</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        # Send to admin email
+        await send_email_notification(
+            "temarucoltd@gmail.com",
+            f"🔔 New Custom Order: {order_id} - {customer_name}",
+            admin_notification_html
+        )
+        logger.info(f"Admin notification sent for order {order_id}")
+    except Exception as e:
+        logger.error(f"Failed to send admin notification for order {order_id}: {str(e)}")
     
     del enquiry['_id']
     return enquiry
