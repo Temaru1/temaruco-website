@@ -84,7 +84,8 @@ const AdminProductsPage = () => {
           branded_price: formData.branded_price ? parseFloat(formData.branded_price) : null,
           image_url: imageUrl,
           moq_value: moqValue,
-          unit_type: unitType
+          unit_type: unitType,
+          has_branding: activeTab === 'souvenirs' ? formData.has_branding : undefined
         }, { headers });
         toast.success('Product updated!');
       } else {
@@ -94,7 +95,8 @@ const AdminProductsPage = () => {
           branded_price: formData.branded_price ? parseFloat(formData.branded_price) : null,
           image_url: imageUrl,
           moq_value: moqValue,
-          unit_type: unitType
+          unit_type: unitType,
+          has_branding: activeTab === 'souvenirs' ? formData.has_branding : undefined
         }, { headers });
         toast.success('Product added!');
       }
