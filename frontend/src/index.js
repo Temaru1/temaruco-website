@@ -16,16 +16,43 @@ root.render(
   </React.StrictMode>
 );
 
-// Register Service Worker for PWA
+// Register Service Worker with auto-update strategy
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/service-worker.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
+        
+        // Check for updates on page load
+        registration.update();
+        
+        // Listen for new service worker
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('New SW found, installing...');
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New content available, skip waiting
+              console.log('New content available, activating...');
+              newWorker.postMessage('skipWaiting');
+            }
+          });
+        });
       })
       .catch((registrationError) => {
         console.log('SW registration failed: ', registrationError);
       });
+    
+    // Reload when new SW takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('New SW active, reloading for fresh content...');
+        window.location.reload();
+      }
+    });
   });
 }
