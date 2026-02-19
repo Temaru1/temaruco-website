@@ -1053,6 +1053,30 @@ const AdminQuotesPage = () => {
                           Paid
                         </button>
                       )}
+                      {quote.status === 'paid' && quote.receipt_url && (
+                        <>
+                          <a
+                            href={quote.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline flex items-center gap-1"
+                            title="View Receipt"
+                            data-testid={`view-receipt-${quote.id}`}
+                          >
+                            <Receipt size={14} />
+                            Receipt
+                          </a>
+                          <button
+                            onClick={() => handleResendReceipt(quote.id)}
+                            className="text-purple-600 hover:underline flex items-center gap-1"
+                            title="Resend Receipt Email"
+                            data-testid={`resend-receipt-${quote.id}`}
+                          >
+                            <Mail size={14} />
+                            Resend
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => generatePrintableQuote(quote)}
                         className="text-blue-600 hover:underline"
