@@ -314,7 +314,7 @@ const SouvenirsPage = () => {
                   {souvenir.has_branding && souvenir.branded_price ? (
                     <div className="space-y-1">
                       <p className="text-zinc-600 text-sm">
-                        Unbranded: <span className="font-bold">{formatPrice(souvenir.price)}</span>
+                        Unbranded: <span className="font-bold">{formatPrice(getBasePrice(souvenir))}</span>
                       </p>
                       <p className="text-[#D90429] text-sm">
                         Branded: <span className="font-bold">{formatPrice(souvenir.branded_price)}</span>
@@ -322,7 +322,7 @@ const SouvenirsPage = () => {
                     </div>
                   ) : (
                     <p className="text-[#D90429] font-bold text-lg">
-                      {formatPrice(souvenir.price)}
+                      {formatPrice(getBasePrice(souvenir))}
                     </p>
                   )}
                 </div>
