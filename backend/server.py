@@ -11656,6 +11656,179 @@ async def delete_file(file_path: str, admin_user: Dict = Depends(get_admin_user)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
+
+# ==================== JOB ORDERS MODULE ====================
+
+async def generate_job_order_id():
+    """Generate unique job order ID: JOB-YYYYMMDD-XXX"""
+    today = datetime.now(timezone.utc).strftime('%Y%m%d')
+    prefix = f"JOB-{today}-"
+    
+    # Find highest number for today
+    latest = await db.job_orders.find_one(
+        {'job_order_id': {'$regex': f'^{prefix}'}},
+        sort=[('job_order_id', -1)]
+    )
+    
+    if latest:
+        try:
+            num = int(latest['job_order_id'].split('-')[-1]) + 1
+        except:
+            num = 1
+    else:
+        num = 1
+    
+    return f"{prefix}{num:03d}"
+
+
+@api_router.get("/admin/job-orders")
+async def get_job_orders(
+    search: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    due_date_from: Optional[str] = None,
+    due_date_to: Optional[str] = None,
+    admin_user: Dict = Depends(get_admin_user)
+):
+    """Get all job orders with search and filters"""
+    query = {}
+    
+    if search:
+        query['$or'] = [
+            {'name': {'$regex': search, '$options': 'i'}},
+            {'email': {'$regex': search, '$options': 'i'}},
+            {'job_order_id': {'$regex': search, '$options': 'i'}}
+        ]
+    
+    if date_from or date_to:
+        date_filter = {}
+        if date_from:
+            date_filter['$gte'] = date_from
+        if date_to:
+            date_filter['$lte'] = date_to
+        query['date_created'] = date_filter
+    
+    if due_date_from or due_date_to:
+        due_filter = {}
+        if due_date_from:
+            due_filter['$gte'] = due_date_from
+        if due_date_to:
+            due_filter['$lte'] = due_date_to
+        query['delivery_due_date'] = due_filter
+    
+    job_orders = await db.job_orders.find(query, {'_id': 0}).sort('created_at', -1).to_list(500)
+    
+    return {
+        'job_orders': job_orders,
+        'total': len(job_orders)
+    }
+
+
+@api_router.post("/admin/job-orders")
+async def create_job_order(request: Request, admin_user: Dict = Depends(get_admin_user)):
+    """Create a new job order"""
+    data = await request.json()
+    
+    if not data.get('name'):
+        raise HTTPException(status_code=400, detail="Name is required")
+    
+    job_order_id = await generate_job_order_id()
+    
+    job_order = {
+        'id': str(uuid.uuid4()),
+        'job_order_id': job_order_id,
+        'name': data.get('name'),
+        'email': data.get('email'),
+        'date_created': data.get('date_created', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+        'items': data.get('items', []),  # Array of {item_name, quantity}
+        'description': data.get('description'),
+        'size': data.get('size'),
+        'color': data.get('color'),
+        'gender': data.get('gender'),  # Male, Female, Unisex
+        'delivery_due_date': data.get('delivery_due_date'),
+        'other_specifications': data.get('other_specifications'),
+        'authorized_signature': data.get('authorized_signature'),
+        'created_by_admin': admin_user.get('user_id'),
+        'created_by_email': admin_user.get('email'),
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'status': 'pending'
+    }
+    
+    await db.job_orders.insert_one(job_order)
+    del job_order['_id']
+    
+    return {'message': 'Job order created', 'job_order': job_order}
+
+
+@api_router.get("/admin/job-orders/{job_order_id}")
+async def get_job_order(job_order_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Get single job order details"""
+    job_order = await db.job_orders.find_one(
+        {'$or': [{'id': job_order_id}, {'job_order_id': job_order_id}]},
+        {'_id': 0}
+    )
+    
+    if not job_order:
+        raise HTTPException(status_code=404, detail="Job order not found")
+    
+    return job_order
+
+
+@api_router.put("/admin/job-orders/{job_order_id}")
+async def update_job_order(job_order_id: str, request: Request, admin_user: Dict = Depends(get_admin_user)):
+    """Update a job order"""
+    data = await request.json()
+    
+    existing = await db.job_orders.find_one(
+        {'$or': [{'id': job_order_id}, {'job_order_id': job_order_id}]}
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Job order not found")
+    
+    update_data = {
+        'name': data.get('name', existing.get('name')),
+        'email': data.get('email', existing.get('email')),
+        'date_created': data.get('date_created', existing.get('date_created')),
+        'items': data.get('items', existing.get('items', [])),
+        'description': data.get('description', existing.get('description')),
+        'size': data.get('size', existing.get('size')),
+        'color': data.get('color', existing.get('color')),
+        'gender': data.get('gender', existing.get('gender')),
+        'delivery_due_date': data.get('delivery_due_date', existing.get('delivery_due_date')),
+        'other_specifications': data.get('other_specifications', existing.get('other_specifications')),
+        'authorized_signature': data.get('authorized_signature', existing.get('authorized_signature')),
+        'status': data.get('status', existing.get('status')),
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+        'updated_by': admin_user.get('email')
+    }
+    
+    await db.job_orders.update_one(
+        {'$or': [{'id': job_order_id}, {'job_order_id': job_order_id}]},
+        {'$set': update_data}
+    )
+    
+    updated = await db.job_orders.find_one(
+        {'$or': [{'id': job_order_id}, {'job_order_id': job_order_id}]},
+        {'_id': 0}
+    )
+    
+    return {'message': 'Job order updated', 'job_order': updated}
+
+
+@api_router.delete("/admin/job-orders/{job_order_id}")
+async def delete_job_order(job_order_id: str, admin_user: Dict = Depends(get_admin_user)):
+    """Delete a job order"""
+    result = await db.job_orders.delete_one(
+        {'$or': [{'id': job_order_id}, {'job_order_id': job_order_id}]}
+    )
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Job order not found")
+    
+    return {'message': 'Job order deleted'}
+
+
 # ==================== GENERAL ====================
 @api_router.get("/")
 async def root():
