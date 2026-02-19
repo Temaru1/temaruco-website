@@ -6401,12 +6401,58 @@ async def create_enquiry(
     return enquiry
 
 @api_router.get("/admin/enquiries")
-async def get_all_enquiries(request: Request):
-    """Admin: Get all custom order enquiries"""
+async def get_all_enquiries(
+    request: Request,
+    search: Optional[str] = None,
+    enquiry_type: Optional[str] = None,
+    status: Optional[str] = None
+):
+    """Admin: Get all custom order enquiries with search and filtering"""
     admin_user = await get_admin_user(request)
     
-    enquiries = await db.enquiries.find({}, {'_id': 0}).sort('created_at', -1).to_list(1000)
-    return enquiries
+    # Build query
+    query = {}
+    
+    # Filter by enquiry type
+    if enquiry_type and enquiry_type != 'all':
+        if enquiry_type == 'custom_order':
+            query['enquiry_type'] = 'custom_order'
+        elif enquiry_type == 'general':
+            query['$or'] = [
+                {'enquiry_type': 'general'},
+                {'enquiry_type': {'$exists': False}}
+            ]
+    
+    # Filter by status
+    if status and status != 'all':
+        query['status'] = status
+    
+    # Search functionality (case-insensitive partial match)
+    if search:
+        search_regex = {'$regex': search, '$options': 'i'}
+        query['$or'] = [
+            {'order_id': search_regex},
+            {'enquiry_code': search_regex},
+            {'customer_name': search_regex},
+            {'customer_phone': search_regex},
+            {'customer_email': search_regex}
+        ]
+    
+    enquiries = await db.enquiries.find(query, {'_id': 0}).sort('created_at', -1).to_list(1000)
+    
+    # Get counts for tabs
+    all_count = await db.enquiries.count_documents({})
+    custom_count = await db.enquiries.count_documents({'enquiry_type': 'custom_order'})
+    general_count = all_count - custom_count
+    
+    return {
+        'enquiries': enquiries,
+        'counts': {
+            'all': all_count,
+            'custom_order': custom_count,
+            'general': general_count
+        }
+    }
 
 @api_router.get("/admin/enquiries/{enquiry_id}")
 async def get_enquiry_details(enquiry_id: str, request: Request):
