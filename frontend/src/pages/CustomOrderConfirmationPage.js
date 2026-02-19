@@ -5,7 +5,10 @@ import { CheckCircle, Phone, Mail, Clock } from 'lucide-react';
 const CustomOrderConfirmationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const enquiryCode = location.state?.enquiryCode || 'N/A';
+  
+  // Get order_id from state (new format) or fallback to enquiry_code (old format)
+  const orderData = location.state || {};
+  const orderId = orderData.order_id || orderData.enquiryCode || 'N/A';
 
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center py-12 px-4">
@@ -20,17 +23,17 @@ const CustomOrderConfirmationPage = () => {
 
           {/* Main Message */}
           <h1 className="font-oswald text-4xl font-bold mb-4" data-testid="confirmation-title">
-            Custom Order Received!
+            Your custom order details have been received.
           </h1>
           
           <p className="text-xl text-zinc-700 mb-8">
-            Your custom order has been received and our Client Relations Officer will reach out to you shortly with a Quote.
+            A quote will be sent to your email within 24 hours.
           </p>
 
-          {/* Enquiry Code - Customer can use this */}
+          {/* Order ID Box */}
           <div className="bg-primary/10 border-2 border-primary rounded-lg p-6 mb-6">
-            <p className="text-sm font-semibold text-primary mb-2">YOUR ENQUIRY CODE</p>
-            <p className="text-3xl font-bold font-mono text-primary mb-3">{enquiryCode}</p>
+            <p className="text-sm font-semibold text-primary mb-2">ORDER ID</p>
+            <p className="text-3xl font-bold font-mono text-primary mb-3" data-testid="order-id">{orderId}</p>
             <div className="bg-white rounded p-4 text-left">
               <p className="text-sm font-semibold mb-2">📋 What is this code for?</p>
               <ul className="text-sm text-zinc-700 space-y-1">
@@ -51,7 +54,7 @@ const CustomOrderConfirmationPage = () => {
                 <ol className="list-decimal list-inside space-y-2 text-zinc-700">
                   <li>Our team will carefully review your custom order request</li>
                   <li>We'll prepare a detailed quote including pricing and timeline</li>
-                  <li>You'll receive the quote via email within 24-48 hours</li>
+                  <li>You'll receive the quote via email within 24 hours</li>
                   <li>You can accept, modify, or discuss the quote with our team</li>
                 </ol>
               </div>
