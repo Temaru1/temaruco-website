@@ -485,8 +485,12 @@ const PODPage = () => {
                     <span>{PRINT_PLACEMENTS.find(p => p.value === orderData.print_placement)?.label}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-zinc-400">Gender</span>
+                    <span>{orderData.gender}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-zinc-400">Color / Size</span>
-                    <span>{orderData.color} / {orderData.size}</span>
+                    <span>{orderData.color} / {orderData.size === 'Other' ? `Custom (${orderData.custom_size || 'Not specified'})` : orderData.size}</span>
                   </div>
                   <div className="border-t border-zinc-700 my-3"></div>
                   <div className="flex justify-between text-lg font-bold">
