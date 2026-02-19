@@ -503,26 +503,111 @@ const BulkOrdersPage = () => {
                   <label className="block text-sm font-medium text-zinc-700 mb-2">
                     Size Distribution (Total: {getTotalFromSizes()} pieces)
                   </label>
-                  <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
-                    {SIZES.map((size) => (
-                      <div key={size} className="text-center">
-                        <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={orderData.sizes[size] || ''}
-                          onChange={(e) => updateSizeQty(size, parseInt(e.target.value) || 0)}
-                          placeholder="0"
-                          className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent"
-                          data-testid={`size-${size}`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {getTotalFromSizes() > 0 && getTotalFromSizes() < 50 && (
-                    <p className="text-sm text-amber-600 mt-2">
-                      ⚠️ Minimum order is 50 pieces. Add {50 - getTotalFromSizes()} more.
-                    </p>
+                  
+                  {/* Size breakdown by color with Male/Female/Child sections */}
+                  {orderData.colors.length > 0 ? (
+                    <div className="space-y-6">
+                      {orderData.colors.map(color => (
+                        <div key={color} className="bg-zinc-50 p-4 rounded-lg border border-zinc-200">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-semibold text-lg flex items-center gap-2">
+                              <span 
+                                className="w-4 h-4 rounded-full border"
+                                style={{ backgroundColor: color.toLowerCase() }}
+                              ></span>
+                              {color}
+                            </h4>
+                            <div className="text-sm">
+                              <span className={`font-medium ${getColorTotal(color) >= 50 ? 'text-green-600' : 'text-amber-600'}`}>
+                                {getColorTotal(color)} / 50 pieces
+                              </span>
+                              {getColorTotal(color) > 0 && getColorTotal(color) < 50 && (
+                                <span className="text-red-500 ml-2">Need {50 - getColorTotal(color)} more</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Male Sizes */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Male Sizes</label>
+                            <div className="grid grid-cols-5 gap-2">
+                              {MALE_SIZES.map(size => (
+                                <div key={`male-${size}`} className="text-center">
+                                  <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={orderData.sizes[color]?.male?.[size] || ''}
+                                    onChange={(e) => updateSizeQty(color, 'male', size, parseInt(e.target.value) || 0)}
+                                    placeholder="0"
+                                    className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                    data-testid={`${color}-male-${size}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Female Sizes */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Female Sizes</label>
+                            <div className="grid grid-cols-5 gap-2">
+                              {FEMALE_SIZES.map(size => (
+                                <div key={`female-${size}`} className="text-center">
+                                  <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={orderData.sizes[color]?.female?.[size] || ''}
+                                    onChange={(e) => updateSizeQty(color, 'female', size, parseInt(e.target.value) || 0)}
+                                    placeholder="0"
+                                    className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                    data-testid={`${color}-female-${size}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Child Sizes */}
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Child Sizes</label>
+                            <div className="grid grid-cols-4 gap-2">
+                              {CHILD_SIZES.map(size => (
+                                <div key={`child-${size}`} className="text-center">
+                                  <label className="block text-xs font-medium text-zinc-500 mb-1">{size}</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={orderData.sizes[color]?.child?.[size] || ''}
+                                    onChange={(e) => updateSizeQty(color, 'child', size, parseInt(e.target.value) || 0)}
+                                    placeholder="0"
+                                    className="w-full px-2 py-2 text-center border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429] focus:border-transparent text-sm"
+                                    data-testid={`${color}-child-${size}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Validation Summary */}
+                      {validateColorMinimums().length > 0 && (
+                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-amber-700 font-medium mb-2">Minimum 50 pieces required per color:</p>
+                          <ul className="text-amber-600 text-sm list-disc list-inside">
+                            {validateColorMinimums().map((err, i) => (
+                              <li key={i}>{err}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-zinc-50 rounded-lg border-2 border-dashed border-zinc-300">
+                      <p className="text-zinc-500">Select colors above to add size quantities</p>
+                    </div>
                   )}
                 </div>
 
