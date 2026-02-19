@@ -991,6 +991,8 @@ const PrintOnDemandDesignPage = () => {
                     <span className={`px-2 py-0.5 rounded text-xs ${variantInfo?.badgeColor}`}>{variantInfo?.label}</span>
                   </div>
                   <div className="flex justify-between"><span className="text-zinc-400">Print Size</span><span>{PRINT_SIZES[printSize].label}</span></div>
+                  <div className="flex justify-between"><span className="text-zinc-400">Gender</span><span>{selectedGender}</span></div>
+                  <div className="flex justify-between"><span className="text-zinc-400">Size</span><span>{selectedSize === 'Other' ? `Custom (${customSize || 'Not specified'})` : selectedSize}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Unit Price</span><span>₦{getVariantPrice()?.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Print Fee</span><span>{elements.length > 0 ? '₦500' : 'N/A'}</span></div>
                   <div className="flex justify-between"><span className="text-zinc-400">Quantity</span><span>×{quantity}</span></div>
