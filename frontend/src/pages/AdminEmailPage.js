@@ -702,7 +702,7 @@ const AdminEmailPage = () => {
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">SMTP Settings</h2>
             <form onSubmit={handleSaveSettings} className="space-y-4">
@@ -790,7 +790,7 @@ const AdminEmailPage = () => {
 
       {/* Template Modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{editingTemplate ? 'Edit Template' : 'New Template'}</h2>
             <form onSubmit={handleSaveTemplate} className="space-y-4">
@@ -865,7 +865,7 @@ const AdminEmailPage = () => {
 
       {/* Campaign Modal */}
       {showCampaignModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{editingCampaign ? 'Edit Campaign' : 'New Campaign'}</h2>
             <form onSubmit={handleSaveCampaign} className="space-y-4">
@@ -925,8 +925,8 @@ const AdminEmailPage = () => {
 
       {/* Subscriber Modal */}
       {showSubscriberModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Add Subscriber</h2>
             <form onSubmit={handleAddSubscriber} className="space-y-4">
               <div>

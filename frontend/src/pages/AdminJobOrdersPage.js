@@ -514,7 +514,7 @@ const AdminJobOrdersPage = () => {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Create Job Order</h3>
               <button onClick={() => setShowCreateModal(false)} className="text-zinc-400 hover:text-zinc-600">
@@ -529,7 +529,7 @@ const AdminJobOrdersPage = () => {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Edit Job Order</h3>
               <button onClick={() => setShowEditModal(false)} className="text-zinc-400 hover:text-zinc-600">
@@ -667,7 +667,7 @@ const AdminJobOrdersPage = () => {
       {/* Delete Confirmation */}
       {showDeleteConfirm && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="text-center">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <Trash2 className="text-red-600" size={32} />
