@@ -938,6 +938,7 @@ const AdminPage = () => {
             <Route path="/suppliers" element={<AdminSuppliersPage />} />
             <Route path="/souvenir-suppliers" element={<AdminSouvenirSuppliersPage />} />
             <Route path="/file-manager" element={<AdminFileManagerPage />} />
+            <Route path="/push-notifications" element={<AdminPushNotificationsPage />} />
             <Route path="/clothing-items" element={<AdminClothingItemsPage />} />
             <Route path="/job-orders" element={<AdminJobOrdersPage />} />
             {(isSuperAdmin || userRole.can_view_financials) && <Route path="/financials" element={<AdminFinancialsPage />} />}
