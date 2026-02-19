@@ -1730,6 +1730,12 @@ async def create_pod_order(
         order_id=order_id
     )
     
+    # Send push notification to admins
+    try:
+        await notify_new_order(db, order_id, 'POD', customer_name)
+    except Exception as e:
+        logger.error(f"Failed to send push notification for POD order: {e}")
+    
     del pod_order['_id']
     return pod_order
 
