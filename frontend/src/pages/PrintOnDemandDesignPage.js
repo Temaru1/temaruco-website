@@ -908,18 +908,61 @@ const PrintOnDemandDesignPage = () => {
               </CardContent>
             </Card>
 
+            {/* Gender Selection */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">Gender</h3>
+                <div className="flex gap-2">
+                  {['Male', 'Female'].map((gender) => (
+                    <button 
+                      key={gender} 
+                      onClick={() => {
+                        setSelectedGender(gender);
+                        setSelectedSize(gender === 'Female' ? '8' : 'M');
+                        setCustomSize('');
+                      }}
+                      className={`flex-1 px-4 py-2 rounded border transition-all ${selectedGender === gender ? 'bg-[#D90429] text-white border-[#D90429]' : 'border-zinc-300 hover:border-zinc-400'}`}
+                      data-testid={`gender-${gender.toLowerCase()}`}
+                    >
+                      {gender}
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Size Selection */}
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3">Size</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(activeProduct.sizes || ['S', 'M', 'L', 'XL']).map((size) => (
-                    <button key={size} onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 rounded border transition-all ${selectedSize === size ? 'bg-[#D90429] text-white border-[#D90429]' : 'border-zinc-300 hover:border-zinc-400'}`}>
+                  {getSizesForGender().map((size) => (
+                    <button 
+                      key={size} 
+                      onClick={() => {
+                        setSelectedSize(size);
+                        if (size !== 'Other') setCustomSize('');
+                      }}
+                      className={`px-4 py-2 rounded border transition-all ${selectedSize === size ? 'bg-[#D90429] text-white border-[#D90429]' : 'border-zinc-300 hover:border-zinc-400'}`}
+                      data-testid={`size-${size}`}
+                    >
                       {size}
                     </button>
                   ))}
                 </div>
+                {/* Custom size input for "Other" */}
+                {selectedGender === 'Female' && selectedSize === 'Other' && (
+                  <div className="mt-3">
+                    <input
+                      type="text"
+                      value={customSize}
+                      onChange={(e) => setCustomSize(e.target.value)}
+                      placeholder="Enter your custom size (e.g., 16, 18, 20)"
+                      className="w-full px-3 py-2 border border-amber-300 rounded-lg bg-amber-50 text-sm"
+                      data-testid="custom-size-input"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
