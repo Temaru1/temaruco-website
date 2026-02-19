@@ -182,10 +182,28 @@ const SouvenirsPage = () => {
                     </p>
                   )}
                 </div>
+                {/* MOQ Display */}
+                <p className="text-xs text-zinc-500 mt-1" data-testid={`moq-display-${souvenir.id}`}>
+                  Minimum Order: {souvenir.moq_value || 1} Pieces
+                </p>
+                {/* Quantity Selector */}
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-xs text-zinc-600">Qty:</label>
+                  <input
+                    type="number"
+                    min={souvenir.moq_value || 1}
+                    step="1"
+                    value={selectedQuantities[souvenir.id] || souvenir.moq_value || 1}
+                    onChange={(e) => updateSelectedQuantity(souvenir.id, e.target.value)}
+                    className="w-20 px-2 py-1 text-sm border rounded"
+                    data-testid={`qty-input-${souvenir.id}`}
+                  />
+                </div>
                 <Button
                   onClick={() => addToCart(souvenir)}
                   className="w-full mt-3 bg-zinc-900 hover:bg-zinc-800"
                   size="sm"
+                  data-testid={`add-to-cart-${souvenir.id}`}
                 >
                   <Plus className="w-4 h-4 mr-2" /> Add to Cart
                 </Button>
