@@ -110,19 +110,19 @@ const BoutiquePage = () => {
   // Handle add to cart - show size selection modal for clothing items
   const handleAddToCart = (product) => {
     // Check if product needs size selection (has gender attribute)
-    if (product.gender === 'male' || product.gender === 'female' || product.gender === 'unisex') {
+    if (product.gender === 'male' || product.gender === 'female' || product.gender === 'child' || product.gender === 'unisex') {
       setSelectedProduct(product);
-      setSelectedSize(product.gender === 'female' ? '8' : 'M');
-      setCustomSize('');
+      const availableSizes = getAvailableSizes(product);
+      setSelectedSize(availableSizes[0] || '');
       setShowSizeModal(true);
     } else {
       // No size needed, add directly
-      addToCartWithSize(product, null, null);
+      addToCartWithSize(product, null);
     }
   };
 
-  const addToCartWithSize = (product, size, customSizeValue) => {
-    const cartItemId = size ? `${product.id}-${size}${customSizeValue ? '-' + customSizeValue : ''}` : product.id;
+  const addToCartWithSize = (product, size) => {
+    const cartItemId = size ? `${product.id}-${size}` : product.id;
     const existingItem = cart.find(item => item.cartItemId === cartItemId || (item.id === product.id && item.size === size));
     
     let newCart;
@@ -137,7 +137,6 @@ const BoutiquePage = () => {
         ...product, 
         cartItemId,
         size: size,
-        custom_size: customSizeValue,
         quantity: 1 
       }];
     }
@@ -145,7 +144,7 @@ const BoutiquePage = () => {
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
     window.dispatchEvent(new Event('cartUpdated'));
-    toast.success(size ? `Added to cart (Size: ${size === 'Other' ? customSizeValue : size})` : 'Added to cart!');
+    toast.success(size ? `Added to cart (Size: ${size})` : 'Added to cart!');
     setShowSizeModal(false);
     setSelectedProduct(null);
   };
