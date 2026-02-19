@@ -2663,6 +2663,7 @@ async def create_souvenir(souvenir_data: Dict[str, Any], admin_user: Dict = Depe
         'is_active': souvenir_data.get('is_active', True),
         'moq_value': int(moq_value),  # Whole numbers only for pieces
         'unit_type': souvenir_data.get('unit_type', 'piece'),
+        'has_branding': souvenir_data.get('has_branding', False),  # Enable branding option for this product
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     await db.souvenirs.insert_one(souvenir)
