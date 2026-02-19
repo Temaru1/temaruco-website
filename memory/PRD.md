@@ -820,4 +820,72 @@ These sections in `server.py` should be extracted:
 
 **Testing:** 100% pass rate (12 backend tests, all UI tests passed)
 
+## Completed Work (Feb 19, 2026) - Custom Orders Under Enquiries
+
+### Custom Orders Storage & Search Feature ✅
+
+**Implementation:**
+
+1. **Order ID Generation:**
+   - New `generate_custom_order_id()` function creates IDs in format: `CUS-YYYYMMDD-HHMM`
+   - Example: `CUS-20260219-1309`
+   - Counter-based system ensures uniqueness
+
+2. **Database Schema Updates:**
+   - Enquiries collection now includes: `order_id`, `enquiry_type`, `delivery_address`, `product_type`, `sizes_selected`, `total_quantity`, `design_file_url`, `linked_quote_id`
+   - Status options: `pending`, `reviewed`, `approved`, `rejected`, `Quote Created`
+
+3. **Backend Endpoints Updated:**
+   - `POST /api/enquiries/create` - Now generates `order_id` and sends confirmation email
+   - `GET /api/admin/enquiries` - New params: `search`, `enquiry_type`, `status`
+   - Returns: `{ enquiries: [...], counts: { all, custom_order, general } }`
+   - `POST /api/admin/enquiries/{id}/create-full-quote` - Creates linked quote in `manual_quotes` collection
+
+4. **Search Functionality:**
+   - Case-insensitive partial match
+   - Searchable fields: Order ID, Customer Name, Phone, Email
+   - Example: Searching "CUS-2026" returns all matching custom orders
+
+5. **Admin UI (AdminEnquiriesPage.js - Complete Rewrite):**
+   - **Filter Tabs:** All Enquiries, Custom Orders, General Enquiries (with counts)
+   - **Search Bar:** "Search by Order ID, customer name, phone, or email..."
+   - **Table Columns:** Order ID, Customer, Phone, Email, Quantity, Status, Date, Actions
+   - **View Button:** Opens detailed modal with all enquiry info
+   - **View Modal Contents:**
+     - Customer Information section
+     - Order Specifications section
+     - Sizes Breakdown display
+     - Design Details
+     - Additional Notes
+     - Uploaded Files preview
+     - Status dropdown (editable)
+     - Deadline display
+   - **Create Quote Button:** Opens quote creation modal (hidden if quote exists)
+   - **Create Quote Modal:**
+     - Auto-fills customer details, order details from enquiry
+     - Admin inputs: Unit Price, Additional Costs, Discount, Production Days, Expiry Date, Notes
+     - Auto-calculates total: (Unit Price × Quantity) + Additional - Discount
+     - Saves to `manual_quotes` collection
+     - Links quote to enquiry, updates status to "Quote Created"
+
+6. **Guest Confirmation (CustomOrderConfirmationPage.js):**
+   - Now displays `order_id` instead of `enquiry_code`
+   - Message: "Your custom order details have been received. A quote will be sent to your email within 24 hours."
+   - Order ID box prominently displayed
+
+7. **Confirmation Email:**
+   - Automatic HTML email sent to customer after submission
+   - Subject: "Custom Order Received – TEMARUCO"
+   - Includes: Order ID, Product, Quantity, Category
+   - Professional template with Temaruco branding
+
+8. **Files Modified:**
+   - `/app/backend/server.py` - Custom order ID generator, enhanced enquiries endpoints, create-full-quote endpoint
+   - `/app/frontend/src/pages/AdminEnquiriesPage.js` - Complete rewrite with tabs, search, modals
+   - `/app/frontend/src/pages/CustomOrderConfirmationPage.js` - Shows order_id
+   - `/app/frontend/src/pages/CustomOrderPage.js` - Passes order_id to confirmation
+
+**Testing:** 100% pass rate (12 backend API tests, all UI tests passed)
+- Test report: `/app/test_reports/iteration_7.json`
+
 
