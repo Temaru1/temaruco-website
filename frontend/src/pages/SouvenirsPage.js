@@ -87,13 +87,23 @@ const SouvenirsPage = () => {
       return;
     }
 
+    // CHECKOUT MOQ VALIDATION - Safety layer
+    for (const item of cart) {
+      const moq = item.moq_value || 1;
+      if (item.quantity < moq) {
+        toast.error(`Minimum order for "${item.name}" is ${moq} pieces.`);
+        return;
+      }
+    }
+
     try {
       const response = await axios.post(`${API_URL}/api/orders/souvenir`, {
         items: cart.map(item => ({
           souvenir_id: item.id,
           name: item.name,
           quantity: item.quantity,
-          price: item.price
+          price: item.price,
+          moq_value: item.moq_value || 1
         })),
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
