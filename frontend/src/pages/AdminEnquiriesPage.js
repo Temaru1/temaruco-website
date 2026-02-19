@@ -54,6 +54,7 @@ const AdminEnquiriesPage = () => {
       setHighlightedId(highlightId);
       setTimeout(() => setHighlightedId(null), 3000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, filterTab, filterStatus]);
 
   const loadEnquiries = async () => {
