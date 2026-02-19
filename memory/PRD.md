@@ -888,4 +888,31 @@ These sections in `server.py` should be extracted:
 **Testing:** 100% pass rate (12 backend API tests, all UI tests passed)
 - Test report: `/app/test_reports/iteration_7.json`
 
+## Completed Work (Feb 19, 2026) - Admin Email Notifications & Cache Fix
+
+### Admin Email Notifications for Custom Orders ✅
+- When a new custom order is submitted, an email is sent to `temarucoltd@gmail.com`
+- Email includes: Order ID, Customer details (name, email, phone), Product details, Quantity, Deadline, Notes
+- Subject format: "🔔 New Custom Order: CUS-YYYYMMDD-HHMM - Customer Name"
+- Professional HTML template with Temaruco branding
+
+### Cache-Busting Fix ✅
+- **Service Worker Updated:** Auto-update strategy with `skipWaiting()` and `clients.claim()`
+- **Cache Strategy:**
+  - HTML: Network-first (no caching)
+  - API calls: Always fetch fresh (no caching)
+  - Static assets (images, fonts): Cache-first with network fallback
+  - JS/CSS: Network-only (React build already uses hashed filenames)
+- **Auto-Cleanup:** Old caches automatically deleted on new SW activation
+- **HTML Meta Tags:** Added `no-cache, no-store, must-revalidate` headers
+- **Controller Change:** Automatic page reload when new SW takes control
+
+**Files Modified:**
+- `/app/backend/server.py` - Added admin notification email in create_enquiry endpoint
+- `/app/frontend/public/service-worker.js` - Complete rewrite with auto-update strategy
+- `/app/frontend/src/index.js` - Added SW update handling with controllerchange listener
+- `/app/frontend/public/index.html` - Added cache-control meta tags
+
+**Result:** Users will automatically receive fresh content after each deployment without clearing browser data.
+
 
