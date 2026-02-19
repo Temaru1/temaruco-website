@@ -335,29 +335,57 @@ const PODPage = () => {
                   </div>
                 </div>
 
-                {/* Color & Size */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Color, Gender & Size */}
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-2">Color</label>
                     <select
                       value={orderData.color}
                       onChange={(e) => setOrderData({...orderData, color: e.target.value})}
                       className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429]"
+                      data-testid="pod-color-select"
                     >
                       {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">Gender</label>
+                    <select
+                      value={orderData.gender}
+                      onChange={(e) => setOrderData({...orderData, gender: e.target.value, size: e.target.value === 'Female' ? '8' : 'M', custom_size: ''})}
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429]"
+                      data-testid="pod-gender-select"
+                    >
+                      {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-2">Size</label>
                     <select
                       value={orderData.size}
-                      onChange={(e) => setOrderData({...orderData, size: e.target.value})}
+                      onChange={(e) => setOrderData({...orderData, size: e.target.value, custom_size: e.target.value !== 'Other' ? '' : orderData.custom_size})}
                       className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#D90429]"
+                      data-testid="pod-size-select"
                     >
-                      {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                      {getSizesForGender().map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                 </div>
+                
+                {/* Custom Size Input for "Other" */}
+                {orderData.gender === 'Female' && orderData.size === 'Other' && (
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">Custom Size</label>
+                    <input
+                      type="text"
+                      value={orderData.custom_size}
+                      onChange={(e) => setOrderData({...orderData, custom_size: e.target.value})}
+                      placeholder="Enter your custom size (e.g., 16, 18, 20)"
+                      className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 bg-amber-50"
+                      data-testid="pod-custom-size-input"
+                    />
+                  </div>
+                )}
 
                 {/* Notes */}
                 <div>
