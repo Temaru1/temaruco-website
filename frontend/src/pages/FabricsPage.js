@@ -20,6 +20,7 @@ const FabricsPage = () => {
   const [showCart, setShowCart] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
+  const [selectedQuantities, setSelectedQuantities] = useState({});  // Track quantity per product
 
   useEffect(() => {
     loadFabrics();
@@ -35,21 +36,40 @@ const FabricsPage = () => {
   };
 
   const addToCart = (fabric) => {
+    const moq = fabric.moq_value || 1;
+    const selectedQty = selectedQuantities[fabric.id] || moq;
+    
+    // MOQ Validation
+    if (selectedQty < moq) {
+      toast.error(`Minimum order for this fabric is ${moq} yards.`);
+      return;
+    }
+    
     const existing = cart.find(item => item.id === fabric.id);
     if (existing) {
       setCart(cart.map(item => 
-        item.id === fabric.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === fabric.id ? { ...item, quantity: item.quantity + selectedQty } : item
       ));
     } else {
-      setCart([...cart, { ...fabric, quantity: 1 }]);
+      setCart([...cart, { ...fabric, quantity: selectedQty }]);
     }
-    toast.success(`${fabric.name} added to cart`);
+    toast.success(`${fabric.name} (${selectedQty} yards) added to cart`);
+  };
+
+  // Update selected quantity for a product
+  const updateSelectedQuantity = (fabricId, value) => {
+    setSelectedQuantities(prev => ({
+      ...prev,
+      [fabricId]: parseFloat(value) || 1
+    }));
   };
 
   const updateQuantity = (id, delta) => {
     setCart(cart.map(item => {
       if (item.id === id) {
-        const newQty = Math.max(1, item.quantity + delta);
+        const moq = item.moq_value || 1;
+        // Use step of 0.5 for fabrics
+        const newQty = Math.max(moq, item.quantity + delta);
         return { ...item, quantity: newQty };
       }
       return item;
