@@ -232,7 +232,8 @@ const BulkOrdersPage = () => {
           ...orderData,
           quantity: getTotalFromSizes() > 0 ? getTotalFromSizes() : orderData.quantity,
           product_variant: selectedVariant,
-          unit_price: getUnitPrice()
+          unit_price: getUnitPrice(),
+          custom_female_sizes: customFemaleSizes  // Include custom size specifications
         },
         customerInfo,
         selectedItem,
